@@ -228,6 +228,15 @@ namespace utils::win32::window::input
 			utils::containers::object_pool<utils::observer_ptr<utils::input::mouse>> mice_ptrs;
 
 		private:
+
+			bool mouse_accepts(utils::input::mouse& mouse, bool global_input)
+				{
+				if (mouse.global) { return true ; }
+				if (global_input) { return false; }
+				//if mouse in window we still have to make sure that NCHITTEST returned client, since rawinput doesn't exclude non-client regions like legacy input did
+				return SendMessage(get_handle(), WM_NCHITTEST, 0, MAKELPARAM(mouse.state.position.x, mouse.state.position.y)) == utils::win32::window::hit_type::client;
+				}
+
 			void button_down(uintptr_t device_handle, utils::input::mouse::button button, bool global)
 				{
 				//std::cout << "window mouse (" << device_handle << ") button down " << utils::magic_enum::enum_name(button) << (global ? ", global" : "") << std::endl;
@@ -237,7 +246,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle) 
 						{
-						if (!global || (global && mouse_ptr->global))
+						if(mouse_accepts(*mouse_ptr, global))
 							{
 							mouse_ptr->button_down(button);
 							}
@@ -253,7 +262,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle)
 						{
-						if (!global || (global && mouse_ptr->global))
+						if (mouse_accepts(*mouse_ptr, global))
 							{
 							mouse_ptr->button_up(button);
 							}
@@ -268,7 +277,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle) 
 						{
-						if (!global || (global && mouse_ptr->global))
+						if (mouse_accepts(*mouse_ptr, global))
 							{
 							mouse_ptr->move_to(position);
 							}
@@ -283,7 +292,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle) 
 						{
-						if (!global || (global && mouse_ptr->global))
+						if (mouse_accepts(*mouse_ptr, global))
 							{
 							mouse_ptr->move_by(delta);
 							}
