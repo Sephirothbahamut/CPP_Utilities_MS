@@ -77,7 +77,7 @@ struct window :
 		resize_printer,
 		troll_close_button
 		>, 
-	utils::devirtualize
+	utils::oop::devirtualize
 	{
 	struct create_info
 		{
@@ -116,11 +116,11 @@ int main()
 			});
 		default_mouse.move_to_actions.emplace([](utils::math::vec2l position)
 			{
-			std::cout << "Mouse move to:     " << position << "\n";
+			//std::cout << "Mouse move to:     " << position << "\n";
 			});
 		default_mouse.move_by_actions.emplace([](utils::math::vec2l delta)
 			{
-			std::cout << "Mouse move by:     " << delta << "\n";
+			//std::cout << "Mouse move by:     " << delta << "\n";
 			});
 		
 		window window{window::create_info
@@ -132,7 +132,7 @@ int main()
 			.style
 				{
 				.transparency{window::style::transparency_t::none},
-				.borders{window::style::value_t::enable},
+				.borders{window::style::value_t::disable},
 				.shadow{window::style::value_t::_default}
 				},
 			.resizable_edge

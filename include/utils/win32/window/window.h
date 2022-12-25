@@ -58,7 +58,7 @@ int main()
 #include <utils/memory.h>
 #include <utils/math/vec2.h>
 #include <utils/math/geometry/aabb.h>
-#include <utils/virtual.h>
+#include <utils/oop/virtual.h>
 
 #include "../windows.h"
 
@@ -114,6 +114,9 @@ namespace utils::win32::window
 			inline void* get_user_data() noexcept { return win32_user_data.user_data; }
 
 			inline bool is_open() const noexcept { return handle; }
+			inline void close() noexcept { ::DestroyWindow(get_handle()); }
+			inline void minimize() noexcept { ::ShowWindow(get_handle(), SW_MINIMIZE); }
+			inline void maximize() noexcept { ::ShowWindow(get_handle(), SW_MAXIMIZE); }
 
 			inline const HWND get_handle() const noexcept
 				{
@@ -183,7 +186,7 @@ namespace utils::win32::window
 
 	// TODO: ensure that derived_from<base> is virtual base
 	template <std::derived_from<base> ...window_implementation_ts>
-	class t : public virtual base, public virtual window_implementation_ts..., public virtual utils::virtualize
+	class t : public virtual base, public virtual window_implementation_ts..., public virtual utils::oop::virtualize
 		{
 		static_assert((std::is_base_of<utils::win32::window::base, window_implementation_ts>::value && ...), "All window implementations must inherit from utils::window.");
 
@@ -229,8 +232,12 @@ namespace utils::win32::window
 				// store window instance pointer in window user data
 				set_window_ptr();
 				//::SetWindowLongPtrW(get_handle(), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(user_data));
+				
+				auto window_rect{this->window_rect};
+				RECT ms_window_rect{.left{0}, .top{0}, .right{window_rect.width}, .bottom{window_rect.height}};
+				AdjustWindowRectEx(&ms_window_rect, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_STYLE)), false, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_EXSTYLE)));
 
-				SetWindowPos(get_handle(), 0, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_DRAWFRAME);
+				SetWindowPos(get_handle(), 0, 0, 0, ms_window_rect.right, ms_window_rect.bottom, SWP_NOZORDER | SWP_NOMOVE | /*SWP_NOSIZE |*/ SWP_NOACTIVATE | SWP_DRAWFRAME);
 				::ShowWindow(get_handle(), SW_SHOW);
 				}
 			inline t(t&& move) noexcept
@@ -245,6 +252,18 @@ namespace utils::win32::window
 				{
 				MSG msg;
 				bool ret = PeekMessage(&msg, get_handle(), 0, 0, PM_REMOVE);
+				if (ret)
+					{
+					::TranslateMessage(&msg);
+					::DispatchMessage(&msg);
+					return true;
+					}
+				else { return false; }
+				}
+			inline bool wait_event() const
+				{
+				MSG msg;
+				bool ret = GetMessage(&msg, get_handle(), 0, 0);
 				if (ret)
 					{
 					::TranslateMessage(&msg);
@@ -277,7 +296,7 @@ namespace utils::win32::window
 		};
 
 	template <std::derived_from<base> ...window_implementation_ts>
-	class simple_t : public t<window_implementation_ts...>, utils::devirtualize
+	class simple_t : public t<window_implementation_ts...>, utils::oop::devirtualize
 		{
 		public:
 			//using t<window_implementation_ts...>::t;

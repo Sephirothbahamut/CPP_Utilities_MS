@@ -5,8 +5,9 @@
 #include <functional>
 #include <unordered_map>
 
+#include <utils/enum.h>
 #include <utils/memory.h>
-#include <utils/containers/handled_container.h>
+#include <utils/containers/object_pool.h>
 #include <utils/math/vec2.h>
 
 #include "window.h"
@@ -21,7 +22,15 @@ namespace utils::input
 		{
 		//TODO scrolling wheel
 		public:
-			mouse(uintptr_t device_handle = 0) : device_handle{device_handle} {}
+			/// <summary>
+			/// device_handle is the device handle of the mouse on Windows hardware.
+			/// 0 will capture events by all mice, which is the default behaviour of most mouse APIs.
+			/// Use values different from 0 when you want to treat multiple mice as separate device (for example local multiplayer)
+			/// 
+			/// set global to true if you want to receive events even when the window is not in focus.
+			/// </summary>
+			mouse(uintptr_t device_handle = 0, bool global = false) : device_handle{device_handle}, global{global} {}
+			bool global{false};
 			uintptr_t get_device_handle() { return device_handle; }
 
 			enum class button { left, right, middle, backward, forward };
@@ -61,8 +70,8 @@ namespace utils::input
 				bool previous_state{this->state.buttons[static_cast<size_t>(button)]};
 				if(state != previous_state)
 					{
-					if (state) { for (auto& action : button_down_actions) { action(button); } }
-					else       { for (auto& action : button_up_actions  ) { action(button); } }
+					if (state) { button_down(button); }
+					else       { button_up  (button); }
 					}
 				}
 
@@ -78,10 +87,10 @@ namespace utils::input
 				for (auto& action : button_up_actions) { action(button); }
 				}
 
-			utils::containers::handled_container<std::function<void(utils::math::vec2l position)>> move_to_actions;
-			utils::containers::handled_container<std::function<void(utils::math::vec2l delta   )>> move_by_actions;
-			utils::containers::handled_container<std::function<void(button button              )>> button_down_actions;
-			utils::containers::handled_container<std::function<void(button button              )>> button_up_actions;
+			utils::containers::object_pool<std::function<void(utils::math::vec2l position)>> move_to_actions;
+			utils::containers::object_pool<std::function<void(utils::math::vec2l delta   )>> move_by_actions;
+			utils::containers::object_pool<std::function<void(button button              )>> button_down_actions;
+			utils::containers::object_pool<std::function<void(button button              )>> button_up_actions;
 			
 		private:
 			uintptr_t device_handle;
@@ -150,28 +159,14 @@ namespace utils::win32::window::input
 					{
 					auto x = GET_X_LPARAM(lparam);
 					auto y = GET_Y_LPARAM(lparam);
-					move_to(0, {x, y});
-					return 0;
-					}
-				else if (msg == WM_LBUTTONUP)
-					{
-					auto x = GET_X_LPARAM(lparam);
-					auto y = GET_Y_LPARAM(lparam);
-					button_up(0, utils::input::mouse::button::left);
-					return 0;
-					}
-				else if (msg == WM_LBUTTONDOWN)
-					{
-					auto x = GET_X_LPARAM(lparam);
-					auto y = GET_Y_LPARAM(lparam);
-					button_down(0, utils::input::mouse::button::left);
+					move_to(0, {x, y}, false);
 					return 0;
 					}
 				else if (msg == WM_INPUT)
 					{
 					UINT dataSize;
 					GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam), RID_INPUT, NULL, &dataSize, sizeof(RAWINPUTHEADER)); //Need to populate data size first
-					//std::cout << GET_RAWINPUT_CODE_WPARAM(wparam) << " code thing\n";
+					
 					if (dataSize > 0)
 						{
 						std::vector<BYTE> rawdata(dataSize);
@@ -187,6 +182,8 @@ namespace utils::win32::window::input
 								//TODO wheel
 								const auto& rawmouse{raw->data.mouse};
 
+								const bool global{GET_RAWINPUT_CODE_WPARAM(wparam) == RIM_INPUTSINK};
+
 								if ((rawmouse.usFlags & MOUSE_MOVE_ABSOLUTE) == MOUSE_MOVE_ABSOLUTE)
 									{
 									const bool isVirtualDesktop = (rawmouse.usFlags & MOUSE_VIRTUAL_DESKTOP) == MOUSE_VIRTUAL_DESKTOP;
@@ -197,25 +194,28 @@ namespace utils::win32::window::input
 									auto const x = static_cast<long>((float(rawmouse.lLastX) / 65535.0f) * float(width ));
 									auto const y = static_cast<long>((float(rawmouse.lLastY) / 65535.0f) * float(height));
 
-									move_to(device_handle, {x, y});
+									move_to(device_handle, {x, y}, global);
 									}
 								else if (rawmouse.lLastX != 0 || rawmouse.lLastY != 0)
 									{
 									long x = rawmouse.lLastX;
 									long y = rawmouse.lLastY;
 
-									move_by(device_handle, {x, y});
+									move_by(device_handle, {x, y}, global);
 									}
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { button_up  (device_handle, utils::input::mouse::button::left    ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { button_down(device_handle, utils::input::mouse::button::left    ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { button_up  (device_handle, utils::input::mouse::button::right   ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { button_down(device_handle, utils::input::mouse::button::right   ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { button_up  (device_handle, utils::input::mouse::button::middle  ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { button_down(device_handle, utils::input::mouse::button::middle  ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { button_up  (device_handle, utils::input::mouse::button::backward); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { button_down(device_handle, utils::input::mouse::button::backward); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { button_up  (device_handle, utils::input::mouse::button::forward ); }
-								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { button_down(device_handle, utils::input::mouse::button::forward ); }
+
+
+
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { button_down(device_handle, utils::input::mouse::button::left    , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { button_up  (device_handle, utils::input::mouse::button::left    , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { button_down(device_handle, utils::input::mouse::button::right   , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { button_up  (device_handle, utils::input::mouse::button::right   , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { button_down(device_handle, utils::input::mouse::button::middle  , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { button_up  (device_handle, utils::input::mouse::button::middle  , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { button_down(device_handle, utils::input::mouse::button::backward, global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { button_up  (device_handle, utils::input::mouse::button::backward, global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { button_down(device_handle, utils::input::mouse::button::forward , global); }
+								if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { button_up  (device_handle, utils::input::mouse::button::forward , global); }
 								}
 							}
 
@@ -225,39 +225,69 @@ namespace utils::win32::window::input
 				return std::nullopt;
 				}
 
-			utils::containers::handled_container<utils::observer_ptr<utils::input::mouse>> mice_ptrs;
+			utils::containers::object_pool<utils::observer_ptr<utils::input::mouse>> mice_ptrs;
 
 		private:
-			void button_up(uintptr_t device_handle, utils::input::mouse::button button)
+			void button_down(uintptr_t device_handle, utils::input::mouse::button button, bool global)
 				{
+				//std::cout << "window mouse (" << device_handle << ") button down " << utils::magic_enum::enum_name(button) << (global ? ", global" : "") << std::endl;
 				for (auto mouse_ptr : mice_ptrs)
 					{
 					const uintptr_t handle{mouse_ptr->get_device_handle()};
-					if (handle == 0 || handle == device_handle) { mouse_ptr->button_up(button); }
+
+					if (handle == 0 || handle == device_handle) 
+						{
+						if (!global || (global && mouse_ptr->global))
+							{
+							mouse_ptr->button_down(button);
+							}
+						}
 					}
 				}
-			void button_down(uintptr_t device_handle, utils::input::mouse::button button)
+			void button_up(uintptr_t device_handle, utils::input::mouse::button button, bool global)
 				{
+				//std::cout << "window mouse (" << device_handle << ") button up   " << utils::magic_enum::enum_name(button) << (global ? ", global" : "") << std::endl;
 				for (auto mouse_ptr : mice_ptrs)
 					{
 					const uintptr_t handle{mouse_ptr->get_device_handle()};
-					if (handle == 0 || handle == device_handle) { mouse_ptr->button_down(button); }
+
+					if (handle == 0 || handle == device_handle)
+						{
+						if (!global || (global && mouse_ptr->global))
+							{
+							mouse_ptr->button_up(button);
+							}
+						}
 					}
 				}
-			void move_to(uintptr_t device_handle, utils::math::vec2l position)
+			void move_to(uintptr_t device_handle, utils::math::vec2l position, bool global)
 				{
 				for (auto mouse_ptr : mice_ptrs)
 					{
 					const uintptr_t handle{mouse_ptr->get_device_handle()};
-					if (handle == 0 || handle == device_handle) { mouse_ptr->move_to(position); }
+
+					if (handle == 0 || handle == device_handle) 
+						{
+						if (!global || (global && mouse_ptr->global))
+							{
+							mouse_ptr->move_to(position);
+							}
+						}
 					}
 				}
-			void move_by(uintptr_t device_handle, utils::math::vec2l delta)
+			void move_by(uintptr_t device_handle, utils::math::vec2l delta, bool global)
 				{
 				for (auto mouse_ptr : mice_ptrs)
 					{
 					const uintptr_t handle{mouse_ptr->get_device_handle()};
-					if (handle == 0 || handle == device_handle) { mouse_ptr->move_by(delta); }
+
+					if (handle == 0 || handle == device_handle) 
+						{
+						if (!global || (global && mouse_ptr->global))
+							{
+							mouse_ptr->move_by(delta);
+							}
+						}
 					}
 				}
 		};
