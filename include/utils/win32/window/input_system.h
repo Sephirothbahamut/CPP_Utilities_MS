@@ -22,6 +22,7 @@ namespace utils::input
 		{
 		//TODO scrolling wheel
 		public:
+
 			/// <summary>
 			/// device_handle is the device handle of the mouse on Windows hardware.
 			/// 0 will capture events by all mice, which is the default behaviour of most mouse APIs.
@@ -32,8 +33,8 @@ namespace utils::input
 			/// 
 			/// set global to true if you want to receive events even when the window is not in focus.
 			/// </summary>
-			mouse(uintptr_t device_handle = 0, bool global = false) : device_handle{device_handle}, global{global} {}
-			bool global{false};
+			mouse(uintptr_t device_handle = 0) : device_handle{device_handle} {}
+
 			uintptr_t get_device_handle() { return device_handle; }
 
 			enum class button { left, right, middle, backward, forward };
@@ -89,6 +90,11 @@ namespace utils::input
 				{
 				state.buttons[static_cast<size_t>(button)] = false;
 				for (auto& action : button_up_actions) { action(*this, button); }
+				}
+
+			void clamp(const utils::math::rect<long>& rect) noexcept
+				{
+				state.position = utils::math::clamp(state.position, rect.top_left, rect.bottom_right);
 				}
 
 			utils::containers::object_pool<std::function<void(mouse& mouse, utils::math::vec2l position)>> move_to_actions;
@@ -230,16 +236,16 @@ namespace utils::win32::window::input
 								move_by(device_handle, {x, y}, global);
 								}
 
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { button_down(device_handle, utils::input::mouse::button::left    , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { button_up  (device_handle, utils::input::mouse::button::left    , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { button_down(device_handle, utils::input::mouse::button::right   , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { button_up  (device_handle, utils::input::mouse::button::right   , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { button_down(device_handle, utils::input::mouse::button::middle  , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { button_up  (device_handle, utils::input::mouse::button::middle  , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { button_down(device_handle, utils::input::mouse::button::backward, global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { button_up  (device_handle, utils::input::mouse::button::backward, global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { button_down(device_handle, utils::input::mouse::button::forward , global); }
-							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { button_up  (device_handle, utils::input::mouse::button::forward , global); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { button_down(device_handle, utils::input::mouse::button::left    ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { button_up  (device_handle, utils::input::mouse::button::left    ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { button_down(device_handle, utils::input::mouse::button::right   ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { button_up  (device_handle, utils::input::mouse::button::right   ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { button_down(device_handle, utils::input::mouse::button::middle  ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { button_up  (device_handle, utils::input::mouse::button::middle  ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { button_down(device_handle, utils::input::mouse::button::backward); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { button_up  (device_handle, utils::input::mouse::button::backward); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { button_down(device_handle, utils::input::mouse::button::forward ); }
+							if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { button_up  (device_handle, utils::input::mouse::button::forward ); }
 							}
 						}
 
@@ -248,20 +254,11 @@ namespace utils::win32::window::input
 				return false;
 				}
 
-			bool mouse_accepts_hittest(utils::input::mouse& mouse, bool global_input)
+			bool hit_test_client(utils::input::mouse& mouse)
 				{
-				if (mouse.global) { return true ; }
-				if (global_input) { return false; }
-				//if mouse in window we still have to make sure that NCHITTEST returned client, since rawinput doesn't exclude non-client regions like legacy input did
 				POINT point;
 				GetCursorPos(&point);
-
 				return SendMessage(get_handle(), WM_NCHITTEST, 0, MAKELPARAM(point.x, point.y)) == utils::win32::window::hit_type::client;
-				}
-
-			bool mouse_accepts(utils::input::mouse& mouse, bool global_input)
-				{
-				return mouse.global || !global_input;
 				}
 
 			void button_down(uintptr_t device_handle, utils::input::mouse::button button, bool global = false)
@@ -273,7 +270,7 @@ namespace utils::win32::window::input
 
 					if (handle == device_handle) 
 						{
-						if(mouse_accepts_hittest(*mouse_ptr, global))
+						if(hit_test_client(*mouse_ptr))
 							{
 							mouse_ptr->button_down(button);
 							}
@@ -289,7 +286,7 @@ namespace utils::win32::window::input
 
 					if (handle == device_handle)
 						{
-						if (mouse_accepts_hittest(*mouse_ptr, global))
+						if (hit_test_client(*mouse_ptr))
 							{
 							mouse_ptr->button_up(button);
 							}
@@ -304,10 +301,7 @@ namespace utils::win32::window::input
 
 					if (handle == device_handle) 
 						{
-						if (mouse_accepts(*mouse_ptr, global))
-							{
-							mouse_ptr->move_to(position);
-							}
+						mouse_ptr->move_to(position);
 						}
 					}
 				}
@@ -319,10 +313,7 @@ namespace utils::win32::window::input
 
 					if (handle == device_handle) 
 						{
-						if (mouse_accepts(*mouse_ptr, global))
-							{
-							mouse_ptr->move_by(delta);
-							}
+						mouse_ptr->move_by(delta);
 						}
 					}
 				}

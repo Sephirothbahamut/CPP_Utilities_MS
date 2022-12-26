@@ -97,15 +97,48 @@ struct window :
 /*/
 using window = utils::win32::window::simple_t<>;
 /**/
+
+std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
+	{
+	UINT deviceCount = 10; // initial guess, must be nonzero
+	std::vector<RAWINPUTDEVICELIST> devices(deviceCount);
+	while (deviceCount != 0) {
+		UINT actualDeviceCount = GetRawInputDeviceList(
+			devices.data(), &deviceCount,
+			sizeof(devices[0]));
+		if (actualDeviceCount != (UINT)-1) {
+			devices.resize(actualDeviceCount);
+			return devices;
+			}
+		DWORD error = GetLastError();
+		if (error != ERROR_INSUFFICIENT_BUFFER) {
+			std::terminate(); // throw something
+			}
+		devices.resize(deviceCount);
+		}
+	}
+
 int main()
 	{
+	for(const auto& device : GetRawInputDevices())
+		{
+		switch (device.dwType)
+			{
+			case RIM_TYPEKEYBOARD: std::cout << "Keyboard "; break;
+			case RIM_TYPEMOUSE   : std::cout << "Mouse    "; break;
+			case RIM_TYPEHID     : std::cout << "HID      "; break;
+			default:               std::cout << "Other    "; break;
+			}
+		std::cout << "(" << reinterpret_cast<uintptr_t>(device.hDevice) << ")" << std::endl;
+		}
+
 	//try
 		{
 		using namespace utils::output;
 
 		window::initializer window_initializer;
 
-		utils::input::mouse default_mouse;
+		utils::input::mouse default_mouse{65743};
 		default_mouse.button_down_actions.emplace([](utils::input::mouse& mouse, utils::input::mouse::button button)
 			{
 			std::cout << "Mouse button down: " << utils::magic_enum::enum_name(button) << "\n";
