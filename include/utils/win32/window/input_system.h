@@ -229,12 +229,17 @@ namespace utils::win32::window::input
 
 		private:
 
-			bool mouse_accepts(utils::input::mouse& mouse, bool global_input)
+			bool mouse_accepts_hittest(utils::input::mouse& mouse, bool global_input)
 				{
 				if (mouse.global) { return true ; }
 				if (global_input) { return false; }
 				//if mouse in window we still have to make sure that NCHITTEST returned client, since rawinput doesn't exclude non-client regions like legacy input did
 				return SendMessage(get_handle(), WM_NCHITTEST, 0, MAKELPARAM(mouse.state.position.x, mouse.state.position.y)) == utils::win32::window::hit_type::client;
+				}
+
+			bool mouse_accepts(utils::input::mouse& mouse, bool global_input)
+				{
+				return mouse.global || !global_input;
 				}
 
 			void button_down(uintptr_t device_handle, utils::input::mouse::button button, bool global)
@@ -246,7 +251,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle) 
 						{
-						if(mouse_accepts(*mouse_ptr, global))
+						if(mouse_accepts_hittest(*mouse_ptr, global))
 							{
 							mouse_ptr->button_down(button);
 							}
@@ -262,7 +267,7 @@ namespace utils::win32::window::input
 
 					if (handle == 0 || handle == device_handle)
 						{
-						if (mouse_accepts(*mouse_ptr, global))
+						if (mouse_accepts_hittest(*mouse_ptr, global))
 							{
 							mouse_ptr->button_up(button);
 							}
