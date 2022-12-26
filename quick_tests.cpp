@@ -106,19 +106,19 @@ int main()
 		window::initializer window_initializer;
 
 		utils::input::mouse default_mouse;
-		default_mouse.button_down_actions.emplace([](utils::input::mouse::button button)
+		default_mouse.button_down_actions.emplace([](utils::input::mouse& mouse, utils::input::mouse::button button)
 			{
 			std::cout << "Mouse button down: " << utils::magic_enum::enum_name(button) << "\n";
 			});
-		default_mouse.button_up_actions.emplace([](utils::input::mouse::button button)
+		default_mouse.button_up_actions.emplace([](utils::input::mouse& mouse, utils::input::mouse::button button)
 			{
 			std::cout << "Mouse button up:   " << utils::magic_enum::enum_name(button) << "\n";
 			});
-		default_mouse.move_to_actions.emplace([](utils::math::vec2l position)
+		default_mouse.move_to_actions.emplace([](utils::input::mouse& mouse, utils::math::vec2l position)
 			{
 			//std::cout << "Mouse move to:     " << position << "\n";
 			});
-		default_mouse.move_by_actions.emplace([](utils::math::vec2l delta)
+		default_mouse.move_by_actions.emplace([](utils::input::mouse& mouse, utils::math::vec2l delta)
 			{
 			//std::cout << "Mouse move by:     " << delta << "\n";
 			});
