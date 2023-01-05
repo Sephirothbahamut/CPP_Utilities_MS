@@ -19,6 +19,12 @@
     <Filter Include="Header Files\window\details">
       <UniqueIdentifier>{7213bbd2-4596-4bea-82f6-5850b518a529}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\input">
+      <UniqueIdentifier>{9a0d7086-9ef7-425b-bed8-e2d95b09c536}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\window\input">
+      <UniqueIdentifier>{36c4988b-3ec5-4803-a999-86ed9b81c06a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="quick_tests.cpp">
@@ -50,8 +56,23 @@
     <ClInclude Include="include\utils\win32\window\taskbar.h">
       <Filter>Header Files\window</Filter>
     </ClInclude>
-    <ClInclude Include="include\utils\win32\window\input_system.h">
-      <Filter>Header Files\window</Filter>
+    <ClInclude Include="include\utils\input\keyboard.h">
+      <Filter>Header Files\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\input\mouse.h">
+      <Filter>Header Files\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\input\common.h">
+      <Filter>Header Files\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\input\controller.h">
+      <Filter>Header Files\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\win32\window\input\mouse.h">
+      <Filter>Header Files\window\input</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\win32\window\input\keyboard.h">
+      <Filter>Header Files\window\input</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

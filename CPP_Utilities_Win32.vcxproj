@@ -140,11 +140,16 @@
     <ClCompile Include="quick_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\utils\input\common.h" />
+    <ClInclude Include="include\utils\input\controller.h" />
+    <ClInclude Include="include\utils\input\keyboard.h" />
+    <ClInclude Include="include\utils\input\mouse.h" />
     <ClInclude Include="include\utils\win32\error_to_exception.h" />
     <ClInclude Include="include\utils\win32\windows.h" />
     <ClInclude Include="include\utils\win32\window\details\DWM.h" />
     <ClInclude Include="include\utils\win32\window\details\style.h" />
-    <ClInclude Include="include\utils\win32\window\input_system.h" />
+    <ClInclude Include="include\utils\win32\window\input\keyboard.h" />
+    <ClInclude Include="include\utils\win32\window\input\mouse.h" />
     <ClInclude Include="include\utils\win32\window\regions.h" />
     <ClInclude Include="include\utils\win32\window\style.h" />
     <ClInclude Include="include\utils\win32\window\taskbar.h" />

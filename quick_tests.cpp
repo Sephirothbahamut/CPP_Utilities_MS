@@ -5,98 +5,8 @@
 #include "include/utils/win32/window/style.h"
 #include "include/utils/win32/window/taskbar.h"
 #include "include/utils/win32/window/regions.h"
-#include "include/utils/win32/window/input_system.h"
+#include "include/utils/win32/window/input/mouse.h"
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
-
-class resize_printer : public virtual utils::win32::window::base
-	{
-	public:
-		std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
-			{
-			switch (msg)
-				{
-				case WM_ENTERSIZEMOVE:
-					std::cout << "entered resizing\n";
-					break;
-				case WM_EXITSIZEMOVE:
-					std::cout << "exited resizing\n";
-					break;
-				case WM_SIZE:
-					std::cout << "Window: " << window_rect.width << ", " << window_rect.height << "\n";
-					std::cout << "Client: " << client_rect.width << ", " << client_rect.height << "\n";
-					break;
-				}
-			return std::nullopt;
-			}
-	};
-
-class troll_close_button : public virtual utils::win32::window::base
-	{
-	public:
-		std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
-			{
-			switch (msg)
-				{
-				case WM_SIZE:
-					{
-					}
-				case WM_CLOSE:
-					{
-					return 0;
-					}
-				case WM_SYSCOMMAND:
-					{
-					// Check your window state here
-					switch (wparam)
-						{
-						case SC_MAXIMIZE:
-							{
-							::DestroyWindow(get_handle());
-							return 0;
-							}
-						case SC_MINIMIZE:
-							{
-							ShowWindow(get_handle(), SW_MAXIMIZE);
-							return 0;
-							}
-						}
-					}
-				}
-			return std::nullopt;
-			}
-	};
-
-struct window : 
-	public utils::win32::window::t
-		<
-		utils::win32::window::style,
-		utils::win32::window::resizable_edge,
-		utils::win32::window::regions,
-		utils::win32::window::taskbar,
-		utils::win32::window::input::mouse,
-		resize_printer,
-		troll_close_button
-		>, 
-	utils::oop::devirtualize
-	{
-	struct create_info
-		{
-		utils::win32::window::base          ::create_info base          ;
-		utils::win32::window::style         ::create_info style         ;
-		utils::win32::window::resizable_edge::create_info resizable_edge;
-		utils::win32::window::regions       ::create_info regions       ;
-		};
-
-	window(create_info create_info) : 
-		utils::win32::window::base          {create_info.base          },
-		utils::win32::window::style         {create_info.style         },
-		utils::win32::window::resizable_edge{create_info.resizable_edge},
-		utils::win32::window::regions       {create_info.regions       }
-		{}
-	};
-/*/
-using window = utils::win32::window::simple_t<>;
-/**/
 
 std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
 	{
@@ -118,6 +28,32 @@ std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
 		}
 	}
 
+struct window_sample : utils::win32::window::base
+	{
+	struct create_info
+		{
+		utils::win32::window::base::create_info           base;
+		utils::win32::window::style::create_info          style;
+		utils::win32::window::resizable_edge::create_info resizable_edge;
+		utils::win32::window::regions::create_info        regions;
+		};
+
+	window_sample(const create_info& create_info) :
+		utils::win32::window::base{create_info.style.adjust_base_create_info(create_info.base)},
+		style         {*this, create_info.style},
+		resizable_edge{*this, create_info.resizable_edge},
+		regions       {*this, create_info.regions},
+		input_mouse   {*this}
+		{
+		}
+	
+	utils::win32::window::style          style         ;
+	utils::win32::window::resizable_edge resizable_edge;
+	utils::win32::window::regions        regions       ;
+	utils::win32::window::input::mouse   input_mouse   ;
+	};
+
+
 int main()
 	{
 	for(const auto& device : GetRawInputDevices())
@@ -136,37 +72,19 @@ int main()
 		{
 		using namespace utils::output;
 
-		window::initializer window_initializer;
+		utils::win32::window::initializer window_initializer;
 
-		utils::input::mouse default_mouse{65743};
-		default_mouse.button_down_actions.emplace([](utils::input::mouse& mouse, utils::input::mouse::button button)
-			{
-			std::cout << "Mouse button down: " << utils::magic_enum::enum_name(button) << "\n";
-			});
-		default_mouse.button_up_actions.emplace([](utils::input::mouse& mouse, utils::input::mouse::button button)
-			{
-			std::cout << "Mouse button up:   " << utils::magic_enum::enum_name(button) << "\n";
-			});
-		default_mouse.move_to_actions.emplace([](utils::input::mouse& mouse, utils::math::vec2l position)
-			{
-			//std::cout << "Mouse move to:     " << position << "\n";
-			});
-		default_mouse.move_by_actions.emplace([](utils::input::mouse& mouse, utils::math::vec2l delta)
-			{
-			//std::cout << "Mouse move by:     " << delta << "\n";
-			});
-		
-		window window{window::create_info
-			{
+		window_sample window{window_sample::create_info{
 			.base
 				{
-				.title{L"Pippo"}
+				.title{L"George G. Goof"},
+				//.position{{10, 60}},
+				//.size{{800, 600}}
 				},
 			.style
 				{
-				.transparency{window::style::transparency_t::none},
-				.borders{window::style::value_t::disable},
-				.shadow{window::style::value_t::_default}
+				.transparency{utils::win32::window::style::transparency_t::composition_attribute},
+				.borders     {utils::win32::window::style::value_t       ::disable}
 				},
 			.resizable_edge
 				{
@@ -175,15 +93,21 @@ int main()
 			.regions
 				{
 				.default_hit_type{utils::win32::window::hit_type::client}
-				}
+				},
 			}};
 
-		window.mice_ptrs.emplace(&default_mouse);
+		
+		window.input_mouse.default_mouse.buttons.left    .on_changed.emplace([](const bool state, const bool) { std::cout << "Mouse button left     " << (state ? "pressed" : "released") << std::endl; });
+		window.input_mouse.default_mouse.buttons.right   .on_changed.emplace([](const bool state, const bool) { std::cout << "Mouse button right    " << (state ? "pressed" : "released") << std::endl; });
+		window.input_mouse.default_mouse.buttons.middle  .on_changed.emplace([](const bool state, const bool) { std::cout << "Mouse button middle   " << (state ? "pressed" : "released") << std::endl; });
+		window.input_mouse.default_mouse.buttons.forward .on_changed.emplace([](const bool state, const bool) { std::cout << "Mouse button forward  " << (state ? "pressed" : "released") << std::endl; });
+		window.input_mouse.default_mouse.buttons.backward.on_changed.emplace([](const bool state, const bool) { std::cout << "Mouse button backward " << (state ? "pressed" : "released") << std::endl; });
+		
 
+		window.show();
 		while (window.is_open())
 			{
 			while (window.poll_event());
-			//window.set_taskbar_visibility(false);
 			}
 		}
 	//catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }

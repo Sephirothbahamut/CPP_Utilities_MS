@@ -27,33 +27,42 @@ namespace utils::win32::window
 	/// Used to give a resizable inner edge to borderless windows. 
 	/// If you also want to have custom regions remember to add resizable_edge before regions, otherwise regions NCHITTEST results will prevent resizable_edges from being evaluated.
 	/// </summary>
-	struct resizable_edge : virtual utils::win32::window::base
+	struct resizable_edge : utils::oop::non_copyable, utils::oop::non_movable
 		{
 		public:
 			struct create_info { int thickness{8}; };
 
-			resizable_edge(create_info create_info = {}) : thickness{create_info.thickness} {}
+			resizable_edge(window::base& base, create_info create_info = {}) : 
+				base_ptr{&base}, 
+				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })},
+				thickness{create_info.thickness}
+				{
+				}
 
 			int thickness;
+
+		protected:
+			const utils::observer_ptr<utils::win32::window::base> base_ptr;
+			const utils::win32::window::base::procedure_handle_unique procedure_handle;
+
 
 			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
 				{
 				return msg == WM_NCHITTEST ? hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}) : std::nullopt;
 				}
 
-		protected:
 			std::optional<hit_type> hit_test(utils::math::vec2i coords) const noexcept
 				{
-				auto rect{this->get_window_rect()};
+				const auto rect{base_ptr->get_window_rect()};
 
 				if (!rect.contains(coords)) { return std::nullopt; }
 
 				if (thickness)
 					{
-					bool hit_result_left {coords.x <= rect.ll + thickness};
-					bool hit_result_right{coords.x >= rect.rr - thickness};
-					bool hit_result_up   {coords.y <= rect.up + thickness};
-					bool hit_result_down {coords.y >= rect.dw - thickness};
+					const bool hit_result_left {coords.x <= rect.ll + thickness};
+					const bool hit_result_right{coords.x >= rect.rr - thickness};
+					const bool hit_result_up   {coords.y <= rect.up + thickness};
+					const bool hit_result_down {coords.y >= rect.dw - thickness};
 
 					if (hit_result_up)
 						{
@@ -76,7 +85,7 @@ namespace utils::win32::window
 				}
 		};
 
-	struct regions : virtual utils::win32::window::base
+	struct regions : utils::oop::non_copyable, utils::oop::non_movable
 		{
 		public:
 			struct region_data_t
@@ -91,22 +100,29 @@ namespace utils::win32::window
 				std::vector<region_data_t> regions_data;
 				};
 
-			regions(create_info create_info)
-				: default_hit_type{create_info.default_hit_type}, regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
-				{}
-
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			regions(window::base& base, const create_info& create_info) :
+				base_ptr{&base},
+				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })},
+				default_hit_type{create_info.default_hit_type}, 
+				regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
 				{
-				return msg == WM_NCHITTEST ? std::optional<LRESULT>{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})} : std::nullopt;
 				}
 
 			hit_type default_hit_type;
 			std::vector<region_data_t> regions_data;
 
 		protected:
+			const utils::observer_ptr<utils::win32::window::base> base_ptr;
+			const utils::win32::window::base::procedure_handle_unique procedure_handle;
+
+			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+				{
+				return msg == WM_NCHITTEST ? std::optional<LRESULT>{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})} : std::nullopt;
+				}
+
 			hit_type hit_test(utils::math::vec2i coords)
 				{
-				auto rect{this->get_window_rect()};
+				const auto rect{base_ptr->get_window_rect()};
 
 				if (!rect.contains(coords)) { return hit_type::hole; }
 

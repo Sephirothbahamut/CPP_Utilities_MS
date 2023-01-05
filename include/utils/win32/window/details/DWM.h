@@ -77,7 +77,7 @@ typedef BOOL(WINAPI* pfnGetWindowCompositionAttribute)(HWND, WINDOWCOMPOSITIONAT
 typedef BOOL(WINAPI* pfnSetWindowCompositionAttribute)(HWND, WINDOWCOMPOSITIONATTRIBDATA*);
 #pragma endregion DWM import
 
-namespace utils::window
+namespace utils::win32::window::details
 	{
 	inline bool make_glass_CompositionAttribute(HWND hwnd)
 		{
