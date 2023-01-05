@@ -27,14 +27,17 @@ namespace utils::win32::window
 	/// Used to give a resizable inner edge to borderless windows. 
 	/// If you also want to have custom regions remember to add resizable_edge before regions, otherwise regions NCHITTEST results will prevent resizable_edges from being evaluated.
 	/// </summary>
-	struct resizable_edge : utils::oop::non_copyable, utils::oop::non_movable
+	class resizable_edge : public module
 		{
 		public:
 			struct create_info { int thickness{8}; };
 
 			resizable_edge(window::base& base, create_info create_info = {}) : 
-				base_ptr{&base}, 
-				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })},
+				module
+					{
+					base,
+					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
+					}, 
 				thickness{create_info.thickness}
 				{
 				}
@@ -42,10 +45,6 @@ namespace utils::win32::window
 			int thickness;
 
 		protected:
-			const utils::observer_ptr<utils::win32::window::base> base_ptr;
-			const utils::win32::window::base::procedure_handle_unique procedure_handle;
-
-
 			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
 				{
 				return msg == WM_NCHITTEST ? hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}) : std::nullopt;
@@ -53,7 +52,7 @@ namespace utils::win32::window
 
 			std::optional<hit_type> hit_test(utils::math::vec2i coords) const noexcept
 				{
-				const auto rect{base_ptr->get_window_rect()};
+				const auto rect{get_base().get_window_rect()};
 
 				if (!rect.contains(coords)) { return std::nullopt; }
 
@@ -85,7 +84,7 @@ namespace utils::win32::window
 				}
 		};
 
-	struct regions : utils::oop::non_copyable, utils::oop::non_movable
+	class regions : public module
 		{
 		public:
 			struct region_data_t
@@ -101,8 +100,11 @@ namespace utils::win32::window
 				};
 
 			regions(window::base& base, const create_info& create_info) :
-				base_ptr{&base},
-				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })},
+				module
+					{
+					base,
+					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
+					},
 				default_hit_type{create_info.default_hit_type}, 
 				regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
 				{
@@ -112,8 +114,6 @@ namespace utils::win32::window
 			std::vector<region_data_t> regions_data;
 
 		protected:
-			const utils::observer_ptr<utils::win32::window::base> base_ptr;
-			const utils::win32::window::base::procedure_handle_unique procedure_handle;
 
 			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
 				{
@@ -122,7 +122,7 @@ namespace utils::win32::window
 
 			hit_type hit_test(utils::math::vec2i coords)
 				{
-				const auto rect{base_ptr->get_window_rect()};
+				const auto rect{get_base().get_window_rect()};
 
 				if (!rect.contains(coords)) { return hit_type::hole; }
 

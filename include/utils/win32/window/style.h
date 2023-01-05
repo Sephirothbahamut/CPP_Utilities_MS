@@ -5,7 +5,7 @@
 
 namespace utils::win32::window
 	{
-	class style : utils::oop::non_copyable, utils::oop::non_movable
+	class style : public module
 		{
 		public:
 			enum class transparency_t
@@ -17,7 +17,6 @@ namespace utils::win32::window
 				none
 				};
 			enum class value_t { enable, disable, _default };
-
 
 			struct create_info
 				{
@@ -47,8 +46,11 @@ namespace utils::win32::window
 				};
 
 			style(window::base& base, create_info create_info) : 
-				base_ptr{&base}, 
-				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })},
+				module
+					{
+					base,
+					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
+					}, 
 				borders{create_info.borders}
 				{
 				switch (create_info.transparency)
@@ -75,8 +77,8 @@ namespace utils::win32::window
 					{
 					switch (create_info.shadow)
 						{
-						case value_t::enable : details::style::set_shadow(base_ptr->get_handle(), true ); break;
-						case value_t::disable: details::style::set_shadow(base_ptr->get_handle(), false); break;
+						case value_t::enable : details::style::set_shadow(base.get_handle(), true ); break;
+						case value_t::disable: details::style::set_shadow(base.get_handle(), false); break;
 						case value_t::_default:
 						default:
 							break;
@@ -86,8 +88,6 @@ namespace utils::win32::window
 
 
 		private:
-			const utils::observer_ptr<utils::win32::window::base> base_ptr;
-			utils::win32::window::base::procedure_handle_unique procedure_handle;
 			
 			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
 				{
@@ -96,7 +96,7 @@ namespace utils::win32::window
 					case WM_NCCALCSIZE:
 						if (wparam == TRUE && borders == value_t::disable) {
 							auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
-							details::style::adjust_maximized_client_rect(base_ptr->get_handle(), params.rgrc[0]);
+							details::style::adjust_maximized_client_rect(get_base().get_handle(), params.rgrc[0]);
 							return 0;
 							}
 						break;

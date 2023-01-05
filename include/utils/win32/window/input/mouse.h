@@ -19,12 +19,15 @@
 
 namespace utils::win32::window::input
 	{
-	class mouse : utils::oop::non_copyable, utils::oop::non_movable
+	class mouse : public module
 		{
 		public:
 			mouse(window::base& base) : 
-				base_ptr{&base},
-				procedure_handle{base.procedures.make_unique([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); })}
+				module
+					{
+					base,
+					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
+					}
 				{
 				//mouse
 				RAWINPUTDEVICE rid_mouse
@@ -44,8 +47,6 @@ namespace utils::win32::window::input
 			utils::input::mouse default_mouse;
 
 		private:
-			const utils::observer_ptr<utils::win32::window::base> base_ptr;
-			const utils::win32::window::base::procedure_handle_unique procedure_handle;
 
 			utils::math::vec2l eval_vec2(LPARAM lparam) const noexcept
 				{

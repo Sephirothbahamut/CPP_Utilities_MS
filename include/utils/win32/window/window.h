@@ -23,6 +23,11 @@ namespace utils::win32::window
 	struct initializer;
 
 	using rect_t = utils::math::rect<long>;
+	using procedure_t = std::function<std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam)>;
+	using procedures_container_t = utils::containers::object_pool<procedure_t>;
+	using procedure_handle_raw    = procedures_container_t::handle_raw;
+	using procedure_handle_unique = procedures_container_t::handle_unique;
+	using procedure_handle_shared = procedures_container_t::handle_shared;
 
 	class base : utils::oop::non_copyable, utils::oop::non_movable
 		{
@@ -116,11 +121,7 @@ namespace utils::win32::window
 
 #pragma region procedure
 		public:
-			using procedures_container_t = utils::containers::object_pool<std::function<std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam)>>;
 			procedures_container_t procedures;
-			using procedure_handle_raw    = procedures_container_t::handle_raw;
-			using procedure_handle_unique = procedures_container_t::handle_unique;
-			using procedure_handle_shared = procedures_container_t::handle_shared;
 
 		private:
 			void set_window_ptr() { SetWindowLongPtr(handle, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); }
@@ -201,6 +202,22 @@ namespace utils::win32::window
 			RegisterClassEx(&wcx);
 			}
 		inline ~initializer() { UnregisterClass(base::class_name, nullptr); }
+		};
+
+	class module : utils::oop::non_copyable, utils::oop::non_movable
+		{
+		protected:
+			module(window::base& base, procedure_t procedure) :
+				base_ptr{&base},
+				procedure_handle{base.procedures.make_unique(procedure)}
+				{}
+
+			const base& get_base() const noexcept { return *base_ptr; }
+			      base& get_base()       noexcept { return *base_ptr; }
+
+		private:
+			const utils::observer_ptr<utils::win32::window::base> base_ptr;
+			procedure_handle_unique procedure_handle;
 		};
 
 	}
