@@ -92,7 +92,15 @@ int main()
 				},
 			.regions
 				{
-				.default_hit_type{utils::win32::window::hit_type::client}
+				.default_hit_type{utils::win32::window::hit_type::client},
+				.regions_data
+					{
+					utils::win32::window::regions::region_data_t
+						{
+						.hit_type{utils::win32::window::hit_type::drag},
+						.rect{0, 0, 64, 64}
+						}
+					}
 				},
 			}};
 

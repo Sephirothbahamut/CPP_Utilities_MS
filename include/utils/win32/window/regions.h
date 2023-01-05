@@ -126,6 +126,8 @@ namespace utils::win32::window
 
 				if (!rect.contains(coords)) { return hit_type::hole; }
 
+				coords -= rect.top_left;
+
 				for (const auto& region_data : regions_data)
 					{
 					if (region_data.rect.contains(coords)) { return region_data.hit_type; }
