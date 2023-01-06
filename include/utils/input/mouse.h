@@ -44,5 +44,7 @@ namespace utils::input
 			{
 			position.set_state(position.get_state() + delta);
 			}
+
+
 		};
 	}

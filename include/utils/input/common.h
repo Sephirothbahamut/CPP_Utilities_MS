@@ -60,7 +60,7 @@ namespace utils::input
 			using state_t = state_T;
 			using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
 			using callbacks_container = utils::containers::object_pool<callback>;
-			using callback_handle     = callbacks_container::handle_raw;
+			using callback_handle     = callbacks_container::handle_unique;
 
 			const state_t& get_state() const noexcept { return _state; }
 
@@ -101,14 +101,14 @@ namespace utils::input
 				negative{negative},
 				positive_handle
 					{
-					positive.on_changed.emplace([this](const inner_T& new_positive_state, const inner_T& previous_positive_state)
+					positive.on_changed.make_unique([this](const inner_T& new_positive_state, const inner_T& previous_positive_state)
 						{
 						this->changed(new_positive_state - negative.get_state(), previous_positive_state - negative.get_state());
 						})
 					},
 				negative_handle
 					{
-					negative.on_changed.emplace([this](const inner_T& new_negative_state, const inner_T& previous_negative_state)
+					negative.on_changed.make_unique([this](const inner_T& new_negative_state, const inner_T& previous_negative_state)
 						{
 						this->changed(positive.get_state() - new_negative_state, positive.get_state() - previous_negative_state);
 						})
@@ -139,14 +139,14 @@ namespace utils::input
 				y{y},
 				x_handle
 					{
-					x.on_changed.emplace([this](const inner_T& new_x_state, const inner_T& previous_x_state)
+					x.on_changed.make_unique([this](const inner_T& new_x_state, const inner_T& previous_x_state)
 						{
 						this->changed({new_x_state, this->y.get_state()}, {previous_x_state, this->y.get_state()});
 						})
 					},
 				y_handle
 					{
-					y.on_changed.emplace([this](const inner_T& new_y_state, const inner_T& previous_y_state)
+					y.on_changed.make_unique([this](const inner_T& new_y_state, const inner_T& previous_y_state)
 						{
 						this->changed({this->x.get_state(), new_y_state}, {this->x.get_state(), previous_y_state});
 						})
@@ -165,6 +165,9 @@ namespace utils::input
 			/// <summary> Triggers callbacks </summary>
 			void change_state(const state_t& new_state) noexcept
 				{
+				state_t previous_state{get_state()};
+				details::input_base<utils::math::vec2<inner_T>>::changed(new_state, previous_state);
+
 				x.change_state(x_handle, new_state.x);
 				y.change_state(y_handle, new_state.y);
 				}
@@ -193,21 +196,21 @@ namespace utils::input
 				z{z},
 				x_handle
 					{
-					x.on_changed.emplace([this](const inner_T& new_x_state, const inner_T& previous_x_state)
+					x.on_changed.make_unique([this](const inner_T& new_x_state, const inner_T& previous_x_state)
 						{
 						this->changed({new_x_state, this->y.get_state(), this->z.get_state()}, {previous_x_state, this->y.get_state(), this->z.get_state()});
 						})
 					},
 				y_handle
 					{
-					y.on_changed.emplace([this](const inner_T& new_y_state, const inner_T& previous_y_state)
+					y.on_changed.make_unique([this](const inner_T& new_y_state, const inner_T& previous_y_state)
 						{
 						this->changed({this->x.get_state(), new_y_state, this->z.get_state()}, {this->x.get_state(), previous_y_state, this->z.get_state()});
 						})
 					},
 				z_handle
 					{
-					z.on_changed.emplace([this](const inner_T& new_z_state, const inner_T& previous_z_state)
+					z.on_changed.make_unique([this](const inner_T& new_z_state, const inner_T& previous_z_state)
 						{
 						this->changed({this->x.get_state(), this->y.get_state(), new_z_state}, {this->x.get_state(), this->y.get_state(), previous_z_state});
 						})
@@ -227,6 +230,9 @@ namespace utils::input
 			/// <summary> Triggers callbacks </summary>
 			void change_state(const state_t& new_state) noexcept
 				{
+				state_t previous_state{get_state()};
+				details::input_base<utils::math::vec3<inner_T>>::changed(new_state, previous_state);
+
 				x.change_state(x_handle, new_state.x);
 				y.change_state(y_handle, new_state.y);
 				z.change_state(z_handle, new_state.z);
