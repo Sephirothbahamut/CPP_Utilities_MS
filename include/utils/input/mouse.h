@@ -15,36 +15,19 @@ namespace utils::input
 			forward ,
 			};
 
-		struct
-			{
-			analog left    ;
-			analog right   ;
-			analog middle  ;
-			analog backward;
-			analog forward ;
-			
-			analog& operator[](button_id button_id)
-				{
-				switch (button_id)
-					{
-					case utils::input::mouse::button_id::left    : return left    ;
-					case utils::input::mouse::button_id::right   : return right   ;
-					case utils::input::mouse::button_id::middle  : return middle  ;
-					case utils::input::mouse::button_id::backward: return backward;
-					case utils::input::mouse::button_id::forward : return forward ;
-					}
-				}
-			} buttons;
+		using buttons_t = inputs<button_id, digital>;
+		buttons_t buttons;
 
-		input_1d<long> x;
-		input_1d<long> y;
-		input_2d<long> position{x, y};
+		enum class axis_id { x, y };
+
+		using axes_t = inputs<axis_id, input_1d<long>>;
+		axes_t axes;
+
+		input_2d<long> position{axes[axis_id::x], axes[axis_id::y]};
 
 		void move_by(utils::math::vec2l delta)
 			{
 			position.set_state(position.get_state() + delta);
 			}
-
-
 		};
 	}

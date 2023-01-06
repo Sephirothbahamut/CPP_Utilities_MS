@@ -61,15 +61,15 @@ namespace utils::win32::window::input
 				{
 				switch (msg)
 					{
-					case WM_MOUSEMOVE  : default_mouse.position                          .change_state(eval_vec2(lparam)); return 0;
-					case WM_LBUTTONDOWN: default_mouse.buttons.left                      .change_state(true             ); return 0;
-					case WM_LBUTTONUP  : default_mouse.buttons.left                      .change_state(false            ); return 0;
-					case WM_RBUTTONDOWN: default_mouse.buttons.right                     .change_state(true             ); return 0;
-					case WM_RBUTTONUP  : default_mouse.buttons.right                     .change_state(false            ); return 0;
-					case WM_MBUTTONDOWN: default_mouse.buttons.middle                    .change_state(true             ); return 0;
-					case WM_MBUTTONUP  : default_mouse.buttons.middle                    .change_state(false            ); return 0;
-					case WM_XBUTTONDOWN: default_mouse.buttons[eval_extra_button(wparam)].change_state(true             ); return 0;
-					case WM_XBUTTONUP  : default_mouse.buttons[eval_extra_button(wparam)].change_state(false            ); return 0;
+					case WM_MOUSEMOVE  : default_mouse.position                                       .change_state(eval_vec2(lparam)); return 0;
+					case WM_LBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return 0;
+					case WM_LBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return 0;
+					case WM_RBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return 0;
+					case WM_RBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return 0;
+					case WM_MBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return 0;
+					case WM_MBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return 0;
+					case WM_XBUTTONDOWN: default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return 0;
+					case WM_XBUTTONUP  : default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return 0;
 					case WM_INPUT      : if(wm_input(wparam, lparam)) { return 0; }
 					}
 				return std::nullopt;
@@ -122,16 +122,16 @@ namespace utils::win32::window::input
 						mouse.move_by({x, y});
 						}
 
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { mouse.buttons.left    .change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { mouse.buttons.left    .change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { mouse.buttons.right   .change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { mouse.buttons.right   .change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { mouse.buttons.middle  .change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { mouse.buttons.middle  .change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { mouse.buttons.backward.change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { mouse.buttons.backward.change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { mouse.buttons.forward .change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { mouse.buttons.forward .change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { mouse.buttons[utils::input::mouse::button_id::left    ].change_state(true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { mouse.buttons[utils::input::mouse::button_id::left    ].change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { mouse.buttons[utils::input::mouse::button_id::right   ].change_state(true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { mouse.buttons[utils::input::mouse::button_id::right   ].change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { mouse.buttons[utils::input::mouse::button_id::middle  ].change_state(true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { mouse.buttons[utils::input::mouse::button_id::middle  ].change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { mouse.buttons[utils::input::mouse::button_id::backward].change_state(true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { mouse.buttons[utils::input::mouse::button_id::backward].change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { mouse.buttons[utils::input::mouse::button_id::forward ].change_state(true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { mouse.buttons[utils::input::mouse::button_id::forward ].change_state(false); }
 					}
 
 				return true;

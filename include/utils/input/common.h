@@ -4,10 +4,11 @@
 #include <cstdint>
 #include <functional>
 
+#include <utils/enum.h>
 #include <utils/memory.h>
-#include <utils/containers/object_pool.h>
 #include <utils/math/vec2.h>
 #include <utils/math/vec3.h>
+#include <utils/containers/object_pool.h>
 
 namespace utils::input
 	{
@@ -23,9 +24,11 @@ namespace utils::input
 			{
 			public:
 				using state_t = state_T;
-				using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
-				using callbacks_container = utils::containers::object_pool<callback>;
-				using callback_handle     = callbacks_container::handle_raw;
+				using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+				using callbacks_container    = utils::containers::object_pool<callback>;
+				using callback_handle_raw    = callbacks_container::handle_raw   ;
+				using callback_handle_unique = callbacks_container::handle_unique;
+				using callback_handle_shared = callbacks_container::handle_shared;
 
 				callbacks_container on_changed;
 				void changed(const state_t& new_state, const state_t& previous_state) noexcept
@@ -37,7 +40,7 @@ namespace utils::input
 					}
 
 			protected:
-				void changed(const callback_handle& exclude, const state_t& new_state, const state_t& previous_state) noexcept
+				void changed(const callback_handle_raw& exclude, const state_t& new_state, const state_t& previous_state) noexcept
 					{
 					for (auto& action : on_changed)
 						{
@@ -60,7 +63,9 @@ namespace utils::input
 			using state_t = state_T;
 			using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
 			using callbacks_container = utils::containers::object_pool<callback>;
-			using callback_handle     = callbacks_container::handle_unique;
+			using callback_handle_raw    = callbacks_container::handle_raw   ;
+			using callback_handle_unique = callbacks_container::handle_unique;
+			using callback_handle_shared = callbacks_container::handle_shared;
 
 			const state_t& get_state() const noexcept { return _state; }
 
@@ -80,7 +85,7 @@ namespace utils::input
 		protected:
 			state_t _state{0};
 
-			virtual void change_state(const callback_handle& exclude, const state_t& new_state) noexcept
+			virtual void change_state(const callback_handle_raw& exclude, const state_t& new_state) noexcept
 				{
 				details::input_base<state_T>::changed(exclude, new_state, get_state());
 				_state = new_state;
@@ -118,8 +123,8 @@ namespace utils::input
 			const state_t& get_state() const noexcept { return {positive.get_state() - negative.get_state()}; }
 
 		private:
-			input_1d<inner_T>::callback_handle positive_handle;
-			input_1d<inner_T>::callback_handle negative_handle;
+			input_1d<inner_T>::callback_handle_unique positive_handle;
+			input_1d<inner_T>::callback_handle_unique negative_handle;
 		};
 
 	template <typename inner_T>
@@ -127,9 +132,11 @@ namespace utils::input
 		{
 		public:
 			using state_t = utils::math::vec2<inner_T>;
-			using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
-			using callbacks_container = utils::containers::object_pool<callback>;
-			using callback_handle     = callbacks_container::handle_raw;
+			using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+			using callbacks_container    = utils::containers::object_pool<callback>;
+			using callback_handle_raw    = callbacks_container::handle_raw   ;
+			using callback_handle_unique = callbacks_container::handle_unique;
+			using callback_handle_shared = callbacks_container::handle_shared;
 
 			input_1d<inner_T>& x;
 			input_1d<inner_T>& y;
@@ -173,8 +180,8 @@ namespace utils::input
 				}
 
 		private:
-			input_1d<inner_T>::callback_handle x_handle;
-			input_1d<inner_T>::callback_handle y_handle;
+			input_1d<inner_T>::callback_handle_unique x_handle;
+			input_1d<inner_T>::callback_handle_unique y_handle;
 		};
 		
 	template <typename inner_T>
@@ -182,9 +189,11 @@ namespace utils::input
 		{
 		public:
 			using state_t = utils::math::vec3<inner_T>;
-			using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
-			using callbacks_container = utils::containers::object_pool<callback>;
-			using callback_handle     = callbacks_container::handle_raw;
+			using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+			using callbacks_container    = utils::containers::object_pool<callback>;
+			using callback_handle_raw    = callbacks_container::handle_raw   ;
+			using callback_handle_unique = callbacks_container::handle_unique;
+			using callback_handle_shared = callbacks_container::handle_shared;
 
 			input_1d<inner_T>& x;
 			input_1d<inner_T>& y;
@@ -239,9 +248,9 @@ namespace utils::input
 				}
 
 		private:
-			input_1d<inner_T>::callback_handle x_handle;
-			input_1d<inner_T>::callback_handle y_handle;
-			input_1d<inner_T>::callback_handle z_handle;
+			input_1d<inner_T>::callback_handle_unique x_handle;
+			input_1d<inner_T>::callback_handle_unique y_handle;
+			input_1d<inner_T>::callback_handle_unique z_handle;
 		};
 
 	using digital       = input_1d<bool >;
@@ -250,4 +259,48 @@ namespace utils::input
 	using analog_delta  = input_1d_delta<float, float>;
 	using axis2d        = input_2d<float>;
 	using axis3d        = input_3d<float>;
+
+
+
+	template <typename id_enum, typename input_t>
+	class inputs
+		{
+		public:
+			using id = id_enum;
+			inline static constexpr const size_t count{utils::enums::enum_count<id>()};
+			using state_t = typename input_t::state_t;
+
+			using callback               = std::function<void(const id& id, const state_t& new_state, const state_t& previous_state)>;
+			using callbacks_container    = utils::containers::object_pool<callback>;
+			using callback_handle_raw    = callbacks_container::handle_raw   ;
+			using callback_handle_unique = callbacks_container::handle_unique;
+			using callback_handle_shared = callbacks_container::handle_shared;
+
+			callbacks_container on_changed;
+
+			inputs()
+				{
+				for (size_t i = 0; i < count; i++)
+					{
+					array[i].on_changed.emplace([this, i](const state_t& new_state, const state_t& previous_state)
+						{
+						this->changed(static_cast<id>(i), new_state, previous_state);
+						});
+					}
+				}
+
+			      input_t& operator[](id id)       noexcept { return array[static_cast<size_t>(id)]; }
+			const input_t& operator[](id id) const noexcept { return array[static_cast<size_t>(id)]; }
+
+		private:
+			std::array<input_t, count> array;
+
+			void changed(const id& id, const state_t& new_state, const state_t& previous_state) noexcept
+				{
+				for (auto& action : on_changed)
+					{
+					action(id, new_state, previous_state);
+					}
+				}
+		};
 	}
