@@ -4,11 +4,17 @@
 
 #include <utils/memory.h>
 
+#include "hwnd_wrapper.h"
 #include "window.h"
 #include "details/style.h"
 
 namespace utils::win32::window
 	{
+	/// <summary>
+	/// I tried. I seriously tried.
+	/// But there's so many ways windows can fake being visible that I've simply lost hopes. 
+	/// Windows with this module will snap to some seemingly random locations, into windows that you can't see but according to Windows's APIs are visible, non-minimized and non-cloaked.
+	/// </summary>
 	class snap_on_drag : public module
 		{
 		public:
@@ -29,6 +35,7 @@ namespace utils::win32::window
 				switch (msg)
 					{
 					case WM_ENTERSIZEMOVE:
+						rects.clear();
 						get_windows();
 						target = result_previous = get_base().get_window_rect();
 						break;
@@ -37,7 +44,7 @@ namespace utils::win32::window
 						if (true)
 							{
 							RECT& attempted_result_win32{*reinterpret_cast<utils::observer_ptr<RECT>>(lparam)};
-							rect_t attempted_result{unpack_window_size(get_base().get_handle(), attempted_result_win32)};
+							rect_t attempted_result{get_base().unpack_window_size(attempted_result_win32)};
 
 							utils::math::vec2l delta{attempted_result.position() - result_previous.position()};
 							target.position() += delta;
@@ -45,7 +52,7 @@ namespace utils::win32::window
 							if (const auto& result_new_opt{evaluate_move()})
 								{
 								const auto& result_new{result_new_opt.value()};
-								attempted_result_win32 = pack_window_size(get_base().get_handle(), result_new);
+								attempted_result_win32 = get_base().pack_window_size(result_new);
 
 								result_previous = result_new;
 								return 0;
@@ -65,19 +72,15 @@ namespace utils::win32::window
 			inline static BOOL CALLBACK enumWindowCallback(HWND hwnd, LPARAM lparam) noexcept
 				{
 				snap_on_drag& self{*reinterpret_cast<utils::observer_ptr<snap_on_drag>>(lparam)};
-				if (self.get_base().get_handle() != hwnd && IsWindowVisible(hwnd) && GetParent(hwnd) == nullptr)
+				hwnd_wrapper wrapped{hwnd};
+
+				bool different{self.get_base().get_handle() != wrapped.get_handle()};
+				bool visible{wrapped.is_visible()};
+				bool parentless{!wrapped.get_parent().is_open()};
+
+				if (self.get_base().get_handle() != wrapped.get_handle() && wrapped.is_visible() && !wrapped.get_parent().is_open())
 					{
-					RECT rect_win32;
-					if (DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rect_win32, sizeof(RECT)) == S_OK)
-						{
-						auto rect{win32_RECT_to_rect_t(rect_win32)};
-						self.rects.push_back(rect);
-						}
-					else if (GetWindowRect(hwnd, &rect_win32))
-						{
-						auto rect{win32_RECT_to_rect_t(rect_win32)};
-						self.rects.push_back(rect);
-						}
+					self.rects.push_back(wrapped.get_window_rect());
 					}
 				return TRUE;
 				}

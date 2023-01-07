@@ -175,6 +175,12 @@ int main()
 		while (window.is_open())
 			{
 			while (window.poll_event());
+
+			POINT point;
+			GetCursorPos(&point);
+			utils::math::vec2l pos{point.x, point.y};
+
+			std::cout << "Mouse pos: " << pos << std::endl;
 			}
 		}
 	//catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }
