@@ -6,6 +6,7 @@
 #include "include/utils/win32/window/style.h"
 #include "include/utils/win32/window/taskbar.h"
 #include "include/utils/win32/window/regions.h"
+#include "include/utils/win32/window/snap_on_drag.h"
 #include "include/utils/win32/window/input/mouse.h"
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
 
@@ -44,6 +45,7 @@ struct window_sample : utils::win32::window::base
 		style         {*this, create_info.style},
 		resizable_edge{*this, create_info.resizable_edge},
 		regions       {*this, create_info.regions},
+		snap_on_drag  {*this},
 		input_mouse   {*this}
 		{
 		}
@@ -51,6 +53,7 @@ struct window_sample : utils::win32::window::base
 	utils::win32::window::style          style         ;
 	utils::win32::window::resizable_edge resizable_edge;
 	utils::win32::window::regions        regions       ;
+	utils::win32::window::snap_on_drag   snap_on_drag  ;
 	utils::win32::window::input::mouse   input_mouse   ;
 	};
 
@@ -84,8 +87,8 @@ int main()
 				},
 			.style
 				{
-				.transparency{utils::win32::window::style::transparency_t::composition_attribute},
-				.borders     {utils::win32::window::style::value_t       ::disable}
+				//.transparency{utils::win32::window::style::transparency_t::composition_attribute},
+				//.borders     {utils::win32::window::style::value_t       ::disable}
 				},
 			.resizable_edge
 				{
@@ -106,9 +109,28 @@ int main()
 			}};
 
 
-		window.input_mouse.default_mouse.buttons.on_changed.emplace([](const utils::input::mouse::button_id& id, const bool& state, const bool&) 
+		window.input_mouse.default_mouse.buttons.on_changed.emplace([&window](const utils::input::mouse::button_id& id, const bool& state, const bool&) 
 			{
 			std::cout << "Mouse button " << utils::enums::enum_name<utils::input::mouse::button_id>(id) << " " << (state ? "pressed" : "released") << std::endl; 
+
+			utils::win32::window::rect_t rect;
+			rect.position() = {32, 32};
+			rect.size()     = {256, 256};
+			switch (id)
+				{
+				case utils::input::mouse::button_id::left:
+					window.window_rect = rect;
+					break;
+				case utils::input::mouse::button_id::right:
+					window.client_rect = rect;
+					break;
+				}
+
+			std::cout << "window rect: " << window.window_rect << std::endl;
+			std::cout << "client_rect: " << window.client_rect << std::endl;
+			std::cout << "window size: " << static_cast<utils::math::vec2l>(window.window_rect.size()) << std::endl;
+			std::cout << "client size: " << static_cast<utils::math::vec2l>(window.client_rect.size()) << std::endl;
+			std::cout << "___________________________________" << std::endl;
 			});
 
 		using huq = utils::input::digital::callback_handle_unique;

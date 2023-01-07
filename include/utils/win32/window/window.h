@@ -23,6 +23,69 @@ namespace utils::win32::window
 	struct initializer;
 
 	using rect_t = utils::math::rect<long>;
+
+	rect_t win32_shadow_thickness(HWND hwnd)
+		{
+		RECT exclude_shadow;
+		RECT include_shadow;
+
+		DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS, &exclude_shadow, sizeof(RECT));
+		GetWindowRect(hwnd, &include_shadow);
+
+		return 
+			{
+			.ll = include_shadow.left   - exclude_shadow.left  , // As of Win10 value = -7 if shadows enabled for hwnd, 0 otherwise.
+			.up = include_shadow.top    - exclude_shadow.top   , // As of Win10 value =  0 if shadows enabled for hwnd, 0 otherwise.
+			.rr = include_shadow.right  - exclude_shadow.right , // As of Win10 value = +7 if shadows enabled for hwnd, 0 otherwise.
+			.dw = include_shadow.bottom - exclude_shadow.bottom, // As of Win10 value = +7 if shadows enabled for hwnd, 0 otherwise.
+			};
+		}
+
+	rect_t win32_RECT_to_rect_t(const RECT& rect)
+		{
+		return {.ll{rect.left}, .up{rect.top}, .rr{rect.right}, .dw{rect.bottom}};
+		}
+	RECT rect_t_to_win32_RECT(const rect_t& rect)
+		{
+		return {.left{rect.ll}, .top{rect.up}, .right{rect.rr}, .bottom{rect.dw}};
+		}
+
+	// https://stackoverflow.com/questions/65599491/both-movewindow-and-setwindowpos-result-in-incorrect-window-position-size
+
+	/// <summary> 
+	/// Takes the rect representing window size (with borders and title bar if present), and adds the shadow (if present) thickness.
+	/// Windows APIs that deal with window rects (set/get position/side) include the shadows.
+	/// Users tendentially don't give a fluff about the shadows.
+	/// </summary>
+	RECT pack_window_size(HWND hwnd, rect_t rect)
+		{
+		auto shadow_thickness{win32_shadow_thickness(hwnd)};
+		return
+			{
+			.left   = rect.ll + shadow_thickness.ll,
+			.top    = rect.up + shadow_thickness.up,
+			.right  = rect.rr + shadow_thickness.rr,
+			.bottom = rect.dw + shadow_thickness.dw
+			};
+		}
+
+	/// <summary> 
+	/// Takes the Win32 rect representing window size + shadow (with borders and title bar if present) and removes the shadow.
+	/// Windows APIs that deal with window rects (set/get position/side) include the shadows.
+	/// Users tendentially don't give a fluff about the shadows.
+	/// </summary>
+	rect_t unpack_window_size(HWND hwnd, RECT rect)
+		{
+		auto shadow_thickness{win32_shadow_thickness(hwnd)};
+		return
+			{
+			.ll = rect.left   - shadow_thickness.ll,
+			.up = rect.top    - shadow_thickness.up,
+			.rr = rect.right  - shadow_thickness.rr,
+			.dw = rect.bottom - shadow_thickness.dw
+			};
+		}
+
 	using procedure_t = std::function<std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam)>;
 	using procedures_container_t = utils::containers::object_pool<procedure_t>;
 	using procedure_handle_raw    = procedures_container_t::handle_raw;
@@ -92,31 +155,52 @@ namespace utils::win32::window
 
 			rect_t get_window_rect() const noexcept
 				{
-				RECT rect;
-				GetWindowRect(handle, &rect);
-				return {.ll{rect.left}, .up{rect.top}, .rr{rect.right}, .dw{rect.bottom}};
+				RECT rect_win32;
+				if (DwmGetWindowAttribute(get_handle(), DWMWA_EXTENDED_FRAME_BOUNDS, &rect_win32, sizeof(RECT)) == S_OK) 
+					{
+					//Equivalent to using unpack_window_size on GetWindowRect
+					return win32_RECT_to_rect_t(rect_win32);
+					}
+				else if (GetWindowRect(handle, &rect_win32))
+					{
+					return win32_RECT_to_rect_t(rect_win32);
+					}
+				else
+					{
+					//TODO error case
+					return {};
+					}
 				}
 			void set_window_rect(rect_t rect) noexcept
 				{
-				// SetWindowPos wants the total size of the window (including title bar and borders),
-				// so we have to compute it
-				RECT rectangle = {.left{rect.ll}, .top{rect.up}, .right{rect.rr}, .bottom{rect.down}};
-				AdjustWindowRect(&rectangle, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_STYLE)), false);
+				RECT rectangle{pack_window_size(get_handle(), rect)};
 
-				long width  = rectangle.right  - rectangle.left;
-				long height = rectangle.bottom - rectangle.top;
+				long width {rectangle.right  - rectangle.left};
+				long height{rectangle.bottom - rectangle.top };
 
 				SetWindowPos(handle, NULL, rectangle.left, rectangle.top, width, height, SWP_NOZORDER);
 				}
 			rect_t get_client_rect() const noexcept
 				{
 				RECT rect;
-				GetClientRect(handle, &rect);
-				return {.ll{rect.left}, .up{rect.top}, .rr{rect.right}, .dw{rect.bottom}};
+				GetClientRect(handle, &rect);//TODO error case
+				return win32_RECT_to_rect_t(rect);
+				}
+			void set_client_rect(rect_t rect) noexcept
+				{
+				RECT rectangle{rect_t_to_win32_RECT(rect)};
+				
+				// Updates the rect to take into account border/title bar if present
+				AdjustWindowRectEx(&rectangle, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_STYLE)), false, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_EXSTYLE)));
+
+				long width {rectangle.right  - rectangle.left};
+				long height{rectangle.bottom - rectangle.top };
+
+				SetWindowPos(handle, NULL, rectangle.left, rectangle.top, width, height, SWP_NOZORDER);
 				}
 
 			__declspec(property(get = get_window_rect, put = set_window_rect)) rect_t window_rect;
-			__declspec(property(get = get_client_rect                       )) rect_t client_rect;
+			__declspec(property(get = get_client_rect, put = set_client_rect)) rect_t client_rect;
 #pragma endregion properties
 
 #pragma region procedure
@@ -206,14 +290,15 @@ namespace utils::win32::window
 
 	class module : utils::oop::non_copyable, utils::oop::non_movable
 		{
+		public:
+			const base& get_base() const noexcept { return *base_ptr; }
+			      base& get_base()       noexcept { return *base_ptr; }
+
 		protected:
 			module(window::base& base, procedure_t procedure) :
 				base_ptr{&base},
 				procedure_handle{base.procedures.make_unique(procedure)}
 				{}
-
-			const base& get_base() const noexcept { return *base_ptr; }
-			      base& get_base()       noexcept { return *base_ptr; }
 
 		private:
 			const utils::observer_ptr<utils::win32::window::base> base_ptr;

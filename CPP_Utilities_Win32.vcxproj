@@ -147,10 +147,12 @@
     <ClInclude Include="include\utils\win32\error_to_exception.h" />
     <ClInclude Include="include\utils\win32\windows.h" />
     <ClInclude Include="include\utils\win32\window\details\DWM.h" />
+    <ClInclude Include="include\utils\win32\window\details\DWM2.h" />
     <ClInclude Include="include\utils\win32\window\details\style.h" />
     <ClInclude Include="include\utils\win32\window\input\keyboard.h" />
     <ClInclude Include="include\utils\win32\window\input\mouse.h" />
     <ClInclude Include="include\utils\win32\window\regions.h" />
+    <ClInclude Include="include\utils\win32\window\snap_on_drag.h" />
     <ClInclude Include="include\utils\win32\window\style.h" />
     <ClInclude Include="include\utils\win32\window\taskbar.h" />
     <ClInclude Include="include\utils\win32\window\window.h" />

@@ -74,5 +74,11 @@
     <ClInclude Include="include\utils\win32\window\input\keyboard.h">
       <Filter>Header Files\window\input</Filter>
     </ClInclude>
+    <ClInclude Include="include\utils\win32\window\snap_on_drag.h">
+      <Filter>Header Files\window</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\win32\window\details\DWM2.h">
+      <Filter>Header Files\window\details</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
