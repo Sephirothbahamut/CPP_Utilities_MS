@@ -23,7 +23,8 @@ namespace utils::win32::window
 	{
 	struct initializer;
 
-	using procedure_t = std::function<std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam)>;
+	using procedure_signature = std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam);
+	using procedure_t = std::function<procedure_signature>;
 	using procedures_container_t  = utils::containers::object_pool<procedure_t>;
 	using procedure_handle_raw    = procedures_container_t::handle_raw;
 	using procedure_handle_unique = procedures_container_t::handle_unique;
@@ -167,14 +168,16 @@ namespace utils::win32::window
 			      base& get_base()       noexcept { return *base_ptr; }
 
 		protected:
-			module(window::base& base, procedure_t procedure) :
-				base_ptr{&base},
-				procedure_handle{base.procedures.make_unique(procedure)}
-				{}
+			module(window::base& base) : base_ptr{&base} {}
+
+			void record_procedure(procedure_t procedure)
+				{
+				procedure_handle = get_base().procedures.make_unique(procedure);
+				}
 
 		private:
 			const utils::observer_ptr<utils::win32::window::base> base_ptr;
-			procedure_handle_unique procedure_handle;
+			procedure_handle_unique procedure_handle{};
 		};
 
 	}

@@ -22,12 +22,7 @@ namespace utils::win32::window::input
 	class mouse : public module
 		{
 		public:
-			mouse(window::base& base) : 
-				module
-					{
-					base,
-					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
-					}
+			mouse(window::base& base) : module{base}
 				{
 				//mouse
 				RAWINPUTDEVICE rid_mouse
@@ -40,6 +35,8 @@ namespace utils::win32::window::input
 					.hwndTarget {base.get_handle()},
 					};
 				if (!RegisterRawInputDevices(&rid_mouse, 1, sizeof(rid_mouse))) { throw last_error("failed to register raw input devices"); }
+
+				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			std::unordered_map<uintptr_t, std::reference_wrapper<utils::input::mouse>> mice;

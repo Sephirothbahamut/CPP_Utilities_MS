@@ -45,13 +45,7 @@ namespace utils::win32::window
 					}
 				};
 
-			style(window::base& base, create_info create_info) : 
-				module
-					{
-					base,
-					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
-					}, 
-				borders{create_info.borders}
+			style(window::base& base, create_info create_info) : module{base}, borders{create_info.borders}
 				{
 				switch (create_info.transparency)
 					{
@@ -84,6 +78,8 @@ namespace utils::win32::window
 							break;
 						}
 					}
+
+				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 

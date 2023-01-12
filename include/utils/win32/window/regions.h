@@ -33,13 +33,10 @@ namespace utils::win32::window
 			struct create_info { int thickness{8}; };
 
 			resizable_edge(window::base& base, create_info create_info = {}) : 
-				module
-					{
-					base,
-					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
-					}, 
+				module{base}, 
 				thickness{create_info.thickness}
 				{
+				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			int thickness;
@@ -100,14 +97,11 @@ namespace utils::win32::window
 				};
 
 			regions(window::base& base, const create_info& create_info) :
-				module
-					{
-					base,
-					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
-					},
+				module{base},
 				default_hit_type{create_info.default_hit_type}, 
 				regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
 				{
+				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			hit_type default_hit_type;

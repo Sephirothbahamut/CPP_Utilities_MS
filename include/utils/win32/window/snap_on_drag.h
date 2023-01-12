@@ -18,13 +18,9 @@ namespace utils::win32::window
 	class snap_on_drag : public module
 		{
 		public:
-			snap_on_drag(window::base& base) :
-				module
-					{
-					base,
-					[this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); }
-					}
+			snap_on_drag(window::base& base) : module{base}
 				{
+				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			long snap_max_distance{16};
