@@ -16,6 +16,7 @@ namespace d2d::window
 	
 			struct create_info
 				{
+				using module_type = render_target;
 				const d2d::factory& d2d_factory;
 				std::function<on_draw_signature> on_render;
 				};
@@ -26,7 +27,6 @@ namespace d2d::window
 				d2d_hwnd_rt{create_info.d2d_factory, get_base().get_handle()},
 				d2d_device_context{d2d_hwnd_rt}
 				{
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 	
 			std::function<on_draw_signature> on_render;
@@ -39,7 +39,7 @@ namespace d2d::window
 			d2d::hwnd_render_target d2d_hwnd_rt;
 			d2d::device_context d2d_device_context;
 	
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
@@ -83,6 +83,7 @@ namespace d2d::window
 
 			struct create_info
 				{
+				using module_type = swap_chain;
 				const d3d ::device& d3d_device;
 				const d2d ::device& d2d_device;
 				const dxgi::device& dxgi_device;
@@ -97,7 +98,6 @@ namespace d2d::window
 				d2d_bitmap_target{d2d_device_context, dxgi_swapchain}
 				{
 				d2d_device_context->SetTarget(d2d_bitmap_target.get());
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			std::function<on_draw_signature> on_render;
@@ -108,7 +108,7 @@ namespace d2d::window
 			d2d::bitmap d2d_bitmap_target;
 
 
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{

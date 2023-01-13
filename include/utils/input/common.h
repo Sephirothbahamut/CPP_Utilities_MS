@@ -12,6 +12,44 @@
 
 namespace utils::input
 	{
+	namespace tmp //TODO remove
+		{
+		std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
+			{
+			UINT deviceCount = 10; // initial guess, must be nonzero
+			std::vector<RAWINPUTDEVICELIST> devices(deviceCount);
+			while (deviceCount != 0) {
+				UINT actualDeviceCount = GetRawInputDeviceList(
+					devices.data(), &deviceCount,
+					sizeof(devices[0]));
+				if (actualDeviceCount != (UINT)-1) {
+					devices.resize(actualDeviceCount);
+					return devices;
+					}
+				DWORD error = GetLastError();
+				if (error != ERROR_INSUFFICIENT_BUFFER) {
+					std::terminate(); // throw something
+					}
+				devices.resize(deviceCount);
+				}
+			}
+
+		void cout_raw_input_devices()
+			{
+			for(const auto& device : GetRawInputDevices())
+				{
+				switch (device.dwType)
+					{
+					case RIM_TYPEKEYBOARD: std::cout << "Keyboard "; break;
+					case RIM_TYPEMOUSE   : std::cout << "Mouse    "; break;
+					case RIM_TYPEHID     : std::cout << "HID      "; break;
+					default:               std::cout << "Other    "; break;
+					}
+				std::cout << "(" << reinterpret_cast<uintptr_t>(device.hDevice) << ")" << std::endl;
+				}
+			}
+		}
+
 	template <typename state_T, typename inner_T>
 	class input_1d_delta;
 	template <typename inner_T>
@@ -23,8 +61,9 @@ namespace utils::input
 		class input_base
 			{
 			public:
-				using state_t = state_T;
-				using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+				using state_t                = state_T;
+				using callback_signature     = void(const state_t& new_state, const state_t& previous_state);
+				using callback               = std::function<callback_signature>;
 				using callbacks_container    = utils::containers::object_pool<callback>;
 				using callback_handle_raw    = callbacks_container::handle_raw   ;
 				using callback_handle_unique = callbacks_container::handle_unique;
@@ -60,12 +99,13 @@ namespace utils::input
 		friend struct input_2d;
 
 		public:
-			using state_t = state_T;
-			using callback            = std::function<void(const state_t& new_state, const state_t& previous_state)>;
-			using callbacks_container = utils::containers::object_pool<callback>;
-			using callback_handle_raw    = callbacks_container::handle_raw   ;
-			using callback_handle_unique = callbacks_container::handle_unique;
-			using callback_handle_shared = callbacks_container::handle_shared;
+			using typename details::input_base<state_T>::state_t               ;
+			using typename details::input_base<state_T>::callback_signature    ;
+			using typename details::input_base<state_T>::callback              ;
+			using typename details::input_base<state_T>::callbacks_container   ;
+			using typename details::input_base<state_T>::callback_handle_raw   ;
+			using typename details::input_base<state_T>::callback_handle_unique;
+			using typename details::input_base<state_T>::callback_handle_shared;
 
 			const state_t& get_state() const noexcept { return _state; }
 
@@ -96,7 +136,13 @@ namespace utils::input
 	class input_1d_delta : public input_1d<state_T>
 		{
 		public:
-			using state_t = state_T;
+			using typename details::input_base<state_T>::state_t               ;
+			using typename details::input_base<state_T>::callback_signature    ;
+			using typename details::input_base<state_T>::callback              ;
+			using typename details::input_base<state_T>::callbacks_container   ;
+			using typename details::input_base<state_T>::callback_handle_raw   ;
+			using typename details::input_base<state_T>::callback_handle_unique;
+			using typename details::input_base<state_T>::callback_handle_shared;
 
 			input_1d<inner_T>& positive;
 			input_1d<inner_T>& negative;
@@ -131,8 +177,9 @@ namespace utils::input
 	class input_2d : public details::input_base<utils::math::vec2<inner_T>>
 		{
 		public:
-			using state_t = utils::math::vec2<inner_T>;
-			using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+			using state_t                = utils::math::vec2<inner_T>;
+			using callback_signature     = void(const state_t& new_state, const state_t& previous_state);
+			using callback               = std::function<callback_signature>;
 			using callbacks_container    = utils::containers::object_pool<callback>;
 			using callback_handle_raw    = callbacks_container::handle_raw   ;
 			using callback_handle_unique = callbacks_container::handle_unique;
@@ -189,7 +236,8 @@ namespace utils::input
 		{
 		public:
 			using state_t = utils::math::vec3<inner_T>;
-			using callback               = std::function<void(const state_t& new_state, const state_t& previous_state)>;
+			using callback_signature     = void(const state_t& new_state, const state_t& previous_state);
+			using callback               = std::function<callback_signature>;
 			using callbacks_container    = utils::containers::object_pool<callback>;
 			using callback_handle_raw    = callbacks_container::handle_raw   ;
 			using callback_handle_unique = callbacks_container::handle_unique;
@@ -270,7 +318,8 @@ namespace utils::input
 			inline static constexpr const size_t count{utils::enums::enum_count<id>()};
 			using state_t = typename input_t::state_t;
 
-			using callback               = std::function<void(const id& id, const state_t& new_state, const state_t& previous_state)>;
+			using callback_signature     = void(const id& id, const state_t& new_state, const state_t& previous_state);
+			using callback               = std::function<callback_signature>;
 			using callbacks_container    = utils::containers::object_pool<callback>;
 			using callback_handle_raw    = callbacks_container::handle_raw   ;
 			using callback_handle_unique = callbacks_container::handle_unique;

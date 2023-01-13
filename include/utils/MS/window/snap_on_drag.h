@@ -18,15 +18,22 @@ namespace utils::MS::window
 	class snap_on_drag : public module
 		{
 		public:
-			snap_on_drag(window::base& base) : module{base}
+			struct create_info
 				{
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
+				using module_type = snap_on_drag;
+				long snap_max_distance{16};
+				};
+
+			snap_on_drag(window::base& base, const create_info& create_info = {}) :
+				module{base},
+				snap_max_distance{create_info.snap_max_distance}
+				{
 				}
 
 			long snap_max_distance{16};
 
 		private:
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{

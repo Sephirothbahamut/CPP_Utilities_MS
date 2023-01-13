@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{87974404-8926-4422-bd27-530a06873fa8}</ProjectGuid>
-    <RootNamespace>CPPUtilitiesWin32</RootNamespace>
+    <ProjectGuid>{ecc97556-b3a3-4255-bb74-1fc60ae73483}</ProjectGuid>
+    <RootNamespace>examples</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,12 +70,6 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -111,8 +105,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalOptions>/D NOMINMAX %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>../CPP_Utilities/include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../CPP_Utilities/include;../include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,8 +121,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalOptions>/D NOMINMAX %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>../CPP_Utilities/include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../CPP_Utilities/include;../include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,27 +131,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="quick_tests.cpp" />
+    <ClCompile Include="01_windowing_system.cpp" />
+    <ClCompile Include="02_input_system.cpp" />
+    <ClCompile Include="03_drawing_system.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\utils\graphics\d2d.h" />
-    <ClInclude Include="include\utils\graphics\d2d\window.h" />
-    <ClInclude Include="include\utils\input\common.h" />
-    <ClInclude Include="include\utils\input\controller.h" />
-    <ClInclude Include="include\utils\input\keyboard.h" />
-    <ClInclude Include="include\utils\input\mouse.h" />
-    <ClInclude Include="include\utils\MS\error_to_exception.h" />
-    <ClInclude Include="include\utils\MS\windows.h" />
-    <ClInclude Include="include\utils\MS\window\details\DWM.h" />
-    <ClInclude Include="include\utils\MS\window\details\style.h" />
-    <ClInclude Include="include\utils\MS\window\hwnd_wrapper.h" />
-    <ClInclude Include="include\utils\MS\window\input\keyboard.h" />
-    <ClInclude Include="include\utils\MS\window\input\mouse.h" />
-    <ClInclude Include="include\utils\MS\window\regions.h" />
-    <ClInclude Include="include\utils\MS\window\snap_on_drag.h" />
-    <ClInclude Include="include\utils\MS\window\style.h" />
-    <ClInclude Include="include\utils\MS\window\taskbar.h" />
-    <ClInclude Include="include\utils\MS\window\window.h" />
+    <ClInclude Include="examples.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

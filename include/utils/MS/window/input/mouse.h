@@ -22,7 +22,9 @@ namespace utils::MS::window::input
 	class mouse : public module
 		{
 		public:
-			mouse(window::base& base) : module{base}
+			struct create_info { using module_type = mouse; };
+
+			mouse(window::base& base, const create_info& create_info = {}) : module{base}
 				{
 				//mouse
 				RAWINPUTDEVICE rid_mouse
@@ -35,8 +37,6 @@ namespace utils::MS::window::input
 					.hwndTarget {base.get_handle()},
 					};
 				if (!RegisterRawInputDevices(&rid_mouse, 1, sizeof(rid_mouse))) { throw last_error("failed to register raw input devices"); }
-
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			std::unordered_map<uintptr_t, std::reference_wrapper<utils::input::mouse>> mice;
@@ -54,7 +54,7 @@ namespace utils::MS::window::input
 				return ((GET_XBUTTON_WPARAM(wparam) == XBUTTON1) ? utils::input::mouse::button_id::backward : utils::input::mouse::button_id::forward);
 				}
 
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{

@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <concepts>
 #include <functional>
 
-#include <utils/math/vec2.h>
 #include <utils/memory.h>
 #include <utils/math/vec2.h>
 #include <utils/math/geometry/aabb.h>
@@ -20,18 +20,82 @@
 
 namespace utils::MS::window
 	{
+	/// <summary>
+	/// Window modules should inherit from module, and implement the procedure if necessary.
+	/// Window modules constructors should take a reference to MS::window::base as first parameters.
+	/// With all the previous criteria, your module can be emplaced into the window.
+	/// 
+	/// If your module needs to change your window's style or ex_style on creation, please implement the 2 methods you can see in the create_info structure of this library's style module.
+	/// 
+	/// Optionally, your module may have a constructor that takes a reference to MS::window::base and a custom struct with all the necessary parameters.
+	/// That struct should have a type declaration as follows: "using module_type = [your module class name]".
+	/// If you do this, the module can be automatically emplaced on window construction by passing the custom struct of your module as additional parameter on window construction.
+	/// </summary>
+	class module
+		{
+		friend class base;
+		public:
+			const base& get_base() const noexcept { return *base_ptr; }
+			      base& get_base()       noexcept { return *base_ptr; }
+
+		protected:
+			module(window::base& base) : base_ptr{&base} {}
+
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) { return std::nullopt; }
+
+		private:
+			utils::observer_ptr<utils::MS::window::base> base_ptr;
+		};
+
 	struct initializer;
 
 	using procedure_signature = std::optional<LRESULT>(UINT msg, WPARAM wparam, LPARAM lparam);
-	using procedure_t = std::function<procedure_signature>;
-	using procedures_container_t  = utils::containers::object_pool<procedure_t>;
-	using procedure_handle_raw    = procedures_container_t::handle_raw;
-	using procedure_handle_unique = procedures_container_t::handle_unique;
-	using procedure_handle_shared = procedures_container_t::handle_shared;
+	namespace concepts
+		{
+		template <typename T>
+		concept module = std::derived_from<T, utils::MS::window::module>;
+		template <typename T>
+		concept module_create_info = std::same_as<T, typename T::module_type::create_info> && concepts::module<typename T::module_type>;
+		template <typename T>
+		concept create_info_affecting_base = module_create_info<T> && requires(T t, base::create_info& base_create_info)
+			{
+					{t.adjust_base_create_info(base_create_info)}-> std::same_as<base::create_info>;
+			};
+		};
 
 	class base : public hwnd_wrapper, utils::oop::non_copyable, utils::oop::non_movable
 		{
 		friend class initializer;
+
+		using modules_container_t = utils::containers::object_pool<std::unique_ptr<module>, 8Ui64, true, false, false>;
+		template <typename T>
+		class module_handle : public modules_container_t::handle_raw
+			{
+			public:
+				using value_type        = T;
+				using reference         = value_type& ;
+				using const_reference   = const reference;
+				using pointer           = value_type* ;
+				using const_pointer     = const pointer;
+				using iterator_category = std::random_access_iterator_tag;
+				using difference_type   = ptrdiff_t ;
+
+				//note: these handles are created by methods which either instantiate T or made a dynamic_cast check to T.
+
+					  reference operator* ()       noexcept { return reinterpret_cast<reference      >(*get_module_ptr()); }
+				const_reference operator* () const noexcept { return reinterpret_cast<const_reference>(*get_module_ptr()); }
+					  pointer   operator->()       noexcept { return reinterpret_cast<      pointer  >( get_module_ptr()); }
+				const_pointer   operator->() const noexcept { return reinterpret_cast<const_pointer  >( get_module_ptr()); }
+					  reference value     ()                { return operator* (); }
+				const_reference value     () const          { return operator* (); }
+					  pointer   get       ()       noexcept { return operator->(); }
+				const_pointer   get       () const noexcept { return operator->(); }
+
+			private:
+				      utils::observer_ptr<module> get_module_ptr()       noexcept { return modules_container_t::handle_raw::operator*().get(); }
+				const utils::observer_ptr<module> get_module_ptr() const noexcept { return modules_container_t::handle_raw::operator*().get(); }
+			};
+
 		public:
 #pragma region creation and destruction
 			struct create_info
@@ -48,9 +112,46 @@ namespace utils::MS::window
 				{
 				set_window_ptr();
 				}
-			inline virtual ~base() noexcept { if (get_handle()) { ::DestroyWindow(get_handle()); } }
+			template <concepts::module_create_info ...Args>
+			inline base(create_info base_create_info, Args&&... other_create_infos) : base{base_create_info}
+				{
+				([&]
+					{
+					if constexpr (concepts::create_info_affecting_base<Args>)
+						{
+						base_create_info = other_create_infos.adjust_base_create_info(base_create_info);
+						}
+					}, ...);
+
+				(this->emplace_module<typename Args::module_type>(other_create_infos), ...);
+				}
+
+			//TODO object pool's move operations
+			// remove this class's inheritance from non_movable
+			// add move operator=
+			//base(base&& move) noexcept
+			//	{
+			//	destroy_window_if_exists();
+			//	hwnd_wrapper::operator=(std::move(move));
+			//
+			//	set_window_ptr();
+			//
+			//	modules = std::move(move.modules);
+			//
+			//	for (auto& module: modules)
+			//		{
+			//		module->base_ptr = this;
+			//		}
+			//	}
+
+			inline ~base() noexcept { destroy_window_if_exists(); }
 
 		private:
+			void destroy_window_if_exists() noexcept
+				{
+				if (get_handle()) { ::DestroyWindow(get_handle()); }
+				}
+
 			inline static constexpr wchar_t class_name[27]{L"CPP_Utilities Window Class"};
 
 			HWND create_window(const create_info& create_info)
@@ -75,10 +176,36 @@ namespace utils::MS::window
 				}
 #pragma endregion creation and destruction
 
-#pragma region procedure
+#pragma region modules
 		public:
-			procedures_container_t procedures;
+			template <concepts::module T, typename ...Args>
+			module_handle<T> emplace_module(Args&&... args)
+				{
+				return {modules.emplace(std::make_unique<T>(*this, std::forward<Args>(args)...))};
+				}
+			template <concepts::module_create_info T>
+			module_handle<typename T::module_type> emplace_module_from_create_info(const T& create_info)
+				{
+				return emplace_module<typename T::module_type>(create_info);
+				}
 
+			template <concepts::module T>
+			module_handle<T> get_module_handle() noexcept
+				{
+				for (auto it{modules.begin()}; it != modules.end(); it++)
+					{
+					if (dynamic_cast<utils::observer_ptr<T>>((*it).operator->()))
+						{
+						return {modules.handle_to_iterator(it)};
+						}
+					}
+				return {};
+				}
+		private:
+			modules_container_t modules;
+#pragma endregion modules
+
+#pragma region procedure
 		private:
 			void set_window_ptr() { SetWindowLongPtr(get_handle(), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); }
 			inline static utils::observer_ptr<base> get_window_ptr(HWND handle)
@@ -95,9 +222,9 @@ namespace utils::MS::window
 
 			inline LRESULT procedure(UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 				{
-				for (auto& procedure : procedures)
+				for (auto& module : modules)
 					{
-					if (auto ret{procedure(msg, wparam, lparam)})
+					if (auto ret{module->procedure(msg, wparam, lparam)})
 						{
 						return ret.value();
 						}
@@ -116,7 +243,7 @@ namespace utils::MS::window
 				inline bool poll_event() const
 					{
 					MSG msg;
-					bool ret = PeekMessage(&msg, get_handle(), 0, 0, PM_REMOVE);
+					bool ret{static_cast<bool>(PeekMessage(&msg, get_handle(), 0, 0, PM_REMOVE))};
 					if (ret)
 						{
 						::TranslateMessage(&msg);
@@ -125,17 +252,12 @@ namespace utils::MS::window
 						}
 					else { return false; }
 					}
-				inline bool wait_event() const
+				inline void wait_event() const
 					{
 					MSG msg;
-					bool ret = GetMessage(&msg, get_handle(), 0, 0);
-					if (ret)
-						{
-						::TranslateMessage(&msg);
-						::DispatchMessage(&msg);
-						return true;
-						}
-					else { return false; }
+					bool ret{static_cast<bool>(GetMessage(&msg, get_handle(), 0, 0))}; //true if WM_QUIT, false otherwise
+					::TranslateMessage(&msg);
+					::DispatchMessage(&msg);
 					}
 #pragma endregion events
 		};
@@ -158,25 +280,6 @@ namespace utils::MS::window
 			RegisterClassEx(&wcx);
 			}
 		inline ~initializer() { UnregisterClass(base::class_name, nullptr); }
-		};
-
-	class module : utils::oop::non_copyable, utils::oop::non_movable
-		{
-		public:
-			const base& get_base() const noexcept { return *base_ptr; }
-			      base& get_base()       noexcept { return *base_ptr; }
-
-		protected:
-			module(window::base& base) : base_ptr{&base} {}
-
-			void record_procedure(procedure_t procedure)
-				{
-				procedure_handle = get_base().procedures.make_unique(procedure);
-				}
-
-		private:
-			const utils::observer_ptr<utils::MS::window::base> base_ptr;
-			procedure_handle_unique procedure_handle{};
 		};
 
 	}

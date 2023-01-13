@@ -20,32 +20,37 @@ namespace utils::MS::window
 
 			struct create_info
 				{
+				using module_type = style;
 				transparency_t transparency{transparency_t::none};
 				value_t borders{value_t::_default};
 				value_t shadow {value_t::_default};
 				/// <summary> Only used by layered transparency </summary>
 				uint8_t alpha{127};
 
-				inline utils::MS::window::base::create_info adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
+				inline utils::MS::window::base::create_info  adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
 					utils::MS::window::base::create_info ret{base_create_info};
-
+					adjust_base_create_info(ret);
+					return ret;
+					}
+				inline utils::MS::window::base::create_info& adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
+					{
 					if (transparency == transparency_t::layered)
 						{
-						ret.style_ex |= WS_EX_LAYERED;
+						base_create_info.style_ex |= WS_EX_LAYERED;
 						}
 
 					if (borders == value_t::disable)
 						{
 						DWORD style{static_cast<DWORD>(details::style::Style::windowed)};
-						ret.style |= style;
+						base_create_info.style |= style;
 						}
 
-					return ret;
+					return base_create_info;
 					}
 				};
 
-			style(window::base& base, create_info create_info) : module{base}, borders{create_info.borders}
+			style(window::base& base, create_info create_info = {}) : module{base}, borders{create_info.borders}
 				{
 				switch (create_info.transparency)
 					{
@@ -78,14 +83,11 @@ namespace utils::MS::window
 							break;
 						}
 					}
-
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 
 		private:
-			
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{

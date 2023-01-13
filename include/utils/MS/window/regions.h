@@ -30,19 +30,22 @@ namespace utils::MS::window
 	class resizable_edge : public module
 		{
 		public:
-			struct create_info { int thickness{8}; };
+			struct create_info 
+				{
+				using module_type = resizable_edge;
+				int thickness{8}; 
+				};
 
-			resizable_edge(window::base& base, create_info create_info = {}) : 
-				module{base}, 
+			resizable_edge(window::base& base, const create_info& create_info = {}) :
+				module{base},
 				thickness{create_info.thickness}
 				{
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			int thickness;
 
 		protected:
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				return msg == WM_NCHITTEST ? hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}) : std::nullopt;
 				}
@@ -92,16 +95,16 @@ namespace utils::MS::window
 
 			struct create_info
 				{
+				using module_type = regions;
 				hit_type default_hit_type;
 				std::vector<region_data_t> regions_data;
 				};
 
-			regions(window::base& base, const create_info& create_info) :
+			regions(window::base& base, const create_info& create_info = {}) :
 				module{base},
 				default_hit_type{create_info.default_hit_type}, 
 				regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
 				{
-				record_procedure([this](UINT msg, WPARAM wparam, LPARAM lparam) -> std::optional<LRESULT> { return procedure(msg, wparam, lparam); });
 				}
 
 			hit_type default_hit_type;
@@ -109,7 +112,7 @@ namespace utils::MS::window
 
 		protected:
 
-			std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam)
+			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				return msg == WM_NCHITTEST ? std::optional<LRESULT>{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})} : std::nullopt;
 				}

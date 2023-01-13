@@ -24,11 +24,11 @@ namespace utils::MS::window
 
 	namespace details
 		{
-		rect_t win32_RECT_to_rect_t(const RECT& rect)
+		inline rect_t win32_RECT_to_rect_t(const RECT& rect)
 			{
 			return {.ll{rect.left}, .up{rect.top}, .rr{rect.right}, .dw{rect.bottom}};
 			}
-		RECT rect_t_to_win32_RECT(const rect_t& rect)
+		inline RECT rect_t_to_win32_RECT(const rect_t& rect)
 			{
 			return {.left{rect.ll}, .top{rect.up}, .right{rect.rr}, .bottom{rect.dw}};
 			}
@@ -41,6 +41,10 @@ namespace utils::MS::window
 		{
 		public:
 			hwnd_wrapper(HWND handle = nullptr) : handle{handle} {}
+			hwnd_wrapper(hwnd_wrapper&& move) noexcept : handle{handle} { move.handle = nullptr; }
+			hwnd_wrapper& operator=(hwnd_wrapper&& move) noexcept { handle = move.handle; move.handle = nullptr; }
+			hwnd_wrapper(const hwnd_wrapper& copy) noexcept = default;
+			hwnd_wrapper& operator=(const hwnd_wrapper& copy) noexcept = default;
 
 			inline void show()
 				{
