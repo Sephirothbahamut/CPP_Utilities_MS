@@ -17,9 +17,8 @@
 
 #include "../error_to_exception.h"
 #include "hwnd_wrapper.h"
-#include "details/style.h"
 
-namespace utils::win32::window
+namespace utils::MS::window
 	{
 	struct initializer;
 
@@ -70,7 +69,7 @@ namespace utils::win32::window
 					nullptr, nullptr, this
 				);
 
-				if (!ret) { throw last_error("Failed to create window. Did you forget to create an initializer instance for your window class? (utils::win32::window::initializer)"); }
+				if (!ret) { throw last_error("Failed to create window. Did you forget to create an initializer instance for your window class? (utils::MS::window::initializer)"); }
 
 				return ret;
 				}
@@ -176,7 +175,7 @@ namespace utils::win32::window
 				}
 
 		private:
-			const utils::observer_ptr<utils::win32::window::base> base_ptr;
+			const utils::observer_ptr<utils::MS::window::base> base_ptr;
 			procedure_handle_unique procedure_handle{};
 		};
 

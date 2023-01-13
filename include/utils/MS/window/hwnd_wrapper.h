@@ -18,7 +18,7 @@
 #include "../error_to_exception.h"
 #include "details/style.h"
 
-namespace utils::win32::window
+namespace utils::MS::window
 	{
 	using rect_t = utils::math::rect<long>;
 

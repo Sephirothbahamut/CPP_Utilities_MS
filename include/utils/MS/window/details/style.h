@@ -1,7 +1,7 @@
 #pragma once
 #include "DWM.h"
 
-namespace utils::win32::window::details::style
+namespace utils::MS::window::details::style
 	{
 	enum class Style : DWORD
 		{

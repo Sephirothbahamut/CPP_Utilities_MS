@@ -3,7 +3,7 @@
 #include "window.h"
 #include "details/style.h"
 
-namespace utils::win32::window
+namespace utils::MS::window
 	{
 	class style : public module
 		{
@@ -26,9 +26,9 @@ namespace utils::win32::window
 				/// <summary> Only used by layered transparency </summary>
 				uint8_t alpha{127};
 
-				inline utils::win32::window::base::create_info adjust_base_create_info(const utils::win32::window::base::create_info& base_create_info) const noexcept
+				inline utils::MS::window::base::create_info adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
-					utils::win32::window::base::create_info ret{base_create_info};
+					utils::MS::window::base::create_info ret{base_create_info};
 
 					if (transparency == transparency_t::layered)
 						{

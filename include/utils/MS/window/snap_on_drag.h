@@ -8,7 +8,7 @@
 #include "window.h"
 #include "details/style.h"
 
-namespace utils::win32::window
+namespace utils::MS::window
 	{
 	/// <summary>
 	/// I tried. I seriously tried.

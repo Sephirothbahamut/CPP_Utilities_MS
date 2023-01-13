@@ -6,7 +6,7 @@
 
 #include "shobjidl_core.h"
 
-namespace utils::win32::window
+namespace utils::MS::window
 	{
 	enum class progress_state { error, paused, normal, indeterminate };
 
@@ -18,7 +18,7 @@ namespace utils::win32::window
 	*/
 
 
-	struct taskbar : virtual utils::win32::window::base
+	struct taskbar : virtual utils::MS::window::base
 		{
 		void set_taskbar_visibility(bool b)
 			{
@@ -39,16 +39,16 @@ namespace utils::win32::window
 			
 			/*switch (progress_state)
 				{
-				case utils::win32::window::progress_state::error:
+				case utils::MS::window::progress_state::error:
 					ITaskbarList3::SetProgressState(get_handle(), TBPF_ERROR);
 					break;
-				case utils::win32::window::progress_state::paused:
+				case utils::MS::window::progress_state::paused:
 					SetProgressState(get_handle(), TBPF_ERROR);
 					break;
-				case utils::win32::window::progress_state::normal:
+				case utils::MS::window::progress_state::normal:
 					SetProgressState(get_handle(), TBPF_ERROR);
 					break;
-				case utils::win32::window::progress_state::indeterminate:
+				case utils::MS::window::progress_state::indeterminate:
 					SetProgressState(get_handle(), TBPF_ERROR);
 					break;
 				default:

@@ -17,7 +17,7 @@
 // For future textbox shortcuts
 // https://learn.microsoft.com/en-us/windows/win32/learnwin32/accelerator-tables
 
-namespace utils::win32::window::input
+namespace utils::MS::window::input
 	{
 	class mouse : public module
 		{

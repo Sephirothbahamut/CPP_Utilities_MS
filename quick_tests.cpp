@@ -2,12 +2,16 @@
 #include <iostream>
 #include <chrono>
 
-#include "include/utils/win32/window/window.h"
-#include "include/utils/win32/window/style.h"
-#include "include/utils/win32/window/taskbar.h"
-#include "include/utils/win32/window/regions.h"
-#include "include/utils/win32/window/snap_on_drag.h"
-#include "include/utils/win32/window/input/mouse.h"
+#include "include/utils/MS/window/window.h"
+#include "include/utils/MS/window/style.h"
+#include "include/utils/MS/window/taskbar.h"
+#include "include/utils/MS/window/regions.h"
+#include "include/utils/MS/window/snap_on_drag.h"
+#include "include/utils/MS/window/input/mouse.h"
+
+#include "include/utils/graphics/d2d.h"
+#include "include/utils/graphics/d2d/window.h"
+
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
 
 std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
@@ -30,18 +34,18 @@ std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
 		}
 	}
 
-struct window_sample : utils::win32::window::base
+struct window_sample : utils::MS::window::base
 	{
 	struct create_info
 		{
-		utils::win32::window::base::create_info           base;
-		utils::win32::window::style::create_info          style;
-		utils::win32::window::resizable_edge::create_info resizable_edge;
-		utils::win32::window::regions::create_info        regions;
+		utils::MS::window::base::create_info           base;
+		utils::MS::window::style::create_info          style;
+		utils::MS::window::resizable_edge::create_info resizable_edge;
+		utils::MS::window::regions::create_info        regions;
 		};
 
 	window_sample(const create_info& create_info) :
-		utils::win32::window::base{create_info.style.adjust_base_create_info(create_info.base)},
+		utils::MS::window::base{create_info.style.adjust_base_create_info(create_info.base)},
 		style         {*this, create_info.style},
 		resizable_edge{*this, create_info.resizable_edge},
 		regions       {*this, create_info.regions},
@@ -50,11 +54,11 @@ struct window_sample : utils::win32::window::base
 		{
 		}
 	
-	utils::win32::window::style          style         ;
-	utils::win32::window::resizable_edge resizable_edge;
-	utils::win32::window::regions        regions       ;
-	utils::win32::window::snap_on_drag   snap_on_drag  ;
-	utils::win32::window::input::mouse   input_mouse   ;
+	utils::MS::window::style          style         ;
+	utils::MS::window::resizable_edge resizable_edge;
+	utils::MS::window::regions        regions       ;
+	utils::MS::window::snap_on_drag   snap_on_drag  ;
+	utils::MS::window::input::mouse   input_mouse   ;
 	};
 
 
@@ -76,7 +80,7 @@ int main()
 		{
 		using namespace utils::output;
 
-		utils::win32::window::initializer window_initializer;
+		utils::MS::window::initializer window_initializer;
 
 		window_sample window{window_sample::create_info{
 			.base
@@ -87,8 +91,8 @@ int main()
 				},
 			.style
 				{
-				//.transparency{utils::win32::window::style::transparency_t::composition_attribute},
-				//.borders     {utils::win32::window::style::value_t       ::disable}
+				//.transparency{utils::MS::window::style::transparency_t::composition_attribute},
+				//.borders     {utils::MS::window::style::value_t       ::disable}
 				},
 			.resizable_edge
 				{
@@ -96,12 +100,12 @@ int main()
 				},
 			.regions
 				{
-				.default_hit_type{utils::win32::window::hit_type::client},
+				.default_hit_type{utils::MS::window::hit_type::client},
 				.regions_data
 					{
-					utils::win32::window::regions::region_data_t
+					utils::MS::window::regions::region_data_t
 						{
-						.hit_type{utils::win32::window::hit_type::drag},
+						.hit_type{utils::MS::window::hit_type::drag},
 						.rect{0, 0, 64, 64}
 						}
 					}
@@ -113,7 +117,7 @@ int main()
 			{
 			std::cout << "Mouse button " << utils::enums::enum_name<utils::input::mouse::button_id>(id) << " " << (state ? "pressed" : "released") << std::endl; 
 
-			utils::win32::window::rect_t rect;
+			utils::MS::window::rect_t rect;
 			rect.position() = {32, 32};
 			rect.size()     = {256, 256};
 			switch (id)

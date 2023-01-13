@@ -1,4 +1,4 @@
-//class input : public virtual utils::win32::window::base
+//class input : public virtual utils::MS::window::base
 //	{
 //	public:
 //		struct create_info { utils::input::manager& input_manager; };

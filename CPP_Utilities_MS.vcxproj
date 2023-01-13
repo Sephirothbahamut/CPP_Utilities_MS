@@ -140,23 +140,24 @@
     <ClCompile Include="quick_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\utils\graphics\d2d.h" />
+    <ClInclude Include="include\utils\graphics\d2d\window.h" />
     <ClInclude Include="include\utils\input\common.h" />
     <ClInclude Include="include\utils\input\controller.h" />
     <ClInclude Include="include\utils\input\keyboard.h" />
     <ClInclude Include="include\utils\input\mouse.h" />
-    <ClInclude Include="include\utils\win32\error_to_exception.h" />
-    <ClInclude Include="include\utils\win32\windows.h" />
-    <ClInclude Include="include\utils\win32\window\details\DWM.h" />
-    <ClInclude Include="include\utils\win32\window\details\DWM2.h" />
-    <ClInclude Include="include\utils\win32\window\details\style.h" />
-    <ClInclude Include="include\utils\win32\window\hwnd_wrapper.h" />
-    <ClInclude Include="include\utils\win32\window\input\keyboard.h" />
-    <ClInclude Include="include\utils\win32\window\input\mouse.h" />
-    <ClInclude Include="include\utils\win32\window\regions.h" />
-    <ClInclude Include="include\utils\win32\window\snap_on_drag.h" />
-    <ClInclude Include="include\utils\win32\window\style.h" />
-    <ClInclude Include="include\utils\win32\window\taskbar.h" />
-    <ClInclude Include="include\utils\win32\window\window.h" />
+    <ClInclude Include="include\utils\MS\error_to_exception.h" />
+    <ClInclude Include="include\utils\MS\windows.h" />
+    <ClInclude Include="include\utils\MS\window\details\DWM.h" />
+    <ClInclude Include="include\utils\MS\window\details\style.h" />
+    <ClInclude Include="include\utils\MS\window\hwnd_wrapper.h" />
+    <ClInclude Include="include\utils\MS\window\input\keyboard.h" />
+    <ClInclude Include="include\utils\MS\window\input\mouse.h" />
+    <ClInclude Include="include\utils\MS\window\regions.h" />
+    <ClInclude Include="include\utils\MS\window\snap_on_drag.h" />
+    <ClInclude Include="include\utils\MS\window\style.h" />
+    <ClInclude Include="include\utils\MS\window\taskbar.h" />
+    <ClInclude Include="include\utils\MS\window\window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
