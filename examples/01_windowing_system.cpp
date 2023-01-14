@@ -5,29 +5,23 @@
 
 #include <utils/MS/window/window.h>
 #include <utils/MS/window/style.h>
-#include <utils/MS/window/taskbar.h>
 #include <utils/MS/window/regions.h>
 #include <utils/MS/window/snap_on_drag.h>
+#include <utils/MS/window/input/mouse.h>
 
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
 
 #include "examples.h"
 
-void windowing_system_inner()
+static void body()
 	{
 	using namespace utils::output;
 
-	// One window_initializer instance must exist before creating one or multiple windows.
 	utils::MS::window::initializer window_initializer;
 
-	// Create a window, and add some modules on window creation.
 	utils::MS::window::base window
 		{
-		// Base parameters to create a window
-		utils::MS::window::base::create_info
-			{
-			.title{L"Donald Fauntleroy Duck"}
-			},
+		utils::MS::window::base::create_info{},
 		// Add the style module to the window that allows for transparent, borderless, and borderless transparent windows:
 		utils::MS::window::style::create_info
 			{
@@ -38,18 +32,17 @@ void windowing_system_inner()
 		utils::MS::window::resizable_edge::create_info
 			{
 			.thickness{8}
-			}
+			},
+		// Input will be explained in the next example, here it's used just to be able to close the window through right-click
+		utils::MS::window::input::mouse::create_info{}
 		};
 
 	// Now let's add some modules to the window at any time after window creation.
-	// Note: Thanks to my fancy and untested (XD) object_pool container, 
-	// you can add modules even while the modules container is being iterated without worries!
-	// (the modules container is iterated whenever an event is being processed)
-	// Adding a module this way returns an handle through which you can access the module itself.
-	// "wmh" is used in variables names as short for "window's module handle"
+	// "wm" is used in variables names as short for "window's module"
+	// emplace operators return a reference to the emplaced window module.
 
 	// You can create a new module with this method if that module has a create_info struct
-	auto wmh_regions{window.emplace_module_from_create_info(utils::MS::window::regions::create_info
+	auto& wm_regions{window.emplace_module_from_create_info(utils::MS::window::regions::create_info
 		{
 		.default_hit_type{utils::MS::window::hit_type::client},
 		.regions_data
@@ -64,44 +57,38 @@ void windowing_system_inner()
 
 	// If a module has no create_info struct you can add it this way instead. 
 	// Acts as any other std container's emplace, however you should still omit the 1st constructor parameter, the reference to window::base.
-	auto wmh_resizable_edge{window.emplace_module<utils::MS::window::resizable_edge>()};
+	// not doing this cause resizable_edge was already in the window.
+	//auto& wm_resizable_edge{window.emplace_module<utils::MS::window::resizable_edge>()};
 	
-	// You can also retrieve an handle to a component that was added on creation or at any other point
-	auto wmh_snap_on_drag{window.get_module_handle<utils::MS::window::snap_on_drag>()};
+	// You can also retrieve a pointer to a component that was added on creation or at any other point
+	// get_module_ptr returns nullptr if the module isn't present.
+	auto wm_snap_on_drag_ptr{window.get_module_ptr<utils::MS::window::snap_on_drag>()};
 
-	// Handles can be accessed with a smart-pointer-like interface
-	if (wmh_snap_on_drag.has_value())
+	if (wm_snap_on_drag_ptr)
 		{
-		wmh_snap_on_drag->snap_max_distance = 32;
-		auto& snap_on_drag_ref{*wmh_snap_on_drag};
-		snap_on_drag_ref.snap_max_distance = 24;
+		wm_snap_on_drag_ptr->snap_max_distance = 32;
 		}
 
-	// Through an handle you can remove a module from the window. 
-	// Note: unlike for modules insertion, removing modules during modules container iteration is NOT safe.
-	// (the modules container is iterated whenever an event is being processed)
-	// hence if you must remove a module inside the window loop, to that in the while(window.is_open()) body, 
-	// but not inside any window procedure or anything that goes through window procedures, like the event system
-	wmh_snap_on_drag.reset();
+	// You can also remove modules by type
+	window.remove_module<utils::MS::window::snap_on_drag>();
 
 	//querying again for the snap_on_drag module will now return an invalid handle
-	auto wmh_snap_on_drag_2{window.get_module_handle<utils::MS::window::snap_on_drag>()};
-	assert(!wmh_snap_on_drag.has_value());
+	auto wm_snap_on_drag_2_ptr{window.get_module_ptr<utils::MS::window::snap_on_drag>()};
+	assert(!wm_snap_on_drag_2_ptr);
 
+	// Input will be explained in the next example, here it's used just to be able to close the window through right-click
+	window.get_module_ptr<utils::MS::window::input::mouse>()
+		->default_mouse.buttons[utils::input::mouse::button_id::right].on_changed.emplace([&window](bool, bool) { window.close(); });
 
 	window.show();
 	while (window.is_open())
 		{
-		// wait event will sleep until a new event is received
 		window.wait_event();
-
-		// alternatively poll_event will return false if the event queue is empty, for real-time applications like games.
-		//while (window.poll_event());
 		}
 	}
 
 void example::windowing_system()
 	{
-	try { windowing_system_inner(); }
+	try { body(); }
 	catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }
 	}

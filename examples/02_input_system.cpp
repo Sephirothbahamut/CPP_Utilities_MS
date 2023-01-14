@@ -4,15 +4,11 @@
 #include <utils/enum.h>
 
 #include <utils/MS/window/window.h>
-#include <utils/MS/window/style.h>
-#include <utils/MS/window/taskbar.h>
-#include <utils/MS/window/regions.h>
-#include <utils/MS/window/snap_on_drag.h>
 #include <utils/MS/window/input/mouse.h>
 
 #include "examples.h"
 
-void input_system_inner()
+static void body()
 	{
 	using namespace utils::output;
 
@@ -25,14 +21,14 @@ void input_system_inner()
 		utils::MS::window::input::mouse::create_info{}
 		};
 
-	// Get the handle of the mouse input module.
-	auto wmh_mouse{window.get_module_handle<utils::MS::window::input::mouse>()};
+	// Get the mouse input module.
+	auto& wm_mouse{*window.get_module_ptr<utils::MS::window::input::mouse>()};
 
 	// Default mouse is your usual cursor. 
 	// You can also add custm virtual mice, to support multiple mice as separate inputs
 	// ...well you could if that wasn't still under construction, but achieving that is one objective
 	// of my input system
-	auto& default_mouse{wmh_mouse->default_mouse};
+	auto& default_mouse{wm_mouse.default_mouse};
 
 	// register_debug_callbacks() will add callbacks to the mouse which write to the console
 	// any input the mouse is receiving.
@@ -78,6 +74,6 @@ void input_system_inner()
 
 void example::input_system()
 	{
-	try { input_system_inner(); }
+	try { body(); }
 	catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }
 	}

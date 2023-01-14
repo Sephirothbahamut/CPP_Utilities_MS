@@ -54,22 +54,23 @@ namespace utils::MS::window::input
 				return ((GET_XBUTTON_WPARAM(wparam) == XBUTTON1) ? utils::input::mouse::button_id::backward : utils::input::mouse::button_id::forward);
 				}
 
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
-					case WM_MOUSEMOVE  : default_mouse.position                                       .change_state(eval_vec2(lparam)); return 0;
-					case WM_LBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return 0;
-					case WM_LBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return 0;
-					case WM_RBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return 0;
-					case WM_RBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return 0;
-					case WM_MBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return 0;
-					case WM_MBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return 0;
-					case WM_XBUTTONDOWN: default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return 0;
-					case WM_XBUTTONUP  : default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return 0;
-					case WM_INPUT      : if(wm_input(wparam, lparam)) { return 0; }
+					case WM_MOUSEMOVE  : default_mouse.position                                       .change_state(eval_vec2(lparam)); return procedure_result::next(0);
+					case WM_LBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return procedure_result::next(0);
+					case WM_LBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return procedure_result::next(0);
+					case WM_RBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return procedure_result::next(0);
+					case WM_RBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return procedure_result::next(0);
+					case WM_MBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return procedure_result::next(0);
+					case WM_MBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return procedure_result::next(0);
+					case WM_XBUTTONDOWN: default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return procedure_result::next(0);
+					case WM_XBUTTONUP  : default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return procedure_result::next(0);
+					case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
 					}
-				return std::nullopt;
+				
+				return procedure_result::next();
 				}
 
 			bool wm_input(WPARAM wparam, LPARAM lparam)

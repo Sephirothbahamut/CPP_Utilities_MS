@@ -14,7 +14,7 @@ namespace utils::input
 	{
 	namespace tmp //TODO remove
 		{
-		std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
+		inline std::vector<RAWINPUTDEVICELIST> GetRawInputDevices()
 			{
 			UINT deviceCount = 10; // initial guess, must be nonzero
 			std::vector<RAWINPUTDEVICELIST> devices(deviceCount);
@@ -34,7 +34,7 @@ namespace utils::input
 				}
 			}
 
-		void cout_raw_input_devices()
+		inline void cout_raw_input_devices()
 			{
 			for(const auto& device : GetRawInputDevices())
 				{

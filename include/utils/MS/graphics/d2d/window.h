@@ -1,10 +1,11 @@
 #pragma once
 #include "../d2d.h"
 
-#include "../../MS/window/window.h"
+#include "../../window/window.h"
 
-namespace d2d::window
+namespace utils::MS::graphics::d2d::window
 	{
+
 	class render_target : public utils::MS::window::module
 		{
 		// Getting a "modern" context from an "outdated" render_target is undocumented, but according to Paint.NET's creator it works
@@ -39,30 +40,32 @@ namespace d2d::window
 			d2d::hwnd_render_target d2d_hwnd_rt;
 			d2d::device_context d2d_device_context;
 	
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
 					case WM_SIZE:
 						on_resize({LOWORD(lparam), HIWORD(lparam)});
-						break;
+						return utils::MS::window::procedure_result::next(0);
 	
 					case WM_DISPLAYCHANGE:
 						//InvalidateRect(get_handle(), NULL, FALSE);
 						break;
-	
+					
+					case WM_ERASEBKGND: return utils::MS::window::procedure_result::stop(1);
+
 					case WM_PAINT:
 						if (on_render)
 							{
 							on_render(get_base(), d2d_device_context);
 							ValidateRect(get_base().get_handle(), NULL);
-							return 0;
+							return utils::MS::window::procedure_result::next(0);
 							}
 						break;
 	
 					}
 	
-				return std::nullopt;
+				return utils::MS::window::procedure_result::next();
 				}
 	
 			void on_resize(utils::math::vec2u size)
@@ -108,17 +111,19 @@ namespace d2d::window
 			d2d::bitmap d2d_bitmap_target;
 
 
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
 					case WM_SIZE:
 						on_resize({LOWORD(lparam), HIWORD(lparam)});
-						break;
+						return utils::MS::window::procedure_result::next(0);
 
 					case WM_DISPLAYCHANGE:
 						//InvalidateRect(get_handle(), NULL, FALSE);
 						break;
+
+					case WM_ERASEBKGND: return utils::MS::window::procedure_result::stop(1);
 
 					case WM_PAINT:
 						if (on_render)
@@ -127,13 +132,13 @@ namespace d2d::window
 							dxgi_swapchain.present();
 
 							ValidateRect(get_base().get_handle(), NULL);
-							return 0;
+							return utils::MS::window::procedure_result::next(0);
 							}
 						break;
 
 					}
 
-				return std::nullopt;
+				return utils::MS::window::procedure_result::next();
 				}
 
 			void on_resize(utils::math::vec2u size)

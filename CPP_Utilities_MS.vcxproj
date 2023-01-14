@@ -142,13 +142,13 @@
     <ClCompile Include="quick_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\utils\graphics\d2d.h" />
-    <ClInclude Include="include\utils\graphics\d2d\window.h" />
     <ClInclude Include="include\utils\input\common.h" />
     <ClInclude Include="include\utils\input\controller.h" />
     <ClInclude Include="include\utils\input\keyboard.h" />
     <ClInclude Include="include\utils\input\mouse.h" />
     <ClInclude Include="include\utils\MS\error_to_exception.h" />
+    <ClInclude Include="include\utils\MS\graphics\d2d.h" />
+    <ClInclude Include="include\utils\MS\graphics\d2d\window.h" />
     <ClInclude Include="include\utils\MS\windows.h" />
     <ClInclude Include="include\utils\MS\window\details\DWM.h" />
     <ClInclude Include="include\utils\MS\window\details\style.h" />

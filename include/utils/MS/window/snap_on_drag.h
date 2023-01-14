@@ -33,7 +33,7 @@ namespace utils::MS::window
 			long snap_max_distance{16};
 
 		private:
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
@@ -41,7 +41,7 @@ namespace utils::MS::window
 						rects.clear();
 						get_windows();
 						target = result_previous = get_base().get_window_rect();
-						break;
+						return procedure_result::next(0);
 
 					case WM_MOVING:
 						if (true)
@@ -58,18 +58,19 @@ namespace utils::MS::window
 								attempted_result_win32 = get_base().pack_window_size(result_new);
 
 								result_previous = result_new;
-								return 0;
+								return procedure_result::stop(0);
 								}
 
 							result_previous = attempted_result;
 							}
-						break;
+						return procedure_result::next();
 
 					case WM_EXITSIZEMOVE:
 						rects.clear();
-						break;
+						return procedure_result::next(0);
 					}
-				return std::nullopt;
+
+				return procedure_result::next();
 				}
 
 			inline static BOOL CALLBACK enumWindowCallback(HWND hwnd, LPARAM lparam) noexcept

@@ -85,9 +85,8 @@ namespace utils::MS::window
 					}
 				}
 
-
 		private:
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
@@ -95,11 +94,12 @@ namespace utils::MS::window
 						if (wparam == TRUE && borders == value_t::disable) {
 							auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
 							details::style::adjust_maximized_client_rect(get_base().get_handle(), params.rgrc[0]);
-							return 0;
+							return procedure_result::stop(0);
 							}
 						break;
 					}
-				return std::nullopt;
+
+				return procedure_result::next();
 				}
 
 		private:

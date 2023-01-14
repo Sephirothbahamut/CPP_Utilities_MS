@@ -20,6 +20,26 @@
 
 namespace utils::MS::window
 	{
+	class base;
+	class procedure_result
+		{
+		friend class base;
+		public:
+			/// <summary> Prevents procedure from being called for modules after this one. The global procedure will return result. </summary>
+			inline static procedure_result stop(LRESULT result) noexcept { return {true , result}; }
+			/// <summary> If no other procedure after this one processed the message, the global procedure will return result. </summary>
+			inline static procedure_result next(LRESULT result) noexcept { return {false, result}; }
+			/// <summary> If no other procedure after this one processed the message, it will be passed to the default window procedure. </summary>
+			inline static procedure_result next(              ) noexcept { return {false        }; }
+
+		private:
+			procedure_result(bool halt, LRESULT result) : halt{halt}, result{result      } {}
+			procedure_result(bool halt                ) : halt{halt}, result{std::nullopt} {}
+			bool halt;
+			std::optional<LRESULT> result;
+		};
+
+
 	/// <summary>
 	/// Window modules should inherit from module, and implement the procedure if necessary.
 	/// Window modules constructors should take a reference to MS::window::base as first parameters.
@@ -41,7 +61,7 @@ namespace utils::MS::window
 		protected:
 			module(window::base& base) : base_ptr{&base} {}
 
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) { return std::nullopt; }
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) { return procedure_result::next(); }
 
 		private:
 			utils::observer_ptr<utils::MS::window::base> base_ptr;
@@ -63,38 +83,11 @@ namespace utils::MS::window
 			};
 		};
 
-	class base : public hwnd_wrapper, utils::oop::non_copyable, utils::oop::non_movable
+	class base : public hwnd_wrapper, utils::oop::non_copyable
 		{
 		friend class initializer;
 
-		using modules_container_t = utils::containers::object_pool<std::unique_ptr<module>, 8Ui64, true, false, false>;
-		template <typename T>
-		class module_handle : public modules_container_t::handle_raw
-			{
-			public:
-				using value_type        = T;
-				using reference         = value_type& ;
-				using const_reference   = const reference;
-				using pointer           = value_type* ;
-				using const_pointer     = const pointer;
-				using iterator_category = std::random_access_iterator_tag;
-				using difference_type   = ptrdiff_t ;
-
-				//note: these handles are created by methods which either instantiate T or made a dynamic_cast check to T.
-
-					  reference operator* ()       noexcept { return reinterpret_cast<reference      >(*get_module_ptr()); }
-				const_reference operator* () const noexcept { return reinterpret_cast<const_reference>(*get_module_ptr()); }
-					  pointer   operator->()       noexcept { return reinterpret_cast<      pointer  >( get_module_ptr()); }
-				const_pointer   operator->() const noexcept { return reinterpret_cast<const_pointer  >( get_module_ptr()); }
-					  reference value     ()                { return operator* (); }
-				const_reference value     () const          { return operator* (); }
-					  pointer   get       ()       noexcept { return operator->(); }
-				const_pointer   get       () const noexcept { return operator->(); }
-
-			private:
-				      utils::observer_ptr<module> get_module_ptr()       noexcept { return modules_container_t::handle_raw::operator*().get(); }
-				const utils::observer_ptr<module> get_module_ptr() const noexcept { return modules_container_t::handle_raw::operator*().get(); }
-			};
+		using modules_container_t = std::vector<std::unique_ptr<module>>;
 
 		public:
 #pragma region creation and destruction
@@ -126,23 +119,21 @@ namespace utils::MS::window
 				(this->emplace_module<typename Args::module_type>(other_create_infos), ...);
 				}
 
-			//TODO object pool's move operations
-			// remove this class's inheritance from non_movable
-			// add move operator=
-			//base(base&& move) noexcept
-			//	{
-			//	destroy_window_if_exists();
-			//	hwnd_wrapper::operator=(std::move(move));
-			//
-			//	set_window_ptr();
-			//
-			//	modules = std::move(move.modules);
-			//
-			//	for (auto& module: modules)
-			//		{
-			//		module->base_ptr = this;
-			//		}
-			//	}
+			base(base&& move) noexcept { operator=(std::move(move)); }
+			base& operator=(base&& move) noexcept
+				{
+				destroy_window_if_exists();
+				hwnd_wrapper::operator=(std::move(move));
+
+				set_window_ptr();
+
+				modules = std::move(move.modules);
+
+				for (auto& module : modules)
+					{
+					module->base_ptr = this;
+					}
+				}
 
 			inline ~base() noexcept { destroy_window_if_exists(); }
 
@@ -179,29 +170,50 @@ namespace utils::MS::window
 #pragma region modules
 		public:
 			template <concepts::module T, typename ...Args>
-			module_handle<T> emplace_module(Args&&... args)
+			T& emplace_module(Args&&... args)
 				{
-				return {modules.emplace(std::make_unique<T>(*this, std::forward<Args>(args)...))};
+				auto unique_ptr{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+				utils::observer_ptr<T> ret_ptr{unique_ptr.get()};
+				modules.emplace_back(std::move(unique_ptr));
+				return *ret_ptr;
 				}
 			template <concepts::module_create_info T>
-			module_handle<typename T::module_type> emplace_module_from_create_info(const T& create_info)
+			T::module_type& emplace_module_from_create_info(const T& create_info)
 				{
 				return emplace_module<typename T::module_type>(create_info);
 				}
 
 			template <concepts::module T>
-			module_handle<T> get_module_handle() noexcept
+			utils::observer_ptr<T> get_module_ptr() noexcept
 				{
-				for (auto it{modules.begin()}; it != modules.end(); it++)
+				for (auto& module_ptr : modules)
 					{
-					if (dynamic_cast<utils::observer_ptr<T>>((*it).operator->()))
+					if (auto cast_ptr{dynamic_cast<utils::observer_ptr<T>>(module_ptr.get())})
 						{
-						return {modules.handle_to_iterator(it)};
+						return cast_ptr;
 						}
 					}
-				return {};
+				return nullptr;
 				}
-		private:
+			template <concepts::module T>
+			utils::observer_ptr<const T> get_module_ptr() const noexcept
+				{
+				for (auto& module_ptr : modules)
+					{
+					if (auto cast_ptr{dynamic_cast<utils::observer_ptr<const T>>(module_ptr.get())})
+						{
+						return cast_ptr;
+						}
+					}
+				return nullptr;
+				}
+
+			template <concepts::module T>
+			void remove_module() noexcept
+				{
+				std::erase_if(modules, [](const std::unique_ptr<module>& module_ptr) { return dynamic_cast<utils::observer_ptr<const T>>(module_ptr.get()); });
+				}
+
 			modules_container_t modules;
 #pragma endregion modules
 
@@ -222,19 +234,21 @@ namespace utils::MS::window
 
 			inline LRESULT procedure(UINT msg, WPARAM wparam, LPARAM lparam) noexcept
 				{
+				std::optional<LRESULT> last_result{std::nullopt};
+				
 				for (auto& module : modules)
 					{
-					if (auto ret{module->procedure(msg, wparam, lparam)})
-						{
-						return ret.value();
-						}
+					auto ret{module->procedure(msg, wparam, lparam)};
+					if (ret.result) { last_result = ret.result; }
+					if (ret.halt  ) { break; }
 					}
-
+				
 				switch (msg)
 					{
 					case WM_NCDESTROY: hwnd_wrapper::close(); return 0;
 					}
 
+				if (last_result) { return last_result.value(); }
 				return DefWindowProc(get_handle(), msg, wparam, lparam);
 				}
 #pragma endregion procedure

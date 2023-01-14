@@ -45,9 +45,17 @@ namespace utils::MS::window
 			int thickness;
 
 		protected:
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
-				return msg == WM_NCHITTEST ? hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}) : std::nullopt;
+				if (msg == WM_NCHITTEST)
+					{
+					if (auto ret{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})})
+						{
+						return procedure_result::stop(ret.value());
+						}
+					}
+
+				return procedure_result::next();
 				}
 
 			std::optional<hit_type> hit_test(utils::math::vec2i coords) const noexcept
@@ -112,9 +120,13 @@ namespace utils::MS::window
 
 		protected:
 
-			virtual std::optional<LRESULT> procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
-				return msg == WM_NCHITTEST ? std::optional<LRESULT>{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})} : std::nullopt;
+				if (msg == WM_NCHITTEST)
+					{
+					return procedure_result::next(hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}));
+					}
+				else return procedure_result::next();
 				}
 
 			hit_type hit_test(utils::math::vec2i coords)
