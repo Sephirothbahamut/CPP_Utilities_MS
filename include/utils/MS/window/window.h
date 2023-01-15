@@ -79,7 +79,7 @@ namespace utils::MS::window
 		template <typename T>
 		concept create_info_affecting_base = module_create_info<T> && requires(T t, base::create_info& base_create_info)
 			{
-					{t.adjust_base_create_info(base_create_info)}-> std::same_as<base::create_info>;
+					{t.adjust_base_create_info(base_create_info)}-> std::same_as<void>;
 			};
 		};
 
@@ -112,9 +112,9 @@ namespace utils::MS::window
 					{
 					if constexpr (concepts::create_info_affecting_base<Args>)
 						{
-						base_create_info = other_create_infos.adjust_base_create_info(base_create_info);
+						other_create_infos.adjust_base_create_info(base_create_info);
 						}
-					}, ...);
+					}(), ...);
 
 				(this->emplace_module<typename Args::module_type>(other_create_infos), ...);
 				}

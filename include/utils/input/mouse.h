@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iomanip>
+#include <iostream>
+
 #include "common.h"
 
 namespace utils::input

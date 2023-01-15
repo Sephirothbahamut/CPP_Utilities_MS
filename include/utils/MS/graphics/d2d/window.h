@@ -20,6 +20,11 @@ namespace utils::MS::graphics::d2d::window
 				using module_type = render_target;
 				const d2d::factory& d2d_factory;
 				std::function<on_draw_signature> on_render;
+				
+				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
+					{
+					base_create_info.style_ex |= WS_EX_NOREDIRECTIONBITMAP;
+					}
 				};
 	
 			render_target(utils::MS::window::base& base, create_info create_info) :
@@ -91,6 +96,19 @@ namespace utils::MS::graphics::d2d::window
 				const d2d ::device& d2d_device;
 				const dxgi::device& dxgi_device;
 				std ::function<on_draw_signature> on_render;
+
+				inline utils::MS::window::base::create_info  adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
+					{
+					utils::MS::window::base::create_info ret{base_create_info};
+					adjust_base_create_info(ret);
+					return ret;
+					}
+				inline utils::MS::window::base::create_info& adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
+					{
+					base_create_info.style_ex |= WS_EX_NOREDIRECTIONBITMAP;
+
+					return base_create_info;
+					}
 				};
 
 			swap_chain(utils::MS::window::base& base, create_info create_info) :

@@ -27,13 +27,7 @@ namespace utils::MS::window
 				/// <summary> Only used by layered transparency </summary>
 				uint8_t alpha{127};
 
-				inline utils::MS::window::base::create_info  adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
-					{
-					utils::MS::window::base::create_info ret{base_create_info};
-					adjust_base_create_info(ret);
-					return ret;
-					}
-				inline utils::MS::window::base::create_info& adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
+				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
 					if (transparency == transparency_t::layered)
 						{
@@ -45,8 +39,6 @@ namespace utils::MS::window
 						DWORD style{static_cast<DWORD>(details::style::Style::windowed)};
 						base_create_info.style |= style;
 						}
-
-					return base_create_info;
 					}
 				};
 

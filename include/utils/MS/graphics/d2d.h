@@ -407,7 +407,17 @@ namespace utils::MS::graphics
 				inline static comptr_t create(const factory& factory, const HWND& hwnd)
 					{
 					comptr_t ret{nullptr};
-					details::throw_if_failed(factory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hwnd), &ret));
+					D2D1_RENDER_TARGET_PROPERTIES properties
+						{
+						.type{D2D1_RENDER_TARGET_TYPE_DEFAULT},
+						.pixelFormat
+							{
+							.format{DXGI_FORMAT_UNKNOWN},
+							.alphaMode{D2D1_ALPHA_MODE_PREMULTIPLIED}
+							}
+						};
+
+					details::throw_if_failed(factory->CreateHwndRenderTarget(properties, D2D1::HwndRenderTargetProperties(hwnd), &ret));
 					return ret;
 					}
 			};

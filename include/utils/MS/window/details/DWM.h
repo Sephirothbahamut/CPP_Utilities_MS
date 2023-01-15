@@ -6,7 +6,7 @@
 
 #include <WinUser.h>
 #include <dwmapi.h>
-#pragma comment (lib, "dwmapi.lib")//without this dwmapi.h doesn't work :shrugs: no idea whatsoever where the compiler is taking this file from
+#pragma comment (lib, "dwmapi.lib")
 #include <tchar.h>
 #include <Shlwapi.h>
 
@@ -101,10 +101,13 @@ namespace utils::MS::window::details
 		}
 	inline bool make_glass_DWM_BlurBehind(HWND hwnd)
 		{
-		DWM_BLURBEHIND bb = {0};
-		bb.dwFlags = DWM_BB_ENABLE;
-		bb.fEnable = true;
-		bb.hRgnBlur = NULL;
+		DWM_BLURBEHIND bb
+			{
+			.dwFlags {DWM_BB_ENABLE},
+			.fEnable {true},
+			.hRgnBlur{nullptr}
+			};
+
 		HRESULT result = DwmEnableBlurBehindWindow(hwnd, &bb);
 		return result == S_OK;
 		}
