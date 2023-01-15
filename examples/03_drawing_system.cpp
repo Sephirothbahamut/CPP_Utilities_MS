@@ -33,27 +33,28 @@ static void body()
 			.borders{utils::MS::window::style::value_t::disable}
 			},
 		utils::MS::window::resizable_edge::create_info{},
-		//utils::MS::graphics::d2d::window::render_target::create_info
-		utils::MS::graphics::d2d::window::swap_chain::create_info
+		//utils::MS::graphics::d2d::window::swap_chain::create_info               //guarantees same device for multiple windows, no transparency
+		utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
+		//utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both, unfinished, need help
 			{
-			//.d2d_factory{d2d_factory},
-			.d2d_device{d2d_device},
+			.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
+			//.d2d_device{d2d_device}, //decomment for the other 2
 			.on_render
 				{
 				[](utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
 					{
 					context->BeginDraw();
 					context->SetTransform(D2D1::IdentityMatrix());
-					context->Clear(D2D1_COLOR_F{0.f, 1.f, 1.f, .5f});
-				
+					context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
+					
 					auto client_rect{window.client_rect};
 					utils::math::vec2f half_size{static_cast<float>(client_rect.width()) / 2.f, static_cast<float>(client_rect.height()) / 2.f};
-				
+					
 					utils::math::rect<float> top_left    {0, 0, half_size.x, half_size.y};
 					utils::math::rect<float> top_right   {top_left }; top_right   .x() += half_size.x;
 					utils::math::rect<float> bottom_left {top_left }; bottom_left .y() += half_size.y;
 					utils::math::rect<float> bottom_right{top_right}; bottom_right.y() += half_size.y;
-				
+					
 					utils::MS::graphics::details::com_ptr<ID2D1SolidColorBrush> brush_r;
 					context->CreateSolidColorBrush(D2D1_COLOR_F{.r{1.f}, .g{0.f}, .b{0.f}, .a{.5f}}, brush_r.address_of());
 					utils::MS::graphics::details::com_ptr<ID2D1SolidColorBrush> brush_g;
@@ -62,12 +63,12 @@ static void body()
 					context->CreateSolidColorBrush(D2D1_COLOR_F{.r{0.f}, .g{0.f}, .b{1.f}, .a{.5f}}, brush_b.address_of());
 					utils::MS::graphics::details::com_ptr<ID2D1SolidColorBrush> brush_y;
 					context->CreateSolidColorBrush(D2D1_COLOR_F{.r{1.f}, .g{1.f}, .b{0.f}, .a{.5f}}, brush_y.address_of());
-				
+					
 					context->FillRectangle(D2D1_RECT_F{.left{top_left    .ll}, .top{top_left    .up}, .right{top_left    .rr}, .bottom{top_left    .dw} }, brush_r.get());
 					context->FillRectangle(D2D1_RECT_F{.left{top_right   .ll}, .top{top_right   .up}, .right{top_right   .rr}, .bottom{top_right   .dw} }, brush_g.get());
 					//context->FillRectangle(D2D1_RECT_F{.left{bottom_left .ll}, .top{bottom_left .up}, .right{bottom_left .rr}, .bottom{bottom_left .dw} }, brush_b.get());
 					context->FillRectangle(D2D1_RECT_F{.left{bottom_right.ll}, .top{bottom_right.up}, .right{bottom_right.rr}, .bottom{bottom_right.dw} }, brush_y.get());
-				
+					
 					context->EndDraw();
 					}
 				}
@@ -84,5 +85,6 @@ static void body()
 void example::drawing_system()
 	{
 	try { body(); }
-	catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }
+	catch (const std::system_error & e) { std::cout << e.what() << std::endl; }
+	catch (const std::runtime_error& e) { std::cout << e.what() << std::endl; }
 	}

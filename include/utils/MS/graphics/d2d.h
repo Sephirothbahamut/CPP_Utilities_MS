@@ -8,14 +8,15 @@
 #include <stdexcept>
 #include <filesystem>
 
-#include <utils/oop/disable_move_copy.h>
-#include <utils/compilation/debug.h>
 #include <utils/math/vec2.h>
 #include <utils/math/rect.h>
 #include <utils/graphics/colour.h>
+#include <utils/compilation/debug.h>
+#include <utils/oop/disable_move_copy.h>
 
-#include <d3d11_3.h>
+#include <dcomp.h>
 #include <d2d1_3.h>
+#include <d3d11_3.h>
 #include <dwrite_3.h>
 #include <wincodec.h>
 #include <wrl/client.h>
@@ -23,8 +24,9 @@
 #include <utils/memory.h>
 
 #pragma comment(lib, "d2d1")
-#pragma comment(lib, "d3d11")
 #pragma comment(lib, "dxgi")
+#pragma comment(lib, "dcomp")
+#pragma comment(lib, "d3d11")
 #pragma comment(lib, "dwrite")
 #pragma comment(lib, "windowscodecs")
 
@@ -61,7 +63,7 @@ namespace utils::MS::graphics
 			}
 
 		template <typename T>
-		class com_ptr : private Microsoft::WRL::ComPtr<T>
+		class com_ptr : protected Microsoft::WRL::ComPtr<T>
 			{
 			template <typename other_T>
 			friend class com_ptr;
@@ -157,19 +159,63 @@ namespace utils::MS::graphics
 
 	namespace dxgi
 		{
-		class device : public details::com_ptr<IDXGIDevice3>
+		struct device : details::com_ptr<IDXGIDevice3>
 			{
-			public:
-				using com_ptr::com_ptr;
-				device(const d3d::device& d3d_device) : com_ptr{create(d3d_device)} {}
+			using com_ptr::com_ptr;
+			device(const d3d::device& d3d_device) : com_ptr{[&d3d_device]
+				{
+				return d3d_device.as<interface_type>();
+				}()} {}
+			};
+		}
 
-			private:
-				self_t create(const d3d::device& d3d_device)
-					{
-					return d3d_device.as<interface_type>();
-					}
+	namespace composition
+		{
+		struct device : details::com_ptr<IDCompositionDevice>
+			{
+			using com_ptr::com_ptr;
+			device(const dxgi::device& dxgi_device) : com_ptr{[&dxgi_device]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(DCompositionCreateDevice(dxgi_device.get(), __uuidof(interface_type), reinterpret_cast<void**>(ret.address_of())));
+				return ret;
+				}()} {}
+			};
+		struct target : details::com_ptr<IDCompositionTarget>
+			{
+			using com_ptr::com_ptr;
+			target(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(composition_device->CreateTargetForHwnd(hwnd, TRUE, ret.address_of()));
+				return ret;
+				}()} {}
+			};
+		struct visual : details::com_ptr<IDCompositionVisual>
+			{
+			using com_ptr::com_ptr;
+			visual(const composition::device& composition_device) : com_ptr{[&composition_device]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(composition_device->CreateVisual(ret.address_of()));
+				return ret;
+				}()} {}	
 			};
 
+		struct surface : details::com_ptr<IDCompositionSurface>
+			{
+			using com_ptr::com_ptr;
+			surface(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(composition_device->CreateSurface(128, 128, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, ret.address_of()));
+				return ret;
+				}()} {}
+			};
+		}
+
+	namespace dxgi
+		{
 		class swap_chain : public details::com_ptr<IDXGISwapChain1>
 			{
 			public:
@@ -223,8 +269,7 @@ namespace utils::MS::graphics
 						.BufferCount {2},
 						.Scaling     {DXGI_SCALING_NONE},
 						.SwapEffect  {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL},
-						.AlphaMode   {DXGI_ALPHA_MODE_PREMULTIPLIED}, //TODO solve, causes error :(
-						//.AlphaMode   {DXGI_ALPHA_MODE_IGNORE}, 
+						.AlphaMode   {DXGI_ALPHA_MODE_IGNORE}, 
 						.Flags       {0},
 						};
 					DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc_fullscreen
@@ -235,9 +280,60 @@ namespace utils::MS::graphics
 				
 					self_t ret{nullptr};
 					details::throw_if_failed(dxgi_factory->CreateSwapChainForHwnd(dxgi_device.get(), hwnd, &desc, &desc_fullscreen, nullptr, ret.address_of()));
-				 
-					// Ensure that DXGI does not queue more than one frame at a time. This both reduces latency and
-					// ensures that the application will only render after each VSync, minimizing power consumption.
+
+					dxgi_device->SetMaximumFrameLatency(1);
+
+					return ret;
+					}
+
+				// CreateSwapchainForHWND failes with premultiplied alpha. The error tells to use CreateSwapChainForComposition
+				// if I use the following method the window is indeed glassy/transparent as expected, however nothing is rendered.
+				// I assume it's related to the fact that CreateSwapChainForComposition never takes information about which window it's supposed to work on,
+				// so that rendering swapchain is actually never being drawn on the window, and i'm seeing a transparent window simply because it's never drawn onto.
+				// I tried to look into composition docs https://learn.microsoft.com/en-us/windows/uwp/composition/composition-native-interop
+				// however there's no explanation on how to "connect" that with a dxgi swapchain.
+				// The closest it gets is retrieving a d2d device context from BeginDraw
+				// but at that point i'd be completely skipping over the whole swapchain deal
+				inline static self_t create_composition(const dxgi::device& dxgi_device, HWND hwnd)
+					{
+					RECT client_rect{0, 0, 0, 0};
+					GetClientRect(hwnd, &client_rect);
+					utils::math::rect<long> rectl{.ll{client_rect.left}, .up{client_rect.top}, .rr{client_rect.right}, .dw{client_rect.bottom}};
+
+					details::com_ptr<IDXGIAdapter> dxgi_adapter;
+					details::throw_if_failed(dxgi_device->GetAdapter(dxgi_adapter.address_of()));
+
+					details::com_ptr<IDXGIFactory2> dxgi_factory;
+					details::throw_if_failed(dxgi_adapter->GetParent(IID_PPV_ARGS(dxgi_factory.address_of())));
+
+					DXGI_SWAP_CHAIN_DESC1 desc
+						{
+						.Width      {static_cast<UINT>(rectl.w())},
+						.Height     {static_cast<UINT>(rectl.h())},
+						.Format     {DXGI_FORMAT_B8G8R8A8_UNORM},
+						.Stereo     {false},
+						.SampleDesc
+							{
+							.Count  {1},
+							.Quality{0}
+							},
+						.BufferUsage {DXGI_USAGE_RENDER_TARGET_OUTPUT},
+						.BufferCount {2},
+						.Scaling     {DXGI_SCALING_STRETCH},
+						.SwapEffect  {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL},
+						.AlphaMode   {DXGI_ALPHA_MODE_PREMULTIPLIED}, //TODO solve, causes error :(
+						//.AlphaMode   {DXGI_ALPHA_MODE_IGNORE}, 
+						.Flags       {DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER},
+						};
+					DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc_fullscreen
+						{
+						.RefreshRate{.Numerator{1}, .Denominator{0}},
+						.Scaling     {DXGI_MODE_SCALING_CENTERED},
+						};
+				
+					self_t ret{nullptr};
+					details::throw_if_failed(dxgi_factory->CreateSwapChainForComposition(dxgi_device.get(), &desc, nullptr, ret.address_of()));
+
 					dxgi_device->SetMaximumFrameLatency(1);
 
 					return ret;
@@ -247,24 +343,20 @@ namespace utils::MS::graphics
 
 	namespace dw
 		{
-		class factory : public details::com_ptr<IDWriteFactory2>
+		struct factory : details::com_ptr<IDWriteFactory2>
 			{
-			public:
-				using com_ptr::com_ptr;
-				factory() : com_ptr{create()} {}
-
-			private:
-				inline static self_t create()
-					{
-					self_t ret{nullptr};
-					details::throw_if_failed(DWriteCreateFactory
+			using com_ptr::com_ptr;
+			factory() : com_ptr{[]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(DWriteCreateFactory
 					(
-						DWRITE_FACTORY_TYPE_SHARED,
-						__uuidof(interface_type),
-						reinterpret_cast<utils::observer_ptr<utils::observer_ptr<IUnknown>>>(ret.address_of())
-						));
-					return ret;
-					}
+					DWRITE_FACTORY_TYPE_SHARED,
+					__uuidof(interface_type),
+					reinterpret_cast<utils::observer_ptr<utils::observer_ptr<IUnknown>>>(ret.address_of())
+					));
+				return ret;
+				}()} {}
 			};
 
 		class text_format : public details::com_ptr<IDWriteTextFormat>
@@ -321,25 +413,21 @@ namespace utils::MS::graphics
 
 	namespace wic
 		{
-		class imaging_factory : public details::com_ptr<IWICImagingFactory2>
+		struct imaging_factory : details::com_ptr<IWICImagingFactory2>
 			{
-			public:
-				using com_ptr::com_ptr;
-				imaging_factory() : com_ptr{create()} {}
-
-			private:
-				inline static self_t create()
-					{
-					self_t ret{nullptr};
-					details::throw_if_failed(CoCreateInstance
-						(
-						CLSID_WICImagingFactory2,
-						nullptr,
-						CLSCTX_INPROC_SERVER,
-						IID_PPV_ARGS(ret.address_of())
-						));
-					return ret;
-					}
+			using com_ptr::com_ptr;
+			imaging_factory() : com_ptr{[]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(CoCreateInstance
+					(
+					CLSID_WICImagingFactory2,
+					nullptr,
+					CLSCTX_INPROC_SERVER,
+					IID_PPV_ARGS(ret.address_of())
+					));
+				return ret;
+				}()} {}
 			};
 
 		class bitmap : public details::com_ptr<IWICBitmap>
@@ -376,30 +464,26 @@ namespace utils::MS::graphics
 
 	namespace d2d
 		{
-		class factory : public details::com_ptr<ID2D1Factory6>
+		struct factory : details::com_ptr<ID2D1Factory6>
 			{
-			public:
-				using com_ptr::com_ptr;
-				factory() : com_ptr{create()} {}
-
-			private:
-				inline static self_t create()
+			using com_ptr::com_ptr;
+			factory() : com_ptr{[]
+				{
+				D2D1_FACTORY_OPTIONS options
 					{
-					D2D1_FACTORY_OPTIONS options
-						{
-						.debugLevel{details::enable_debug_layer ? D2D1_DEBUG_LEVEL_INFORMATION : D2D1_DEBUG_LEVEL_NONE}
-						};
+					.debugLevel{details::enable_debug_layer ? D2D1_DEBUG_LEVEL_INFORMATION : D2D1_DEBUG_LEVEL_NONE}
+					};
 
-					self_t ret{nullptr};
-					
-					details::throw_if_failed(D2D1CreateFactory
-						(
-						D2D1_FACTORY_TYPE_SINGLE_THREADED,
-						options,
-						ret.address_of()
-						));
-					return ret;
-					}
+				self_t ret{nullptr};
+
+				details::throw_if_failed(D2D1CreateFactory
+					(
+					D2D1_FACTORY_TYPE_SINGLE_THREADED,
+					options,
+					ret.address_of()
+					));
+				return ret;
+				}()} {}
 			};
 
 		class device : public details::com_ptr<ID2D1Device5>
@@ -424,43 +508,37 @@ namespace utils::MS::graphics
 					}
 			};
 
-		class render_target : public details::com_ptr<ID2D1RenderTarget>
+		struct render_target : details::com_ptr<ID2D1RenderTarget>
 			{
 			public:
 				using com_ptr::com_ptr;
-				render_target(const factory& factory, const wic::bitmap& bitmap) : com_ptr{create(factory, bitmap)} {}
-
-			private:
-				inline static self_t create(const factory& factory, const wic::bitmap& bitmap)
+				render_target(const factory& factory, const wic::bitmap& bitmap) : com_ptr{[&factory, &bitmap]
 					{
 					self_t ret{nullptr};
 					details::throw_if_failed(factory->CreateWicBitmapRenderTarget(bitmap.get(), D2D1::RenderTargetProperties(), ret.address_of()));
 					return ret;
-					}
+					}()} {}
 			};
-		class hwnd_render_target : public details::com_ptr<ID2D1HwndRenderTarget>
+
+		struct hwnd_render_target : details::com_ptr<ID2D1HwndRenderTarget>
 			{
-			public:
-				using com_ptr::com_ptr;
-				hwnd_render_target(const factory& factory, const HWND& hwnd) : com_ptr{create(factory, hwnd)} {}
-
-			private:
-				inline static self_t create(const factory& factory, const HWND& hwnd)
+			using com_ptr::com_ptr;
+			hwnd_render_target(const factory& factory, const HWND& hwnd) : com_ptr{[&factory, &hwnd]
+				{
+				self_t ret{nullptr};
+				D2D1_RENDER_TARGET_PROPERTIES properties
 					{
-					self_t ret{nullptr};
-					D2D1_RENDER_TARGET_PROPERTIES properties
+					.type{D2D1_RENDER_TARGET_TYPE_DEFAULT},
+					.pixelFormat
 						{
-						.type{D2D1_RENDER_TARGET_TYPE_DEFAULT},
-						.pixelFormat
-							{
-							.format{DXGI_FORMAT_UNKNOWN},
-							.alphaMode{D2D1_ALPHA_MODE_PREMULTIPLIED}
-							}
-						};
+						.format{DXGI_FORMAT_UNKNOWN},
+						.alphaMode{D2D1_ALPHA_MODE_PREMULTIPLIED}
+						}
+					};
 
-					details::throw_if_failed(factory->CreateHwndRenderTarget(properties, D2D1::HwndRenderTargetProperties(hwnd), ret.address_of()));
-					return ret;
-					}
+				details::throw_if_failed(factory->CreateHwndRenderTarget(properties, D2D1::HwndRenderTargetProperties(hwnd), ret.address_of()));
+				return ret;
+				}()} {}
 			};
 
 		class device_context : public details::com_ptr<ID2D1DeviceContext5>
@@ -495,6 +573,9 @@ namespace utils::MS::graphics
 			private:
 				inline static self_t create(const d2d::device_context& d2d_device_context, const dxgi::swap_chain& dxgi_swapchain)
 					{
+					//details::com_ptr<ID3D11Texture2D> d3d_texture_back_buffer;
+					//details::throw_if_failed(dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(d3d_texture_back_buffer.address_of())));
+
 					details::com_ptr<IDXGISurface2> dxgi_back_buffer;
 					details::throw_if_failed(dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(dxgi_back_buffer.address_of())));
 
