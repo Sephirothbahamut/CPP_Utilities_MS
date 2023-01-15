@@ -221,6 +221,9 @@ namespace utils::MS::graphics
 			public:
 				swap_chain(const dxgi::device& dxgi_device, HWND hwnd) : com_ptr{create(dxgi_device, hwnd)} {}
 
+				//temporary flag for testing purposes
+				swap_chain(const dxgi::device& dxgi_device, HWND hwnd, nullptr_t) : com_ptr{create_composition(dxgi_device, hwnd)} {}
+
 				void resize(utils::math::vec2u size)
 					{
 					HRESULT hresult{get()->ResizeBuffers(2, size.x, size.y, DXGI_FORMAT_B8G8R8A8_UNORM, 0)};
@@ -286,7 +289,7 @@ namespace utils::MS::graphics
 					return ret;
 					}
 
-				// CreateSwapchainForHWND failes with premultiplied alpha. The error tells to use CreateSwapChainForComposition
+				// CreateSwapchainForHWND fails with premultiplied alpha. The error tells to use CreateSwapChainForComposition
 				// if I use the following method the window is indeed glassy/transparent as expected, however nothing is rendered.
 				// I assume it's related to the fact that CreateSwapChainForComposition never takes information about which window it's supposed to work on,
 				// so that rendering swapchain is actually never being drawn on the window, and i'm seeing a transparent window simply because it's never drawn onto.

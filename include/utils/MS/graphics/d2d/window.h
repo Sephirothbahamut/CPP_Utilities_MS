@@ -194,7 +194,7 @@ namespace utils::MS::graphics::d2d::window
 				composition_device{create_info.d2d_device.get_dxgi_device()},
 				composition_surface{composition_device, get_base().get_handle()},
 
-				dxgi_swapchain{create_info.d2d_device.get_dxgi_device(), get_base().get_handle()},
+				dxgi_swapchain{create_info.d2d_device.get_dxgi_device(), get_base().get_handle(), nullptr},
 				d2d_bitmap_target{d2d_device_context, dxgi_swapchain}
 				{
 				d2d_device_context->SetTarget(d2d_bitmap_target.get());

@@ -33,8 +33,8 @@ static void body()
 			.borders{utils::MS::window::style::value_t::disable}
 			},
 		utils::MS::window::resizable_edge::create_info{},
-		//utils::MS::graphics::d2d::window::swap_chain::create_info               //guarantees same device for multiple windows, no transparency
 		utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
+		//utils::MS::graphics::d2d::window::swap_chain::create_info            //guarantees same device for multiple windows, no transparency
 		//utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both, unfinished, need help
 			{
 			.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
