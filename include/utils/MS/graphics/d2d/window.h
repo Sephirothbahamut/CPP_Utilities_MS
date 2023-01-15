@@ -92,22 +92,13 @@ namespace utils::MS::graphics::d2d::window
 			struct create_info
 				{
 				using module_type = swap_chain;
-				const d3d ::device& d3d_device;
+
 				const d2d ::device& d2d_device;
-				const dxgi::device& dxgi_device;
 				std ::function<on_draw_signature> on_render;
 
-				inline utils::MS::window::base::create_info  adjust_base_create_info(const utils::MS::window::base::create_info& base_create_info) const noexcept
-					{
-					utils::MS::window::base::create_info ret{base_create_info};
-					adjust_base_create_info(ret);
-					return ret;
-					}
-				inline utils::MS::window::base::create_info& adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
+				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
 					base_create_info.style_ex |= WS_EX_NOREDIRECTIONBITMAP;
-
-					return base_create_info;
 					}
 				};
 
@@ -115,7 +106,7 @@ namespace utils::MS::graphics::d2d::window
 				module{base},
 				on_render{create_info.on_render},
 				d2d_device_context{create_info.d2d_device},
-				dxgi_swapchain{create_info.d3d_device, get_base().get_handle()},
+				dxgi_swapchain{create_info.d2d_device.get_dxgi_device(), get_base().get_handle()},
 				d2d_bitmap_target{d2d_device_context, dxgi_swapchain}
 				{
 				d2d_device_context->SetTarget(d2d_bitmap_target.get());
@@ -163,7 +154,7 @@ namespace utils::MS::graphics::d2d::window
 				{
 				//Release things that reference the swapchain before resizing
 				d2d_device_context->SetTarget(nullptr);
-				d2d_bitmap_target.Reset();
+				d2d_bitmap_target.reset();
 
 				dxgi_swapchain.resize(size);
 
