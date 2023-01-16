@@ -324,8 +324,7 @@ namespace utils::MS::graphics
 						.BufferCount {2},
 						.Scaling     {DXGI_SCALING_STRETCH},
 						.SwapEffect  {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL},
-						.AlphaMode   {DXGI_ALPHA_MODE_PREMULTIPLIED}, //TODO solve, causes error :(
-						//.AlphaMode   {DXGI_ALPHA_MODE_IGNORE}, 
+						.AlphaMode   {DXGI_ALPHA_MODE_PREMULTIPLIED},
 						.Flags       {DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER},
 						};
 					DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc_fullscreen
