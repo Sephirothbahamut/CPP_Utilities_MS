@@ -135,7 +135,7 @@ namespace utils::MS::window
 
 				if (!rect.contains(coords)) { return hit_type::hole; }
 
-				coords -= rect.top_left;
+				coords -= rect.top_left();
 
 				for (const auto& region_data : regions_data)
 					{
