@@ -22,6 +22,8 @@ static void body()
 	utils::MS::window::base window
 		{
 		utils::MS::window::base::create_info{},
+		// Simple module to close the window with [ESC]
+		close_module::create_info{},
 		// Add the style module to the window that allows for transparent, borderless, and borderless transparent windows:
 		utils::MS::window::style::create_info
 			{
@@ -34,7 +36,9 @@ static void body()
 			.thickness{8}
 			},
 		// Input will be explained in the next example, here it's used just to be able to close the window through right-click
-		utils::MS::window::input::mouse::create_info{}
+		utils::MS::window::input::mouse::create_info{},
+		// Simple module to close the window with [ESC]
+		close_module::create_info{}
 		};
 
 	// Now let's add some modules to the window at any time after window creation.

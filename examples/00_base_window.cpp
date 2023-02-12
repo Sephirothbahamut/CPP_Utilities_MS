@@ -23,7 +23,9 @@ static void body()
 		utils::MS::window::base::create_info
 			{
 			.title{L"Donald Fauntleroy Duck"}
-			}
+			},
+		// Ignore this, modules are explained in the next example
+		close_module::create_info{}
 		};
 
 	// needed to actually open the window

@@ -10,7 +10,11 @@
 
 namespace utils::MS::graphics::d2d::window
 	{
-
+	/// <summary>
+	/// Simplest version that works with window transparency. 
+	/// You have no control over devices usage so you cannot ensure that multiple windows share the same device. 
+	/// This means you cannot use the same resources across multiple windows created this way.
+	/// </summary>
 	class render_target : public utils::MS::window::module
 		{
 		// Getting a "modern" context from an "outdated" render_target is undocumented, but according to Paint.NET's creator it works
@@ -67,7 +71,12 @@ namespace utils::MS::graphics::d2d::window
 					case WM_PAINT:
 						if (on_render)
 							{
+							d2d_device_context->BeginDraw();
+
 							on_render(get_base(), d2d_device_context);
+
+							d2d_device_context->EndDraw();
+
 							ValidateRect(get_base().get_handle(), NULL);
 							return utils::MS::window::procedure_result::next(0);
 							}
@@ -83,7 +92,12 @@ namespace utils::MS::graphics::d2d::window
 				d2d_hwnd_rt->Resize({size.x, size.y});
 				}
 		};
-	
+
+	/// <summary>
+	/// Proper modern way to create a swapchain for directx drawing.
+	/// *HOWEVER* window transparency is not supported at all.
+	/// If you don't need transparency this is the cleanest solution.
+	/// </summary>
 	class swap_chain: public utils::MS::window::module
 		{
 		// This is the proper way, it doesn't work with transparentcy in the swapchain
@@ -142,10 +156,14 @@ namespace utils::MS::graphics::d2d::window
 					case WM_PAINT:
 						if (on_render)
 							{
-							on_render(get_base(), d2d_device_context);
-							dxgi_swapchain.present();
+							d2d_device_context->BeginDraw();
 
+							on_render(get_base(), d2d_device_context);
+
+							d2d_device_context->EndDraw();
+							dxgi_swapchain.present();
 							ValidateRect(get_base().get_handle(), NULL);
+
 							return utils::MS::window::procedure_result::next(0);
 							}
 						break;
@@ -169,6 +187,11 @@ namespace utils::MS::graphics::d2d::window
 				}
 		};
 
+	/// <summary>
+	/// Modern (I think) correct way to create a directx-drawable window that supports transparency through composition APIs.
+	/// Resizing with this transparency feels less "snappy" than the render_target alternative, 
+	/// but you have control over which devices are used which means you can share resources across multiple windows.
+	/// </summary>
 	class composition_swap_chain : public utils::MS::window::module
 		{
 		public:
@@ -178,8 +201,8 @@ namespace utils::MS::graphics::d2d::window
 				{
 				using module_type = composition_swap_chain;
 
-				const d2d ::device& d2d_device;
-				std ::function<on_draw_signature> on_render;
+				const d2d::device& d2d_device;
+				std::function<on_draw_signature> on_render;
 
 				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
@@ -192,24 +215,20 @@ namespace utils::MS::graphics::d2d::window
 				on_render{create_info.on_render},
 				d2d_device_context{create_info.d2d_device},
 				composition_device{create_info.d2d_device.get_dxgi_device()},
-				composition_surface{composition_device, get_base().get_handle()},
-
-				dxgi_swapchain{create_info.d2d_device.get_dxgi_device(), get_base().get_handle(), nullptr},
-				d2d_bitmap_target{d2d_device_context, dxgi_swapchain}
+				composition_visual{composition_device},
+				composition_target{composition_device, get_base().get_handle()},
+				dxgi_swapchain    {create_info.d2d_device.get_dxgi_device(), get_base().get_handle(), nullptr}
 				{
-				d2d_device_context->SetTarget(d2d_bitmap_target.get());
 				}
 
 			std::function<on_draw_signature> on_render;
 
 		private:
 			d2d::device_context d2d_device_context;
-
 			composition::device composition_device;
-			composition::surface composition_surface;
-
+			composition::visual composition_visual;
+			composition::target composition_target;
 			dxgi::swap_chain dxgi_swapchain;
-			d2d::bitmap d2d_bitmap_target;
 
 			virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
@@ -228,27 +247,18 @@ namespace utils::MS::graphics::d2d::window
 					case WM_PAINT:
 						if (on_render)
 							{
-							// If BeginDraw gives me a d2dDevice context...
-							POINT offset{}; //?
+							d2d::bitmap bitmap{d2d_device_context, dxgi_swapchain};
+							d2d_device_context->SetTarget(bitmap.get());
+							
+							d2d_device_context->BeginDraw();
 
-							auto comp_surf_interop{composition_surface.as<ABI::Windows::UI::Composition::ICompositionDrawingSurfaceInterop>()};
+							on_render(get_base(), d2d_device_context);
 
-							auto HR{comp_surf_interop->BeginDraw(nullptr, __uuidof(ID2D1DeviceContext5), reinterpret_cast<void**>(d2d_device_context.address_of()), &offset)};
-							if (SUCCEEDED(HR))
-								{
-								on_render(get_base(), d2d_device_context);
-								// ...what am I supposed to do with the swapchain?
-								//dxgi_swapchain.present();
-
-								details::throw_if_failed(composition_surface->EndDraw());
-
-								ValidateRect(get_base().get_handle(), NULL);
-								}
-							else
-								{
-								std::cout << details::hr_to_string(HR) << std::endl;
-								}
-							return utils::MS::window::procedure_result::next(0);
+							d2d_device_context->EndDraw();
+							dxgi_swapchain->Present(1, 0);
+							composition_visual->SetContent(dxgi_swapchain.get());
+							composition_target->SetRoot(composition_visual.get());
+							composition_device->Commit();
 							}
 						break;
 
@@ -259,7 +269,8 @@ namespace utils::MS::graphics::d2d::window
 
 			void on_resize(utils::math::vec2u size)
 				{
-				// So do I resize a swapchain or not?
+				d2d_device_context->SetTarget(nullptr);
+				dxgi_swapchain.resize(size);
 				}
 		};
 	}

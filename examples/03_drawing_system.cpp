@@ -27,23 +27,23 @@ static void body()
 	utils::MS::window::base window
 		{
 		utils::MS::window::base::create_info{.position{{1024, 768}}, .size{{256u, 128u}}},
+		close_module::create_info{},
 		utils::MS::window::style::create_info
 			{
 			.transparency{utils::MS::window::style::transparency_t::composition_attribute},
 			.borders{utils::MS::window::style::value_t::disable}
 			},
 		utils::MS::window::resizable_edge::create_info{},
-		utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
+		//utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
 		//utils::MS::graphics::d2d::window::swap_chain::create_info            //guarantees same device for multiple windows, no transparency
-		//utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both, unfinished, need help
+		utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both but I don't trust I've done it correctly at all lol
 			{
-			.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
-			//.d2d_device{d2d_device}, //decomment for the other 2
+			//.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
+			.d2d_device{d2d_device}, //decomment for the other 2
 			.on_render
 				{
 				[](utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
 					{
-					context->BeginDraw();
 					context->SetTransform(D2D1::IdentityMatrix());
 					context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});
 					
@@ -68,8 +68,6 @@ static void body()
 					context->FillRectangle(D2D1_RECT_F{.left{top_right   .ll}, .top{top_right   .up}, .right{top_right   .rr}, .bottom{top_right   .dw} }, brush_g.get());
 					//context->FillRectangle(D2D1_RECT_F{.left{bottom_left .ll}, .top{bottom_left .up}, .right{bottom_left .rr}, .bottom{bottom_left .dw} }, brush_b.get());
 					context->FillRectangle(D2D1_RECT_F{.left{bottom_right.ll}, .top{bottom_right.up}, .right{bottom_right.rr}, .bottom{bottom_right.dw} }, brush_y.get());
-					
-					context->EndDraw();
 					}
 				}
 			}

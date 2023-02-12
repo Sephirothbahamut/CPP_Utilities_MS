@@ -17,6 +17,7 @@ static void body()
 	utils::MS::window::base window
 		{
 		utils::MS::window::base::create_info{.size{{256u, 128u}}},
+		close_module::create_info{},
 		// Create a mouse window module. This will bridge between the OS's input and my input system
 		utils::MS::window::input::mouse::create_info{}
 		};

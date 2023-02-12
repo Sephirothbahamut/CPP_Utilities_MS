@@ -1,5 +1,7 @@
 #pragma once
 
+#include "close_module.h"
+
 namespace example
 	{
 	void base_window();

@@ -35,5 +35,8 @@
     <ClInclude Include="examples.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="close_module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

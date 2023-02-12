@@ -20,6 +20,7 @@
 #include <dwrite_3.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <windows.ui.composition.interop.h>
 
 #include <utils/memory.h>
 
@@ -95,6 +96,7 @@ namespace utils::MS::graphics
 				      pointer  get       ()       noexcept { return inner_t::Get(); }
 
 				utils::observer_ptr<pointer> address_of() noexcept { return Microsoft::WRL::ComPtr<T>::GetAddressOf(); }
+				auto thing_for_uuidof_functions() noexcept { return Microsoft::WRL::ComPtr<T>::operator&(); }
 
 				bool operator==(const com_ptr<T>& other) const noexcept = default;
 
@@ -165,51 +167,6 @@ namespace utils::MS::graphics
 			device(const d3d::device& d3d_device) : com_ptr{[&d3d_device]
 				{
 				return d3d_device.as<interface_type>();
-				}()} {}
-			};
-		}
-
-	namespace composition
-		{
-		struct device : details::com_ptr<IDCompositionDevice>
-			{
-			using com_ptr::com_ptr;
-			device(const dxgi::device& dxgi_device) : com_ptr{[&dxgi_device]
-				{
-				self_t ret{nullptr};
-				details::throw_if_failed(DCompositionCreateDevice(dxgi_device.get(), __uuidof(interface_type), reinterpret_cast<void**>(ret.address_of())));
-				return ret;
-				}()} {}
-			};
-		struct target : details::com_ptr<IDCompositionTarget>
-			{
-			using com_ptr::com_ptr;
-			target(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
-				{
-				self_t ret{nullptr};
-				details::throw_if_failed(composition_device->CreateTargetForHwnd(hwnd, TRUE, ret.address_of()));
-				return ret;
-				}()} {}
-			};
-		struct visual : details::com_ptr<IDCompositionVisual>
-			{
-			using com_ptr::com_ptr;
-			visual(const composition::device& composition_device) : com_ptr{[&composition_device]
-				{
-				self_t ret{nullptr};
-				details::throw_if_failed(composition_device->CreateVisual(ret.address_of()));
-				return ret;
-				}()} {}	
-			};
-
-		struct surface : details::com_ptr<IDCompositionSurface>
-			{
-			using com_ptr::com_ptr;
-			surface(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
-				{
-				self_t ret{nullptr};
-				details::throw_if_failed(composition_device->CreateSurface(128, 128, DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, ret.address_of()));
-				return ret;
 				}()} {}
 			};
 		}
@@ -325,7 +282,7 @@ namespace utils::MS::graphics
 						.Scaling     {DXGI_SCALING_STRETCH},
 						.SwapEffect  {DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL},
 						.AlphaMode   {DXGI_ALPHA_MODE_PREMULTIPLIED},
-						.Flags       {DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER},
+						.Flags       {0}//DXGI_SWAP_CHAIN_FLAG_FOREGROUND_LAYER},
 						};
 					DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc_fullscreen
 						{
@@ -345,7 +302,7 @@ namespace utils::MS::graphics
 
 	namespace dw
 		{
-		struct factory : details::com_ptr<IDWriteFactory2>
+		struct factory : details::com_ptr<IDWriteFactory7>
 			{
 			using com_ptr::com_ptr;
 			factory() : com_ptr{[]
@@ -364,50 +321,84 @@ namespace utils::MS::graphics
 		class text_format : public details::com_ptr<IDWriteTextFormat>
 			{
 			public:
+				enum class alignment_ver { top, center, bottom };
+				enum class alignment_hor { left, center, justified, right };
+
+				struct create_info
+					{
+					std::wstring name;
+					float size{16.f};
+					DWRITE_FONT_WEIGHT  weight {DWRITE_FONT_WEIGHT_NORMAL };
+					DWRITE_FONT_STYLE   style  {DWRITE_FONT_STYLE_NORMAL  };
+					DWRITE_FONT_STRETCH stretch{DWRITE_FONT_STRETCH_NORMAL};
+					alignment_hor alignment_hor{alignment_hor::left};
+					alignment_ver alignment_ver{alignment_ver::top};
+					std::wstring locale{L"en-gb"};
+					};
+
 				using com_ptr::com_ptr;
-				enum class alignment_ver { top , center, bottom };
-				enum class alignment_hor { left, center, justified, right  };
 	
-				text_format(dw::factory& dw_factory) : com_ptr{create(dw_factory)} {}
-	
-				void set_alignment_hor(alignment_hor alignment)
-					{
-					switch (alignment)
-						{
-						case dw::text_format::alignment_hor::left     : get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING  ); break;
-						case dw::text_format::alignment_hor::center   : get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER   ); break;
-						case dw::text_format::alignment_hor::justified: get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_JUSTIFIED); break;
-						case dw::text_format::alignment_hor::right    : get()->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING ); break;
-						}
-					}
-				void set_alignment_ver(alignment_ver alignment)
-					{
-					switch (alignment)
-						{
-						case dw::text_format::alignment_ver::top      : get()->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR  ); break;
-						case dw::text_format::alignment_ver::center   : get()->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER); break;
-						case dw::text_format::alignment_ver::bottom   : get()->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR   ); break;
-						}
-					}
+				text_format(dw::factory& dw_factory, const create_info& create_info) : com_ptr{create(dw_factory, create_info)} {}
 	
 			private:
-				inline static self_t create(dw::factory& dw_factory)
+				inline static self_t create(dw::factory& dw_factory, const create_info& create_info)
 					{
-					static const WCHAR sc_fontName[] = L"Calibri";
-					static const FLOAT sc_fontSize = 50;
-	
 					self_t ret{nullptr};
 					details::throw_if_failed(dw_factory->CreateTextFormat
 						(
-						sc_fontName,
+						create_info.name.c_str(),
 						nullptr,
-						DWRITE_FONT_WEIGHT_NORMAL,
-						DWRITE_FONT_STYLE_NORMAL,
-						DWRITE_FONT_STRETCH_NORMAL,
-						sc_fontSize,
+						create_info.weight,
+						create_info.style,
+						create_info.stretch,
+						create_info.size,
 						L"", //locale
 						ret.address_of()
 						));
+					
+					switch (create_info.alignment_hor)
+						{
+						case alignment_hor::left     : ret->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_LEADING  ); break;
+						case alignment_hor::center   : ret->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_CENTER   ); break;
+						case alignment_hor::justified: ret->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_JUSTIFIED); break;
+						case alignment_hor::right    : ret->SetTextAlignment(DWRITE_TEXT_ALIGNMENT::DWRITE_TEXT_ALIGNMENT_TRAILING ); break;
+						}
+					
+					switch (create_info.alignment_ver)
+						{
+						case alignment_ver::top      : ret->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_NEAR  ); break;
+						case alignment_ver::center   : ret->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_CENTER); break;
+						case alignment_ver::bottom   : ret->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT::DWRITE_PARAGRAPH_ALIGNMENT_FAR   ); break;
+						}
+
+					return ret;
+					}
+			};
+		
+		class text_layout : public details::com_ptr<IDWriteTextLayout>
+			{
+			public:
+				enum class alignment_ver { top, center, bottom };
+				enum class alignment_hor { left, center, justified, right };
+
+				using com_ptr::com_ptr;
+	
+				text_layout(dw::factory& dw_factory, const std::wstring& string, const text_format& format, utils::math::vec2f box_size) : com_ptr{create(dw_factory, string, format, box_size)} {}
+	
+			private:
+				inline static self_t create(dw::factory& dw_factory, const std::wstring& string, const text_format& format, utils::math::vec2f box_size)
+					{
+					self_t ret{nullptr};
+					details::throw_if_failed(dw_factory->CreateTextLayout
+						(
+						string.c_str(), // The string to be laid out and formatted.
+						string.size (), // The length of the string.
+						format.get  (), // The text format to apply to the string (contains font information, etc).
+						box_size.x,     // The width of the layout box.
+						box_size.y,     // The height of the layout box.
+						ret.address_of()
+						));
+					
 					return ret;
 					}
 			};
@@ -575,9 +566,6 @@ namespace utils::MS::graphics
 			private:
 				inline static self_t create(const d2d::device_context& d2d_device_context, const dxgi::swap_chain& dxgi_swapchain)
 					{
-					//details::com_ptr<ID3D11Texture2D> d3d_texture_back_buffer;
-					//details::throw_if_failed(dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(d3d_texture_back_buffer.address_of())));
-
 					details::com_ptr<IDXGISurface2> dxgi_back_buffer;
 					details::throw_if_failed(dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(dxgi_back_buffer.address_of())));
 
@@ -624,6 +612,27 @@ namespace utils::MS::graphics
 				//	details::throw_if_failed(d2d_device_context->CreateBitmapFromWicBitmap(wic_bitmap.get(), &ret));
 				//	return ret;
 				//	}
+			};
+
+
+		class solid_brush : public details::com_ptr<ID2D1SolidColorBrush>
+			{
+			public:
+				using com_ptr::com_ptr;
+				solid_brush(const d2d::device_context& d2d_device_context, utils::graphics::colour::rgba_f rgba_f) : com_ptr{create(d2d_device_context, rgba_f)} {}
+
+			private:
+				inline static self_t create(const d2d::device_context& d2d_device_context, utils::graphics::colour::rgba_f rgba_f)
+					{
+					self_t ret{nullptr};
+					details::throw_if_failed(d2d_device_context->CreateSolidColorBrush
+						(
+						D2D1::ColorF{rgba_f.r, rgba_f.g, rgba_f.b, rgba_f.a},
+						D2D1_BRUSH_PROPERTIES{.opacity{1}},
+						ret.address_of()
+						));
+					return ret;
+					}
 			};
 		}
 
@@ -692,4 +701,73 @@ namespace utils::MS::graphics
 			details::throw_if_failed(stream->Commit(STGC_DEFAULT));
 			}
 		}
+
+	namespace composition
+		{
+		struct device : details::com_ptr<IDCompositionDevice>
+			{
+			using com_ptr::com_ptr;
+			device(const dxgi::device& dxgi_device) : com_ptr{[&dxgi_device]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(DCompositionCreateDevice(dxgi_device.get(), __uuidof(interface_type), ret.thing_for_uuidof_functions()));
+				return ret;
+				}()} {}
+			};
+		struct target : details::com_ptr<IDCompositionTarget>
+			{
+			using com_ptr::com_ptr;
+			target(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(composition_device->CreateTargetForHwnd(hwnd, TRUE, ret.address_of()));
+				return ret;
+				}()} {}
+			};
+		struct visual : details::com_ptr<IDCompositionVisual>
+			{
+			using com_ptr::com_ptr;
+			visual(const composition::device& composition_device) : com_ptr{[&composition_device]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed(composition_device->CreateVisual(ret.address_of()));
+				return ret;
+				}()} {}
+			};
+		/*struct surface : details::com_ptr<ABI::Windows::UI::Composition::ICompositionDrawingSurface>
+			{
+			using com_ptr::com_ptr;
+			surface(const composition::device& composition_device, HWND hwnd) : com_ptr{[&composition_device, &hwnd]
+				{
+				self_t ret{nullptr};
+				details::throw_if_failed
+					(
+					composition_device->CreateDrawingSurface
+						(
+						{128, 128},
+						ABI::Windows::Graphics::DirectX::DirectXPixelFormat::DirectXPixelFormat_B8G8R8A8UIntNormalized,
+						ABI::Windows::Graphics::DirectX::DirectXAlphaMode_Premultiplied,
+						ret.address_of()
+						)
+					);
+					//DXGI_FORMAT_B8G8R8A8_UNORM, DXGI_ALPHA_MODE_PREMULTIPLIED, ret.address_of()));
+				return ret;
+				}()} {}
+			};
+		struct surface_interop : details::com_ptr<ABI::Windows::UI::Composition::ICompositionDrawingSurfaceInterop>
+			{
+			using com_ptr::com_ptr;
+			surface_interop(const composition::surface& composition_surface) : com_ptr{[&composition_surface] {return composition_surface.as<self_t>(); }()} {}
+
+			d2d::device_context begin_draw()
+				{
+				details::com_ptr<ID2D1DeviceContext> ret;
+
+				POINT offset; // ?
+				operator->()->BeginDraw(nullptr, __uuidof(ID2D1DeviceContext), ret.thing_for_uuidof_functions(), &offset);
+				return {ret.as<d2d::device_context>()};
+				}
+			};*/
+		}
+
 	}
