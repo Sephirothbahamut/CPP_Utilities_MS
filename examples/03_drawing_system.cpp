@@ -40,9 +40,9 @@ static void body()
 			{
 			//.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
 			.d2d_device{d2d_device}, //decomment for the other 2
-			.on_render
+			.draw_callback
 				{
-				[](utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
+				[](const utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
 					{
 					context->SetTransform(D2D1::IdentityMatrix());
 					context->Clear(D2D1_COLOR_F{0.f, 0.f, 0.f, 0.f});

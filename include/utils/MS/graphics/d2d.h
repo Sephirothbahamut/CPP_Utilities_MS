@@ -191,7 +191,7 @@ namespace utils::MS::graphics
 					else { details::throw_if_failed(hresult); }
 					}
 
-				void present()
+				void present() const
 					{
 					HRESULT hresult{get()->Present(1, 0)};
 					if (hresult == DXGI_ERROR_DEVICE_REMOVED || hresult == DXGI_ERROR_DEVICE_RESET)
