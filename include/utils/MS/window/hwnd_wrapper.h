@@ -14,6 +14,7 @@
 #include <utils/containers/object_pool.h>
 
 #include "../windows.h"
+#include "../cast.h"
 
 #include "../error_to_exception.h"
 #include "details/style.h"
@@ -21,18 +22,6 @@
 namespace utils::MS::window
 	{
 	using rect_t = utils::math::rect<long>;
-
-	namespace details
-		{
-		inline rect_t win32_RECT_to_rect_t(const RECT& rect)
-			{
-			return {.ll{rect.left}, .up{rect.top}, .rr{rect.right}, .dw{rect.bottom}};
-			}
-		inline RECT rect_t_to_win32_RECT(const rect_t& rect)
-			{
-			return {.left{rect.ll}, .top{rect.up}, .right{rect.rr}, .bottom{rect.dw}};
-			}
-		}
 
 	/// <summary>
 	/// Wraps existing HWND windows. Used to get properties of the windows with my own interface, wrapping raw Win32 API calls and types.
@@ -81,11 +70,11 @@ namespace utils::MS::window
 				if (DwmGetWindowAttribute(get_handle(), DWMWA_EXTENDED_FRAME_BOUNDS, &rect_win32, sizeof(RECT)) == S_OK) 
 					{
 					//Equivalent to using unpack_window_size on GetWindowRect
-					return details::win32_RECT_to_rect_t(rect_win32);
+					return cast(rect_win32);
 					}
 				else if (GetWindowRect(get_handle(), &rect_win32))
 					{
-					return details::win32_RECT_to_rect_t(rect_win32);
+					return cast(rect_win32);
 					}
 				else
 					{
@@ -106,11 +95,11 @@ namespace utils::MS::window
 				{
 				RECT rect;
 				GetClientRect(handle, &rect);//TODO error case
-				return details::win32_RECT_to_rect_t(rect);
+				return cast(rect);
 				}
 			void set_client_rect(rect_t rect) noexcept
 				{
-				RECT rectangle{details::rect_t_to_win32_RECT(rect)};
+				RECT rectangle{cast(rect)};
 				
 				// Updates the rect to take into account border/title bar if present
 				AdjustWindowRectEx(&rectangle, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_STYLE)), false, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_EXSTYLE)));

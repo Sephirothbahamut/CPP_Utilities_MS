@@ -614,6 +614,7 @@ namespace utils::MS::graphics
 				//	}
 			};
 
+		using brush = details::com_ptr<ID2D1Brush>;
 
 		class solid_brush : public details::com_ptr<ID2D1SolidColorBrush>
 			{

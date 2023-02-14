@@ -149,6 +149,7 @@
     <ClInclude Include="include\utils\MS\error_to_exception.h" />
     <ClInclude Include="include\utils\MS\graphics\d2d.h" />
     <ClInclude Include="include\utils\MS\graphics\d2d\window.h" />
+    <ClInclude Include="include\utils\MS\cast.h" />
     <ClInclude Include="include\utils\MS\windows.h" />
     <ClInclude Include="include\utils\MS\window\details\DWM.h" />
     <ClInclude Include="include\utils\MS\window\details\style.h" />

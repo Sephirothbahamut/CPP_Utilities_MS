@@ -51,7 +51,11 @@ namespace utils::MS::graphics::d2d::window
 						case WM_ERASEBKGND: return utils::MS::window::procedure_result::stop(1);
 
 						case WM_PAINT:
-							if (draw()) { return utils::MS::window::procedure_result::next(0); }
+							if (draw()) 
+								{
+								ValidateRect(get_base().get_handle(), nullptr);
+								return utils::MS::window::procedure_result::next(0); 
+								}
 							break;
 						}
 	
@@ -149,6 +153,7 @@ namespace utils::MS::graphics::d2d::window
 				d2d_device_context->SetTarget(d2d_bitmap_target.get());
 				}
 
+			bool draw() const noexcept { details::base<swap_chain>::draw(); }
 			bool draw(std::function<draw_callback_signature> draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }

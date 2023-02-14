@@ -95,5 +95,8 @@
     <ClInclude Include="include\utils\MS\graphics\d2d.h">
       <Filter>Headers\MS\graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\utils\MS\cast.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
