@@ -90,6 +90,37 @@ namespace utils::input
 			};
 		}
 
+	class input_event
+		{
+		public:
+			using state_t                = void;
+			using callback_signature     = void();
+			using callback               = std::function<callback_signature>;
+			using callbacks_container    = utils::containers::object_pool<callback>;
+			using callback_handle_raw    = callbacks_container::handle_raw   ;
+			using callback_handle_unique = callbacks_container::handle_unique;
+			using callback_handle_shared = callbacks_container::handle_shared;
+
+			callbacks_container on_trigger;
+			void trigger() noexcept
+				{
+				for (auto& action : on_trigger)
+					{
+					action();
+					}
+				}
+
+		protected:
+			void trigger(const callback_handle_raw& exclude) noexcept
+				{
+				for (auto& action : on_trigger)
+					{
+					if (&action == exclude.get()) { continue; }
+					action();
+					}
+				}
+		};
+
 	template <typename state_T>
 	class input_1d : public details::input_base<state_T>
 		{

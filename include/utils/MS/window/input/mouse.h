@@ -44,7 +44,19 @@ namespace utils::MS::window::input
 			utils::input::mouse default_mouse;
 
 		private:
-
+			void capture() const noexcept { SetCapture(get_base().get_handle()); }
+			void release() const noexcept { ReleaseCapture(); }
+			void prepare_mouseleave() const noexcept
+				{
+				TRACKMOUSEEVENT tme
+					{
+					.cbSize   {sizeof(TRACKMOUSEEVENT)},
+					.dwFlags  {TME_LEAVE},
+					.hwndTrack{get_base().get_handle()}
+					};
+				TrackMouseEvent(&tme);
+				}
+			
 			utils::math::vec2l eval_vec2(LPARAM lparam) const noexcept
 				{
 				return {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
@@ -58,16 +70,17 @@ namespace utils::MS::window::input
 				{
 				switch (msg)
 					{
-					case WM_MOUSEMOVE  : default_mouse.position                                       .change_state(eval_vec2(lparam)); return procedure_result::next(0);
-					case WM_LBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return procedure_result::next(0);
-					case WM_LBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return procedure_result::next(0);
-					case WM_RBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return procedure_result::next(0);
-					case WM_RBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return procedure_result::next(0);
-					case WM_MBUTTONDOWN: default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return procedure_result::next(0);
-					case WM_MBUTTONUP  : default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return procedure_result::next(0);
-					case WM_XBUTTONDOWN: default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return procedure_result::next(0);
-					case WM_XBUTTONUP  : default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return procedure_result::next(0);
-					case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
+					case WM_MOUSEMOVE  : prepare_mouseleave(); default_mouse.position                            .change_state(eval_vec2(lparam)); return procedure_result::next(0);
+					case WM_LBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return procedure_result::next(0);
+					case WM_LBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return procedure_result::next(0);
+					case WM_RBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return procedure_result::next(0);
+					case WM_RBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return procedure_result::next(0);
+					case WM_MBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return procedure_result::next(0);
+					case WM_MBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return procedure_result::next(0);
+					case WM_XBUTTONDOWN: capture(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return procedure_result::next(0);
+					case WM_XBUTTONUP  : release(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return procedure_result::next(0);
+					case WM_MOUSELEAVE :            default_mouse.leave                                          .trigger     (                 ); return procedure_result::next(0);
+					//case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
 					}
 				
 				return procedure_result::next();

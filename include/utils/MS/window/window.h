@@ -133,6 +133,7 @@ namespace utils::MS::window
 					{
 					module->base_ptr = this;
 					}
+				return *this;
 				}
 
 			inline ~base() noexcept { destroy_window_if_exists(); }

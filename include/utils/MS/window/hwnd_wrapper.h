@@ -31,7 +31,7 @@ namespace utils::MS::window
 		public:
 			hwnd_wrapper(HWND handle = nullptr) : handle{handle} {}
 			hwnd_wrapper(hwnd_wrapper&& move) noexcept : handle{handle} { move.handle = nullptr; }
-			hwnd_wrapper& operator=(hwnd_wrapper&& move) noexcept { handle = move.handle; move.handle = nullptr; }
+			hwnd_wrapper& operator=(hwnd_wrapper&& move) noexcept { handle = move.handle; move.handle = nullptr; return *this; }
 			hwnd_wrapper(const hwnd_wrapper& copy) noexcept = default;
 			hwnd_wrapper& operator=(const hwnd_wrapper& copy) noexcept = default;
 
@@ -45,6 +45,7 @@ namespace utils::MS::window
 			inline void close   () noexcept { ::DestroyWindow(get_handle()); handle = nullptr;}
 			inline void minimize() noexcept { ::ShowWindow(get_handle(), SW_MINIMIZE); }
 			inline void maximize() noexcept { ::ShowWindow(get_handle(), SW_MAXIMIZE); }
+			inline void restore () noexcept { ::ShowWindow(get_handle(), SW_RESTORE ); }
 
 			inline bool is_visible() const noexcept
 				{

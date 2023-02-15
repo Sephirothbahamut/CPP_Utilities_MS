@@ -64,6 +64,8 @@ namespace utils::MS::window
 
 				if (!rect.contains(coords)) { return std::nullopt; }
 
+				if (get_base().is_maximized()) { return std::nullopt; }
+
 				if (thickness)
 					{
 					const bool hit_result_left {coords.x <= rect.ll + thickness};
