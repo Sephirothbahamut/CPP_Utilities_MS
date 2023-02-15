@@ -471,7 +471,8 @@ namespace utils::MS::graphics
 
 				details::throw_if_failed(D2D1CreateFactory
 					(
-					D2D1_FACTORY_TYPE_SINGLE_THREADED,
+					//D2D1_FACTORY_TYPE_SINGLE_THREADED,
+					D2D1_FACTORY_TYPE_MULTI_THREADED,
 					options,
 					ret.address_of()
 					));
