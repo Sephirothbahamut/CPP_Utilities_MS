@@ -55,6 +55,8 @@ namespace utils::MS::window
 		{
 		friend class base;
 		public:
+			virtual ~module() {};
+
 			const base& get_base() const noexcept { return *base_ptr; }
 			      base& get_base()       noexcept { return *base_ptr; }
 
@@ -85,7 +87,7 @@ namespace utils::MS::window
 
 	class base : public hwnd_wrapper, utils::oop::non_copyable
 		{
-		friend class initializer;
+		friend struct initializer;
 
 		using modules_container_t = std::vector<std::unique_ptr<module>>;
 

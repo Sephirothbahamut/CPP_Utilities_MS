@@ -127,7 +127,7 @@ namespace utils::input
 		template <typename state_T, typename inner_T>
 		friend class input_1d_delta;
 		template <typename inner_T>
-		friend struct input_2d;
+		friend class input_2d;
 
 		public:
 			using typename details::input_base<state_T>::state_t               ;
@@ -238,7 +238,7 @@ namespace utils::input
 					}
 				{}
 
-			const state_t& get_state() const noexcept { return {x.get_state(), y.get_state()}; }
+			const state_t get_state() const noexcept { return {x.get_state(), y.get_state()}; }
 
 			/// <summary> Does not trigger callbacks </summary>
 			void set_state(const state_t& new_state) noexcept

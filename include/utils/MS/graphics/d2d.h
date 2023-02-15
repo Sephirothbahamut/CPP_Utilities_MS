@@ -64,7 +64,7 @@ namespace utils::MS::graphics
 			}
 
 		template <typename T>
-		class com_ptr : protected Microsoft::WRL::ComPtr<T>
+		class com_ptr : public Microsoft::WRL::ComPtr<T>
 			{
 			template <typename other_T>
 			friend class com_ptr;
@@ -392,7 +392,7 @@ namespace utils::MS::graphics
 					details::throw_if_failed(dw_factory->CreateTextLayout
 						(
 						string.c_str(), // The string to be laid out and formatted.
-						string.size (), // The length of the string.
+						static_cast<uint32_t>(string.size()), // The length of the string.
 						format.get  (), // The text format to apply to the string (contains font information, etc).
 						box_size.x,     // The width of the layout box.
 						box_size.y,     // The height of the layout box.

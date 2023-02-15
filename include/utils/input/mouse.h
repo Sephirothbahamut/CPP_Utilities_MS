@@ -38,7 +38,7 @@ namespace utils::input
 
 		class debug_callbacks_handles
 			{
-			friend class mouse;
+			friend struct mouse;
 			public:
 				void unregister() noexcept { buttons.reset(); axes.reset(); position.reset(); }
 
