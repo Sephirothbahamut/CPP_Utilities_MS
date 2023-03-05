@@ -772,4 +772,18 @@ namespace utils::MS::graphics
 			};*/
 		}
 
+	struct initializer
+		{
+		utils::MS::graphics::co::initializer co_initializer;
+		utils::MS::graphics::d2d::factory    d2d_factory   ;
+		utils::MS::graphics::d3d ::device    d3d_device    ;
+		utils::MS::graphics::dxgi::device    dxgi_device   {d3d_device};
+		utils::MS::graphics::d2d ::device    d2d_device    {d2d_factory, dxgi_device};
+
+		operator utils::MS::graphics::co::initializer() const noexcept { return co_initializer; }
+		operator utils::MS::graphics::d2d::factory   () const noexcept { return d2d_factory   ; }
+		operator utils::MS::graphics::d3d ::device   () const noexcept { return d3d_device    ; }
+		operator utils::MS::graphics::dxgi::device   () const noexcept { return dxgi_device   ; }
+		operator utils::MS::graphics::d2d ::device   () const noexcept { return d2d_device    ; }
+		};
 	}

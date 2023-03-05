@@ -30,11 +30,18 @@ namespace utils::MS::graphics::d2d::window
 
 				std::function<draw_callback_signature> draw_callback;
 
-				bool draw(std::function<draw_callback_signature> draw_callback) const noexcept {};
 				bool draw() const noexcept { return derived().draw(draw_callback); }
+
+				// Note: kept for reference reasons.
+				// there should be no benefit/no difference between doing this and calling directly draw, assuming no other module deals with WM_PAINT
+				void send_redraw_event() noexcept
+					{
+					RedrawWindow(get_base().get_handle(), NULL, NULL, RDW_INVALIDATE | RDW_INTERNALPAINT);
+					}
 
 			protected:
 				void on_resize(utils::math::vec2u size) noexcept {}
+
 
 				virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 					{
@@ -42,6 +49,7 @@ namespace utils::MS::graphics::d2d::window
 						{
 						case WM_SIZE:
 							derived().on_resize({LOWORD(lparam), HIWORD(lparam)});
+							draw();
 							return utils::MS::window::procedure_result::next(0);
 	
 						case WM_DISPLAYCHANGE:
@@ -98,6 +106,7 @@ namespace utils::MS::graphics::d2d::window
 				{
 				}
 
+			bool draw() const noexcept { details::base<render_target>::draw(); }
 			bool draw(std::function<draw_callback_signature> draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }
@@ -215,6 +224,7 @@ namespace utils::MS::graphics::d2d::window
 				dxgi_swapchain    {create_info.d2d_device.get_dxgi_device(), get_base().get_handle(), nullptr}
 				{}
 
+			bool draw() const noexcept { return details::base<composition_swap_chain>::draw(); }
 			bool draw(std::function<draw_callback_signature> draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }

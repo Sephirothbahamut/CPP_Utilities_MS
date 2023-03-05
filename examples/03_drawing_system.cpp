@@ -15,12 +15,7 @@ static void body()
 	{
 	using namespace utils::output;
 
-	utils::MS::graphics::co::initializer co_initializer;
-	utils::MS::graphics::d2d::factory d2d_factory;
-
-	utils::MS::graphics::d3d::device d3d_device;
-	utils::MS::graphics::dxgi::device dxgi_device{d3d_device};
-	utils::MS::graphics::d2d::device d2d_device{d2d_factory, dxgi_device};
+	utils::MS::graphics::initializer graphics;
 
 	utils::MS::window::initializer window_initializer;
 
@@ -38,8 +33,8 @@ static void body()
 		//utils::MS::graphics::d2d::window::swap_chain::create_info            //guarantees same device for multiple windows, no transparency
 		utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both but I don't trust I've done it correctly at all lol
 			{
-			//.d2d_factory{d2d_factory}, //decomment for render_target, since it doesn't take a device
-			.d2d_device{d2d_device}, //decomment for the other 2
+			//.d2d_factory{graphics}, //decomment for render_target, since it doesn't take a device
+			.d2d_device{graphics}, //decomment for the other 2
 			.draw_callback
 				{
 				[](const utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
