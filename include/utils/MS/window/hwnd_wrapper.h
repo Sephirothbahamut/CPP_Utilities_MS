@@ -9,7 +9,7 @@
 #include <utils/math/vec2.h>
 #include <utils/memory.h>
 #include <utils/math/vec2.h>
-#include <utils/math/geometry/aabb.h>
+#include <utils/math/rect.h>
 #include <utils/oop/disable_move_copy.h>
 #include <utils/containers/object_pool.h>
 

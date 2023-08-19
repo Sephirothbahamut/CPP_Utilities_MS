@@ -39,8 +39,8 @@ namespace utils::MS::graphics
 		{
 		inline constexpr bool enable_debug_layer = utils::compilation::debug;
 
-		bool succeeded(HRESULT result) { return SUCCEEDED(result); }
-		bool failed   (HRESULT result) { return FAILED   (result); }
+		inline bool succeeded(HRESULT result) { return SUCCEEDED(result); }
+		inline bool failed   (HRESULT result) { return FAILED   (result); }
 
 		inline std::string hr_to_string(HRESULT hr) noexcept { std::stringstream ss; ss << std::hex << hr; return ss.str(); }
 
@@ -164,7 +164,7 @@ namespace utils::MS::graphics
 		struct device : details::com_ptr<IDXGIDevice3>
 			{
 			using com_ptr::com_ptr;
-			device(const d3d::device& d3d_device) : com_ptr{[&d3d_device]
+			inline device(const d3d::device& d3d_device) : com_ptr{[&d3d_device]
 				{
 				return d3d_device.as<interface_type>();
 				}()} {}
@@ -176,10 +176,10 @@ namespace utils::MS::graphics
 		class swap_chain : public details::com_ptr<IDXGISwapChain1>
 			{
 			public:
-				swap_chain(const dxgi::device& dxgi_device, HWND hwnd) : com_ptr{create(dxgi_device, hwnd)} {}
+				inline swap_chain(const dxgi::device& dxgi_device, HWND hwnd) : com_ptr{create(dxgi_device, hwnd)} {}
 
 				//temporary flag for testing purposes
-				swap_chain(const dxgi::device& dxgi_device, HWND hwnd, nullptr_t) : com_ptr{create_composition(dxgi_device, hwnd)} {}
+				inline swap_chain(const dxgi::device& dxgi_device, HWND hwnd, nullptr_t) : com_ptr{create_composition(dxgi_device, hwnd)} {}
 
 				void resize(utils::math::vec2u size)
 					{
@@ -305,7 +305,7 @@ namespace utils::MS::graphics
 		struct factory : details::com_ptr<IDWriteFactory7>
 			{
 			using com_ptr::com_ptr;
-			factory() : com_ptr{[]
+			inline factory() : com_ptr{[]
 				{
 				self_t ret{nullptr};
 				details::throw_if_failed(DWriteCreateFactory
@@ -338,7 +338,7 @@ namespace utils::MS::graphics
 
 				using com_ptr::com_ptr;
 	
-				text_format(dw::factory& dw_factory, const create_info& create_info) : com_ptr{create(dw_factory, create_info)} {}
+				inline text_format(dw::factory& dw_factory, const create_info& create_info) : com_ptr{create(dw_factory, create_info)} {}
 	
 			private:
 				inline static self_t create(dw::factory& dw_factory, const create_info& create_info)
@@ -383,8 +383,15 @@ namespace utils::MS::graphics
 
 				using com_ptr::com_ptr;
 	
-				text_layout(dw::factory& dw_factory, const std::wstring& string, const text_format& format, utils::math::vec2f box_size) : com_ptr{create(dw_factory, string, format, box_size)} {}
-	
+				inline text_layout(dw::factory& dw_factory, const std::wstring& string, const text_format& format, utils::math::vec2f box_size) : com_ptr{create(dw_factory, string, format, box_size)} {}
+				
+				inline utils::math::vec2f get_size() const noexcept
+					{
+					DWRITE_TEXT_METRICS metrics;
+					details::throw_if_failed((*this)->GetMetrics(&metrics));
+					return {metrics.width, metrics.height};
+					}
+
 			private:
 				inline static self_t create(dw::factory& dw_factory, const std::wstring& string, const text_format& format, utils::math::vec2f box_size)
 					{
@@ -409,7 +416,7 @@ namespace utils::MS::graphics
 		struct imaging_factory : details::com_ptr<IWICImagingFactory2>
 			{
 			using com_ptr::com_ptr;
-			imaging_factory() : com_ptr{[]
+			inline imaging_factory() : com_ptr{[]
 				{
 				self_t ret{nullptr};
 				details::throw_if_failed(CoCreateInstance
@@ -427,7 +434,7 @@ namespace utils::MS::graphics
 			{
 			public:
 				using com_ptr::com_ptr;
-				bitmap(const wic::imaging_factory& wic_imaging_factory, utils::math::vec2u size) : com_ptr{create(wic_imaging_factory, size)} {}
+				inline bitmap(const wic::imaging_factory& wic_imaging_factory, utils::math::vec2u size) : com_ptr{create(wic_imaging_factory, size)} {}
 	
 			private:
 				inline static self_t create(const wic::imaging_factory& wic_imaging_factory, utils::math::vec2u size)
@@ -442,7 +449,7 @@ namespace utils::MS::graphics
 			{
 			public:
 				using com_ptr::com_ptr;
-				stream(const wic::imaging_factory& wic_imaging_factory, const std::filesystem::path& path) : com_ptr{create(wic_imaging_factory, path)} {}
+				inline stream(const wic::imaging_factory& wic_imaging_factory, const std::filesystem::path& path) : com_ptr{create(wic_imaging_factory, path)} {}
 	
 			private:
 				inline static self_t create(const wic::imaging_factory& wic_imaging_factory, const std::filesystem::path& path)
@@ -509,7 +516,16 @@ namespace utils::MS::graphics
 				render_target(const factory& factory, const wic::bitmap& bitmap) : com_ptr{[&factory, &bitmap]
 					{
 					self_t ret{nullptr};
-					details::throw_if_failed(factory->CreateWicBitmapRenderTarget(bitmap.get(), D2D1::RenderTargetProperties(), ret.address_of()));
+
+					WICPixelFormatGUID pixel_format;
+					details::throw_if_failed(bitmap->GetPixelFormat(&pixel_format));
+
+					details::throw_if_failed(factory->CreateWicBitmapRenderTarget
+						(
+						bitmap.get(),
+						D2D1_RENDER_TARGET_PROPERTIES{},
+						ret.address_of()
+						));
 					return ret;
 					}()} {}
 			};
@@ -685,7 +701,7 @@ namespace utils::MS::graphics
 					}
 			};
 
-		void save_to_file(const wic::imaging_factory& wic_factory, const d2d::device& d2d_device, const d2d::bitmap& d2d_bitmap, const std::filesystem::path& path)
+		inline void save_to_file(const wic::imaging_factory& wic_factory, const d2d::device& d2d_device, const details::com_ptr<ID2D1Bitmap1>& d2d_bitmap, const std::filesystem::path& path)
 			{// https://github.com/uri247/Win81App/blob/master/Direct2D%20save%20to%20image%20file%20sample/C%2B%2B/SaveAsImageFileSample.cpp
 
 			wic::stream stream{wic_factory, path};

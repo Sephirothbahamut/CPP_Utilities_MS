@@ -116,9 +116,10 @@ namespace utils::MS::graphics::d2d::window
 				return true;
 				}
 
+			d2d::device_context d2d_device_context;
+
 		private:
 			d2d::hwnd_render_target d2d_hwnd_rt;
-			d2d::device_context d2d_device_context;
 
 			void on_resize(utils::math::vec2u size) noexcept 
 				{
@@ -173,8 +174,9 @@ namespace utils::MS::graphics::d2d::window
 				return true;
 				}
 
-		private:
 			d2d::device_context d2d_device_context;
+
+		private:
 			dxgi::swap_chain dxgi_swapchain;
 			d2d::bitmap d2d_bitmap_target;
 
@@ -245,8 +247,9 @@ namespace utils::MS::graphics::d2d::window
 				return true;
 				}
 
-		private:
 			d2d::device_context d2d_device_context;
+
+		private:
 			composition::device composition_device;
 			composition::visual composition_visual;
 			composition::target composition_target;

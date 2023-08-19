@@ -1,7 +1,7 @@
 #pragma once
 
 #include <utils/math/vec2.h>
-#include <utils/math/geometry/aabb.h>
+#include <utils/math/rect.h>
 
 #include <utils/MS/window/window.h>
 

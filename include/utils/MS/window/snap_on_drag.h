@@ -97,7 +97,7 @@ namespace utils::MS::window
 			std::optional<rect_t> evaluate_move()
 				{
 				utils::math::rect<long> closest;
-				utils::math::rect<long> distance{-1, -1, -1, -1};
+				utils::math::rect<long> distance{.ll{-1}, .up{-1}, .rr{-1}, .dw{-1}};
 
 				for (const auto& rect : rects)
 					{

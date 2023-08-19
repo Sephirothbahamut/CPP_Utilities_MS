@@ -28,7 +28,7 @@ static void body()
 			.transparency{utils::MS::window::style::transparency_t::composition_attribute},
 			.borders{utils::MS::window::style::value_t::disable}
 			},
-		utils::MS::window::resizable_edge::create_info{},
+			utils::MS::window::resizable_edge::create_info{.thickness{8}},
 		//utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
 		//utils::MS::graphics::d2d::window::swap_chain::create_info            //guarantees same device for multiple windows, no transparency
 		utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both but I don't trust I've done it correctly at all lol
@@ -45,7 +45,7 @@ static void body()
 					auto client_rect{window.client_rect};
 					utils::math::vec2f half_size{static_cast<float>(client_rect.width()) / 2.f, static_cast<float>(client_rect.height()) / 2.f};
 					
-					utils::math::rect<float> top_left    {0, 0, half_size.x, half_size.y};
+					utils::math::rect<float> top_left    {.ll{0.f}, .up{0.f}, .rr{half_size.x}, .dw{half_size.y}};
 					utils::math::rect<float> top_right   {top_left }; top_right   .x() += half_size.x;
 					utils::math::rect<float> bottom_left {top_left }; bottom_left .y() += half_size.y;
 					utils::math::rect<float> bottom_right{top_right}; bottom_right.y() += half_size.y;
