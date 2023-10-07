@@ -5,9 +5,9 @@
 
 #include "common.h"
 
-namespace utils::input
+namespace utils::input_system::device
 	{
-	struct mouse
+	namespace mouse
 		{
 		enum class button_id 
 			{
@@ -15,55 +15,55 @@ namespace utils::input
 			right   ,
 			middle  ,
 			backward,
-			forward ,
+			forward 
 			};
-
-		using buttons_t = inputs<button_id, digital>;
-		buttons_t buttons;
 
 		enum class axis_id { x, y };
 
-		using axes_t = inputs<axis_id, input_1d<long>>;
-		axes_t axes;
+		using buttons_t = device::inputs::static_enum<input::digital, mouse::button_id>;
+		using axes_t    = device::inputs::static_enum<input::analog , mouse::axis_id  >;
 
-		input_2d<long> position{axes[axis_id::x], axes[axis_id::y]};
+		using object = device::base<buttons_t, axes_t>;//decent-er name?
 
-		void move_by(utils::math::vec2l delta)
+		class debug_callbacks
 			{
-			position.set_state(position.get_state() + delta);
-			}
-
-		input_event leave;
-
-
-		class debug_callbacks_handles
-			{
-			friend struct mouse;
 			public:
-				void unregister() noexcept { buttons.reset(); axes.reset(); position.reset(); }
+				struct callback_digital_t : event::base
+					{
+					callback_digital_t(button_id id, input::digital& input) : id{id}, mapping{input} { mapping.map(*this); }
+
+					button_id id;
+					mapping::button::from_digital mapping;
+
+					virtual on_completion operator()() noexcept final override
+						{
+						std::cout << utils::enums::enum_name<button_id>(id) << " ";
+						if (mapping.value().changed()) { std::cout << "(changed)"; }
+						else { std::cout << "(unchanged)"; }
+						std::cout << " " << mapping.value().previous << " > " << mapping.value().current << std::endl;
+						}
+					};
+
+				debug_callbacks(object& instance) : 
+					instance{instance},
+					callbacks_digital
+						{
+						callback_digital_t{button_id::left    , instance.digital[button_id::left    ]},
+						callback_digital_t{button_id::right   , instance.digital[button_id::right   ]},
+						callback_digital_t{button_id::middle  , instance.digital[button_id::middle  ]},
+						callback_digital_t{button_id::backward, instance.digital[button_id::backward]},
+						callback_digital_t{button_id::forward , instance.digital[button_id::forward ]}
+						}
+					{
+					
+					}
+
+
 
 			private:
-				using chu_b = typename buttons_t     ::callback_handle_unique;
-				using chu_a = typename axes_t        ::callback_handle_unique;
-				using chu_2 = typename input_2d<long>::callback_handle_unique;
-				using chu_e = typename input_event   ::callback_handle_unique;
+				std::reference_wrapper<object> instance;
 
-				chu_b buttons;
-				chu_a axes;
-				chu_2 position;
-				chu_e leave;
-
-				debug_callbacks_handles(chu_b&& buttons, chu_a&& axes, chu_2&& position, chu_e&& leave) : buttons{std::move(buttons)}, axes{std::move(axes)}, position{std::move(position)}, leave{std::move(leave)} {}
+				std::array<callback_digital_t, buttons_t::count> callbacks_digital;
 			};
-		debug_callbacks_handles register_debug_callbacks()
-			{
-			return 
-				{
-				{this->buttons .on_changed.make_unique([](const button_id& id, const bool& state, const bool&) { })}, //                               std::cout << "Mouse button  " << std::left << std::setw(9) << utils::enums::enum_name(id) << (state ? "pressed" : "released") << std::endl; })},
-				{this->axes    .on_changed.make_unique([](const axis_id  & id, const long& state, const long&) { })}, //                               std::cout << "Mouse axis    " << utils::enums::enum_name(id) << ": " << state << std::endl; })},
-				{this->position.on_changed.make_unique([](                     const auto& state, const auto&) { })}, //using namespace utils::output; std::cout << "Mouse position: " << state << std::endl; })},
-				{this->leave   .on_trigger.make_unique([]() { std::cout << "Mouse left" << std::endl; })},
-				};
-			}
 		};
 	}
