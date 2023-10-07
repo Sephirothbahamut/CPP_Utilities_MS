@@ -59,9 +59,9 @@ namespace utils::input
 			{
 			return 
 				{
-				{this->buttons .on_changed.make_unique([](const button_id& id, const bool& state, const bool&) {                                std::cout << "Mouse button  " << std::left << std::setw(9) << utils::enums::enum_name(id) << (state ? "pressed" : "released") << std::endl; })},
-				{this->axes    .on_changed.make_unique([](const axis_id  & id, const long& state, const long&) {                                std::cout << "Mouse axis    " << utils::enums::enum_name(id) << ": " << state << std::endl; })},
-				{this->position.on_changed.make_unique([](                     const auto& state, const auto&) { using namespace utils::output; std::cout << "Mouse position: " << state << std::endl; })},
+				{this->buttons .on_changed.make_unique([](const button_id& id, const bool& state, const bool&) { })}, //                               std::cout << "Mouse button  " << std::left << std::setw(9) << utils::enums::enum_name(id) << (state ? "pressed" : "released") << std::endl; })},
+				{this->axes    .on_changed.make_unique([](const axis_id  & id, const long& state, const long&) { })}, //                               std::cout << "Mouse axis    " << utils::enums::enum_name(id) << ": " << state << std::endl; })},
+				{this->position.on_changed.make_unique([](                     const auto& state, const auto&) { })}, //using namespace utils::output; std::cout << "Mouse position: " << state << std::endl; })},
 				{this->leave   .on_trigger.make_unique([]() { std::cout << "Mouse left" << std::endl; })},
 				};
 			}

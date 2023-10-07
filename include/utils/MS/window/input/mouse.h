@@ -80,7 +80,7 @@ namespace utils::MS::window::input
 					case WM_XBUTTONDOWN: capture(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return procedure_result::next(0);
 					case WM_XBUTTONUP  : release(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return procedure_result::next(0);
 					case WM_MOUSELEAVE :            default_mouse.leave                                          .trigger     (                 ); return procedure_result::next(0);
-					//case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
+					case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
 					}
 				
 				return procedure_result::next();
