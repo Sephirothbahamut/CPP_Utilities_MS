@@ -21,10 +21,15 @@ namespace utils::MS::window::input
 	{
 	class mouse : public module
 		{
+		using input_mouse = utils::input_system::device::mouse;
 		public:
-			struct create_info { using module_type = mouse; };
+			struct create_info 
+				{
+				utils::input_system::manager& input_manager;
+				using module_type = mouse; 
+				};
 
-			mouse(window::base& base, const create_info& create_info = {}) : module{base}
+			mouse(window::base& base, const create_info& create_info) : module{base}, input_manager{create_info.input_manager}
 				{
 				//mouse
 				RAWINPUTDEVICE rid_mouse
@@ -39,11 +44,13 @@ namespace utils::MS::window::input
 				if (!RegisterRawInputDevices(&rid_mouse, 1, sizeof(rid_mouse))) { throw last_error("failed to register raw input devices"); }
 				}
 
-			std::unordered_map<uintptr_t, std::reference_wrapper<utils::input::mouse>> mice;
+			std::unordered_map<uintptr_t, input_mouse::object> mice;
 
-			utils::input::mouse default_mouse;
+			input_mouse::object default_mouse;
 
 		private:
+			utils::input_system::manager& input_manager;
+
 			void capture() const noexcept { SetCapture(get_base().get_handle()); }
 			void release() const noexcept { ReleaseCapture(); }
 			void prepare_mouseleave() const noexcept
@@ -61,29 +68,39 @@ namespace utils::MS::window::input
 				{
 				return {GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
 				}
-			utils::input::mouse::button_id eval_extra_button(WPARAM wparam) const noexcept
+			utils::input_system::device::mouse::button_id eval_extra_button(WPARAM wparam) const noexcept
 				{
-				return ((GET_XBUTTON_WPARAM(wparam) == XBUTTON1) ? utils::input::mouse::button_id::backward : utils::input::mouse::button_id::forward);
+				return ((GET_XBUTTON_WPARAM(wparam) == XBUTTON1) ? utils::input_system::device::mouse::button_id::backward : utils::input_system::device::mouse::button_id::forward);
 				}
 
 			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
 				{
 				switch (msg)
 					{
-					case WM_MOUSEMOVE  : prepare_mouseleave(); default_mouse.position                            .change_state(eval_vec2(lparam)); return procedure_result::next(0);
-					case WM_LBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(true             ); return procedure_result::next(0);
-					case WM_LBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::left  ].change_state(false            ); return procedure_result::next(0);
-					case WM_RBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(true             ); return procedure_result::next(0);
-					case WM_RBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::right ].change_state(false            ); return procedure_result::next(0);
-					case WM_MBUTTONDOWN: capture(); default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(true             ); return procedure_result::next(0);
-					case WM_MBUTTONUP  : release(); default_mouse.buttons[utils::input::mouse::button_id::middle].change_state(false            ); return procedure_result::next(0);
-					case WM_XBUTTONDOWN: capture(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(true             ); return procedure_result::next(0);
-					case WM_XBUTTONUP  : release(); default_mouse.buttons[eval_extra_button(wparam)             ].change_state(false            ); return procedure_result::next(0);
-					case WM_MOUSELEAVE :            default_mouse.leave                                          .trigger     (                 ); return procedure_result::next(0);
+					case WM_MOUSEMOVE  : prepare_mouseleave(); default_process_analog (eval_vec2(lparam)                    ); return procedure_result::next(0);
+					case WM_LBUTTONDOWN: capture           (); default_process_digital(input_mouse::button_id::left  , true ); return procedure_result::next(0);
+					case WM_LBUTTONUP  : release           (); default_process_digital(input_mouse::button_id::left  , false); return procedure_result::next(0);
+					case WM_RBUTTONDOWN: capture           (); default_process_digital(input_mouse::button_id::right , true ); return procedure_result::next(0);
+					case WM_RBUTTONUP  : release           (); default_process_digital(input_mouse::button_id::right , false); return procedure_result::next(0);
+					case WM_MBUTTONDOWN: capture           (); default_process_digital(input_mouse::button_id::middle, true ); return procedure_result::next(0);
+					case WM_MBUTTONUP  : release           (); default_process_digital(input_mouse::button_id::middle, false); return procedure_result::next(0);
+					case WM_XBUTTONDOWN: capture           (); default_process_digital(eval_extra_button(wparam)     , true ); return procedure_result::next(0);
+					case WM_XBUTTONUP  : release           (); default_process_digital(eval_extra_button(wparam)     , false); return procedure_result::next(0);
+					//case WM_MOUSELEAVE :                       default_mouse.leave                                          .trigger     (                 ); return procedure_result::next(0);
 					case WM_INPUT      : if(wm_input(wparam, lparam)) { return procedure_result::next(0); }
 					}
 				
 				return procedure_result::next();
+				}
+
+			void default_process_digital(const input_mouse::button_id& id, bool new_state) noexcept
+				{
+				default_mouse.digital[id].change(input_manager, new_state);
+				}
+			void default_process_analog(utils::math::vec2f new_state) noexcept
+				{
+				default_mouse.analog[input_mouse::axis_id::x].change(input_manager, new_state.x);
+				default_mouse.analog[input_mouse::axis_id::y].change(input_manager, new_state.y);
 				}
 
 			bool wm_input(WPARAM wparam, LPARAM lparam)
@@ -103,9 +120,8 @@ namespace utils::MS::window::input
 
 					auto device_handle{reinterpret_cast<uintptr_t>(raw->header.hDevice)};
 
-					auto mouse_ref_it{mice.find(device_handle)};
-					if (mouse_ref_it == mice.end()) { return false; }
-					auto& mouse{mouse_ref_it->second.get()};
+					auto result{mice.emplace(std::piecewise_construct, std::make_tuple(device_handle), std::make_tuple())};
+					auto& mouse{result.first->second};
 
 					// https://docs.microsoft.com/en-us/windows/win32/api/winuser/ns-winuser-rawmouse
 					//TODO wheel
@@ -123,26 +139,30 @@ namespace utils::MS::window::input
 						auto const x = static_cast<long>((float(rawmouse.lLastX) / 65535.0f) * float(width ));
 						auto const y = static_cast<long>((float(rawmouse.lLastY) / 65535.0f) * float(height));
 
-						mouse.position.change_state({x, y});
+						//Move to
+						mouse.analog[input_mouse::axis_id::x].change(input_manager, x);
+						mouse.analog[input_mouse::axis_id::y].change(input_manager, y);
 						}
 					else if (rawmouse.lLastX != 0 || rawmouse.lLastY != 0)
 						{
 						long x = rawmouse.lLastX;
 						long y = rawmouse.lLastY;
 
-						mouse.move_by({x, y});
+						//Move by
+						mouse.analog[input_mouse::axis_id::x].change(input_manager, x);
+						mouse.analog[input_mouse::axis_id::y].change(input_manager, y);
 						}
 
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { mouse.buttons[utils::input::mouse::button_id::left    ].change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { mouse.buttons[utils::input::mouse::button_id::left    ].change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { mouse.buttons[utils::input::mouse::button_id::right   ].change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { mouse.buttons[utils::input::mouse::button_id::right   ].change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { mouse.buttons[utils::input::mouse::button_id::middle  ].change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { mouse.buttons[utils::input::mouse::button_id::middle  ].change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { mouse.buttons[utils::input::mouse::button_id::backward].change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { mouse.buttons[utils::input::mouse::button_id::backward].change_state(false); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { mouse.buttons[utils::input::mouse::button_id::forward ].change_state(true ); }
-					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { mouse.buttons[utils::input::mouse::button_id::forward ].change_state(false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_DOWN) { mouse.digital[input_mouse::button_id::left    ].change(input_manager, true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_1_UP  ) { mouse.digital[input_mouse::button_id::left    ].change(input_manager, false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_DOWN) { mouse.digital[input_mouse::button_id::right   ].change(input_manager, true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_2_UP  ) { mouse.digital[input_mouse::button_id::right   ].change(input_manager, false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_DOWN) { mouse.digital[input_mouse::button_id::middle  ].change(input_manager, true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_3_UP  ) { mouse.digital[input_mouse::button_id::middle  ].change(input_manager, false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN) { mouse.digital[input_mouse::button_id::backward].change(input_manager, true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP  ) { mouse.digital[input_mouse::button_id::backward].change(input_manager, false); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) { mouse.digital[input_mouse::button_id::forward ].change(input_manager, true ); }
+					if (rawmouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP  ) { mouse.digital[input_mouse::button_id::forward ].change(input_manager, false); }
 					}
 
 				return true;

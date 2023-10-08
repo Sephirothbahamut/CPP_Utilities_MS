@@ -45,6 +45,13 @@ namespace utils::input_system
 		public:
 			void step() noexcept
 				{
+				for (auto& element : events_ptrs_set)
+					{
+					(*element)();
+					}
+				events_ptrs_set.clear();
+				return;
+
 				auto it{events_ptrs_set.begin()};
 				while (it != events_ptrs_set.end())
 					{
@@ -261,12 +268,12 @@ namespace utils::input_system
 		enum class test_enum_t { a, b, c };
 		namespace inputs
 			{
-			template <typename DERIVED_T>
+			template <typename DERIVED_T, input::concepts::input input_T, typename id_T>
 			struct base_crtp
 				{
 				using derived_t = DERIVED_T;
-				using id_t      = typename derived_t::id_t;
-				using input_t   = typename derived_t::input_t;
+				using id_t      = id_T;
+				using input_t   = input_T;
 
 				constexpr const derived_t& derived() const noexcept { return static_cast<const derived_t&>(*this); }
 				constexpr       derived_t& derived()       noexcept { return static_cast<      derived_t&>(*this); }
@@ -281,7 +288,7 @@ namespace utils::input_system
 				};
 
 			template <input::concepts::input input_T, size_t SIZE>
-			struct static_array : public base_crtp<static_array<input_T, SIZE>>
+			class static_array : public base_crtp<static_array<input_T, SIZE>, input_T, size_t>
 				{
 				public:
 					using id_t    = size_t;
@@ -307,7 +314,7 @@ namespace utils::input_system
 				};
 
 			template <input::concepts::input input_T, typename id_enum>
-			class static_enum : public base_crtp<static_enum<input_T, id_enum>>
+			class static_enum : public base_crtp<static_enum<input_T, id_enum>, input_T, id_enum>
 				{
 				public:
 					using id_t    = id_enum;
@@ -332,7 +339,7 @@ namespace utils::input_system
 				};
 
 			template <input::concepts::input input_T, typename id_T>
-			class dynamic : public base_crtp<dynamic<input_T, id_T>>
+			class dynamic : public base_crtp<dynamic<input_T, id_T>, input_T, id_T>
 				{
 				public:
 					using id_t    = id_T;
@@ -348,7 +355,7 @@ namespace utils::input_system
 			namespace concepts
 				{
 				template <typename T>
-				concept inputs = std::derived_from<T, base_crtp<typename T::derived_t>>;
+				concept inputs = std::derived_from<T, base_crtp<typename T::derived_t, typename T::input_t, typename T::id_t>>;
 				template <typename T>
 				concept digital = inputs<T> && std::same_as<typename T::input_t, input::digital>;
 				template <typename T>
@@ -368,23 +375,23 @@ namespace utils::input_system
 			digital_t digital;
 			analog_t  analog ;
 
-			void change(manager& manager, const typename digital_t::id_t& digital_id, const typename digital_t::value_type& new_value) noexcept
+			void change(manager& manager, const typename digital_t::id_t& digital_id, const typename digital_t::input_t::value_type& new_value) noexcept
 				requires different_id_t
 				{
 				change_digital(manager, digital_id, new_value);
 				}
-			void change(manager& manager, const typename analog_t ::id_t& analog_id , const typename analog_t ::value_type& new_value) noexcept
+			void change(manager& manager, const typename analog_t ::id_t& analog_id , const typename analog_t ::input_t::value_type& new_value) noexcept
 				requires different_id_t
 				{
 				change_analog (manager, analog_id, new_value);
 				}
 
-			void change_digital(manager& manager, const typename digital_t::id_t& id, const typename digital_t::value_type& new_value) noexcept
+			void change_digital(manager& manager, const typename digital_t::id_t& id, const typename digital_t::input_t::value_type& new_value) noexcept
 				{
 				digital.change(manager, id, new_value);
 				manager.insert(events_ptrs_set.begin(), events_ptrs_set.end());
 				}
-			void change_analog (manager& manager, const typename analog_t ::id_t& id , const typename analog_t ::value_type& new_value) noexcept
+			void change_analog (manager& manager, const typename analog_t ::id_t& id , const typename analog_t ::input_t::value_type& new_value) noexcept
 				{
 				analog .change(manager, id, new_value);
 				manager.insert(events_ptrs_set.begin(), events_ptrs_set.end());

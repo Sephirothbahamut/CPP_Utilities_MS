@@ -4,7 +4,7 @@
 #include <utils/enum.h>
 
 #include <utils/MS/window/window.h>
-//#include <utils/MS/window/input/mouse.h>
+#include <utils/MS/window/input/mouse.h>
 
 #include "examples.h"
 
@@ -12,30 +12,32 @@ static void body()
 	{
 	using namespace utils::output;
 
+	utils::input_system::manager manager_input;
+
 	utils::MS::window::initializer window_initializer;
 
 	utils::MS::window::base window
 		{
 		utils::MS::window::base::create_info{.size{{256u, 128u}}},
-		close_module::create_info{}///////////////////////////////////////////////////////////////////////////////,
+		close_module::create_info{},
 		// Create a mouse window module. This will bridge between the OS's input and my input system
-		///////////////////////////////////////////////////////////////////////////utils::MS::window::input::mouse::create_info{}
+		utils::MS::window::input::mouse::create_info{manager_input}
 		};
 
 	// Get the mouse input module.
-	////////////////////////////////////////////////////////////////////////////auto& wm_mouse{*window.get_module_ptr<utils::MS::window::input::mouse>()};
+	auto& wm_mouse{*window.get_module_ptr<utils::MS::window::input::mouse>()};
 
 	// Default mouse is your usual cursor. 
 	// You can also add custm virtual mice, to support multiple mice as separate inputs
 	// ...well you could if that wasn't still under construction, but achieving that is one objective
 	// of my input system
-	{}///////////////////////////////////////////////////////////////////////////////,auto& default_mouse{wm_mouse.default_mouse};
+	auto& default_mouse{wm_mouse.default_mouse};
 
 	// register_debug_callbacks() will add callbacks to the mouse which write to the console
 	// any input the mouse is receiving.
 	// it returns an unique_ptr-like object which is responsible for the lifetime of those callbacks.
 	// if that object is destroyed, the debug callbacks are removed.
-	{}///////////////////////////////////////////////////////////////////////////////,auto debug_callbacks_handle{default_mouse.register_debug_callbacks()};
+	utils::input_system::device::mouse::debug_callbacks mouse_debug_callbacks{default_mouse};
 
 	// Now let's add something fancier
 
@@ -70,6 +72,7 @@ static void body()
 	while (window.is_open())
 		{
 		window.wait_event();
+		manager_input.step();
 		}
 	}
 

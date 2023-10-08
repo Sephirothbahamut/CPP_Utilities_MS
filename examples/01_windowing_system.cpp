@@ -7,7 +7,7 @@
 #include <utils/MS/window/style.h>
 #include <utils/MS/window/regions.h>
 #include <utils/MS/window/snap_on_drag.h>
-#include <utils/MS/window/input/mouse.h>
+///////////////////////////////////////////////////////////////////////////#include <utils/MS/window/input/mouse.h>
 
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
 
@@ -36,7 +36,7 @@ static void body()
 			.thickness{8}
 			},
 		// Input will be explained in the next example, here it's used just to be able to close the window through right-click
-		utils::MS::window::input::mouse::create_info{},
+		///////////////////////////////////////////////////////////////////////////utils::MS::window::input::mouse::create_info{},
 		// Simple module to close the window with [ESC]
 		close_module::create_info{}
 		};
@@ -81,8 +81,8 @@ static void body()
 	assert(!wm_snap_on_drag_2_ptr);
 
 	// Input will be explained in the next example, here it's used just to be able to close the window through right-click
-	window.get_module_ptr<utils::MS::window::input::mouse>()
-		->default_mouse.buttons[utils::input::mouse::button_id::right].on_changed.emplace([&window](bool, bool) { window.close(); });
+	///////////////////////////////////////////////////////////////////////////window.get_module_ptr<utils::MS::window::input::mouse>()
+	///////////////////////////////////////////////////////////////////////////	->default_mouse.buttons[utils::input::mouse::button_id::right].on_changed.emplace([&window](bool, bool) { window.close(); });
 
 	window.show();
 	while (window.is_open())

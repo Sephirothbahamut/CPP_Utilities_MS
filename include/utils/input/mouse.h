@@ -7,8 +7,11 @@
 
 namespace utils::input_system::device
 	{
-	namespace mouse
+	struct mouse
 		{
+		mouse() = delete;
+
+
 		enum class button_id 
 			{
 			left    ,
@@ -41,6 +44,24 @@ namespace utils::input_system::device
 						if (mapping.value().changed()) { std::cout << "(changed)"; }
 						else { std::cout << "(unchanged)"; }
 						std::cout << " " << mapping.value().previous << " > " << mapping.value().current << std::endl;
+						return on_completion::remove;
+						}
+					};
+				struct callback_analog_t  : event::base
+					{
+					callback_analog_t (std::unique_ptr<mapping::axis1d::base>&& x, std::unique_ptr<mapping::axis1d::base>&& y) : 
+						mapping{std::move(x), std::move(y)} 
+						{
+						mapping.map(*this); 
+						}
+
+					mapping::axis2d::from_axes mapping;
+
+					virtual on_completion operator()() noexcept final override
+						{
+						std::cout << "XY : (" << mapping.value().previous.x << ", " << mapping.value().previous.y << ") > ("
+							<< mapping.value().current.x << ", " << mapping.value().current.y << ")" << std::endl;
+						return on_completion::remove;
 						}
 					};
 
@@ -53,6 +74,11 @@ namespace utils::input_system::device
 						callback_digital_t{button_id::middle  , instance.digital[button_id::middle  ]},
 						callback_digital_t{button_id::backward, instance.digital[button_id::backward]},
 						callback_digital_t{button_id::forward , instance.digital[button_id::forward ]}
+						},
+					callback_analog
+						{
+						std::make_unique<mapping::axis1d::from_analog>(instance.analog[axis_id::x]),
+						std::make_unique<mapping::axis1d::from_analog>(instance.analog[axis_id::y])
 						}
 					{
 					
@@ -62,8 +88,8 @@ namespace utils::input_system::device
 
 			private:
 				std::reference_wrapper<object> instance;
-
 				std::array<callback_digital_t, buttons_t::count> callbacks_digital;
+				callback_analog_t callback_analog;
 			};
 		};
 	}
