@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <iomanip>
 #include <iostream>
@@ -7,26 +7,30 @@
 
 namespace utils::input_system::device
 	{
-	struct mouse
+	namespace details
 		{
-		mouse() = delete;
-
-
-		enum class button_id 
+		enum class button_id
 			{
-			left    ,
-			right   ,
-			middle  ,
+			left,
+			right,
+			middle,
 			backward,
-			forward 
+			forward
 			};
 
 		enum class axis_id { x, y };
+		
+		using buttons_t = device::inputs::static_enum<input::digital, button_id>;
+		using axes_t    = device::inputs::static_enum<input::analog , axis_id  >;
+		}
 
-		using buttons_t = device::inputs::static_enum<input::digital, mouse::button_id>;
-		using axes_t    = device::inputs::static_enum<input::analog , mouse::axis_id  >;
+	struct mouse : device::base<details::buttons_t, details::axes_t>
+		{
+		using button_id = details::button_id;
+		using axis_id   = details::axis_id  ;
 
-		using object = device::base<buttons_t, axes_t>;//decent-er name?
+		using buttons_t = details::buttons_t;
+		using axes_t    = details::axes_t   ;
 
 		class debug_callbacks
 			{
@@ -65,8 +69,7 @@ namespace utils::input_system::device
 						}
 					};
 
-				debug_callbacks(object& instance) : 
-					instance{instance},
+				debug_callbacks(mouse& instance) : 
 					callbacks_digital
 						{
 						callback_digital_t{button_id::left    , instance.digital[button_id::left    ]},
@@ -81,15 +84,14 @@ namespace utils::input_system::device
 						std::make_unique<mapping::axis1d::from_analog>(instance.analog[axis_id::y])
 						}
 					{
-					
 					}
 
-
-
 			private:
-				std::reference_wrapper<object> instance;
 				std::array<callback_digital_t, buttons_t::count> callbacks_digital;
 				callback_analog_t callback_analog;
 			};
 		};
+	using maus = mouse;
+	///////////////////////////////////////
+	using 🐭  = mouse;
 	}

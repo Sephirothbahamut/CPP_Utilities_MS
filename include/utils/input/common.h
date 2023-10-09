@@ -38,6 +38,7 @@ namespace utils::input_system
 			};
 
 		using ptrs_set = std::unordered_set<utils::observer_ptr<event::base>>;
+		//using ptrs_set = std::unordered_set<utils::observer_ptr<std::function<on_completion()>>>;
 		}
 
 	class manager
@@ -45,18 +46,9 @@ namespace utils::input_system
 		public:
 			void step() noexcept
 				{
-				for (auto& element : events_ptrs_set)
-					{
-					(*element)();
-					}
-				events_ptrs_set.clear();
-				return;
-
 				auto it{events_ptrs_set.begin()};
 				while (it != events_ptrs_set.end())
 					{
-					auto current{it++};
-
 					auto& triggered_event_ptr{*it};
 					auto& triggered_event{*triggered_event_ptr};
 					if (triggered_event() == on_completion::remove)
@@ -79,35 +71,6 @@ namespace utils::input_system
 		private:
 			event::ptrs_set events_ptrs_set;
 		};
-
-	namespace mapping
-		{
-		template <typename T>
-		class base : public ::utils::oop::non_copyable, public ::utils::oop::non_movable
-			{
-			public:
-				using state_type = state_base<T>;
-				using value_type = typename state_base<T>::value_type;
-				virtual state_type value() const noexcept = 0;
-				virtual void map(event::base& event) noexcept { event_ptr = &event; inner_map(event); };
-				virtual void unmap() noexcept { if (event_ptr) { inner_unmap(*event_ptr); event_ptr = nullptr; } };
-
-				~base() { unmap(); }
-
-			private:
-				::utils::observer_ptr<event::base> event_ptr{nullptr};
-
-				virtual void inner_map  (event::base& event) noexcept = 0;
-				virtual void inner_unmap(event::base& event) noexcept = 0;
-			};
-
-
-		namespace concepts
-			{
-			template <typename T>
-			concept mapping = std::derived_from<T, base<typename T::value_type>>;
-			}
-		}
 
 	namespace input
 		{
@@ -145,6 +108,31 @@ namespace utils::input_system
 
 	namespace mapping
 		{
+		template <typename T>
+		class base : public ::utils::oop::non_copyable, public ::utils::oop::non_movable
+			{
+			public:
+				using state_type = state_base<T>;
+				using value_type = typename state_base<T>::value_type;
+				virtual state_type value() const noexcept = 0;
+				void map(event::base& event) noexcept { event_ptr = &event; inner_map(event); };
+				void unmap() noexcept { if (event_ptr) { inner_unmap(*event_ptr); event_ptr = nullptr; } };
+
+				~base() { unmap(); }
+
+			private:
+				::utils::observer_ptr<event::base> event_ptr{nullptr};
+
+				virtual void inner_map(event::base& event) noexcept = 0;
+				virtual void inner_unmap(event::base& event) noexcept = 0;
+			};
+
+		namespace concepts
+			{
+			template <typename T>
+			concept mapping = std::derived_from<T, base<typename T::value_type>>;
+			}
+
 		namespace button
 			{
 			struct base : mapping::base<bool> {};
@@ -250,8 +238,8 @@ namespace utils::input_system
 						{
 						return
 							{
-							::utils::math::vec2f{static_cast<float>(mapping_x_ptr->value().current , mapping_y_ptr->value().current)},
-							::utils::math::vec2f{static_cast<float>(mapping_x_ptr->value().previous, mapping_y_ptr->value().previous)},
+							::utils::math::vec2f{mapping_x_ptr->value().current , mapping_y_ptr->value().current },
+							::utils::math::vec2f{mapping_x_ptr->value().previous, mapping_y_ptr->value().previous},
 							};
 						};
 
@@ -264,8 +252,6 @@ namespace utils::input_system
 
 	namespace device
 		{
-
-		enum class test_enum_t { a, b, c };
 		namespace inputs
 			{
 			template <typename DERIVED_T, input::concepts::input input_T, typename id_T>

@@ -44,9 +44,9 @@ namespace utils::MS::window::input
 				if (!RegisterRawInputDevices(&rid_mouse, 1, sizeof(rid_mouse))) { throw last_error("failed to register raw input devices"); }
 				}
 
-			std::unordered_map<uintptr_t, input_mouse::object> mice;
+			std::unordered_map<uintptr_t, input_mouse> mice;
 
-			input_mouse::object default_mouse;
+			input_mouse default_mouse;
 
 		private:
 			utils::input_system::manager& input_manager;
