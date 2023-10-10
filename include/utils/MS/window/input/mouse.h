@@ -9,10 +9,9 @@
 #include <utils/memory.h>
 #include <utils/math/vec2.h>
 #include <utils/math/vec3.h>
+#include <utils/input_system/device/mouse.h>
 
 #include "../window.h"
-#include "../../../input/mouse.h"
-
 
 // For future textbox shortcuts
 // https://learn.microsoft.com/en-us/windows/win32/learnwin32/accelerator-tables

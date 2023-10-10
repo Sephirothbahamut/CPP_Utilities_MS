@@ -13,9 +13,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Headers\input">
-      <UniqueIdentifier>{9a0d7086-9ef7-425b-bed8-e2d95b09c536}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\MS">
       <UniqueIdentifier>{068bafcd-7a23-4e32-9bdb-938d8e2e9d26}</UniqueIdentifier>
     </Filter>
@@ -41,18 +38,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\utils\input\keyboard.h">
-      <Filter>Headers\input</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utils\input\mouse.h">
-      <Filter>Headers\input</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utils\input\common.h">
-      <Filter>Headers\input</Filter>
-    </ClInclude>
-    <ClInclude Include="include\utils\input\controller.h">
-      <Filter>Headers\input</Filter>
-    </ClInclude>
     <ClInclude Include="include\utils\MS\windows.h">
       <Filter>Headers\MS</Filter>
     </ClInclude>
