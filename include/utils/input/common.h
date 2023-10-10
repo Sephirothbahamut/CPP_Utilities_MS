@@ -51,7 +51,7 @@ namespace utils::input_system
 		struct callback_wrapper
 			{
 			void* identifier;
-			bool operator== (const callback_wrapper& other) const noexcept { return identifier == other.identifier; }
+			bool operator== (const callback_wrapper& other) const noexcept { return identifier ==  other.identifier; }
 			auto operator<=>(const callback_wrapper& other) const noexcept { return identifier <=> other.identifier; }
 			on_completion operator()() const noexcept { return callback(); }
 			std::function<on_completion()> callback;
@@ -63,25 +63,23 @@ namespace utils::input_system
 			};
 		using callbacks_wrappers = std::unordered_set<callback_wrapper, callback_wrapper::hash_function>;
 
-		struct node
+		//mappings and events are nodes. Events are the roots of the tree
+		struct node : utils::oop::non_copyable, utils::oop::non_movable 
 			{
-			virtual callback_wrapper get_callback_wrapped() noexcept = 0;
+			virtual callback_wrapper get_callback_wrapped() noexcept = 0; 
 			};
 
-		struct branch : node, ::utils::oop::non_copyable, ::utils::oop::non_movable
+		//mappings are branches. The last branch's parent is an event.
+		struct branch : node
 			{
 			branch(node& parent) : parent{parent} {}
 
 			virtual details::callback_wrapper get_callback_wrapped() noexcept final override 
 				{
 				return parent.get().get_callback_wrapped(); 
-				//return parent_obs->get_callback_wrapped();
 				}
 
-			//should be referrence wrapper but can't cause child may need to be instantiated before parent
 			std::reference_wrapper<node> parent;
-			//still assumed to be not null after setup
-			//utils::observer_ptr<node> parent_obs;
 			};
 
 		using nodes = std::unordered_set
@@ -151,9 +149,8 @@ namespace utils::input_system
 
 	namespace mapping
 		{
-
 		template <typename T>
-		struct root : details::branch
+		struct base : details::branch
 			{
 			using branch::branch;
 			using state_type = state_base<T>;
@@ -163,59 +160,62 @@ namespace utils::input_system
 
 		namespace button
 			{
-			using base = root<bool>;
+			using base = mapping::base<bool>;
 
-			struct from_digital : base
+			struct device_input : base
 				{
-				std::reference_wrapper<input::digital> input_digital;
+				std::reference_wrapper<input::digital> input;
 
-				from_digital(details::node& parent, input::digital& input_digital) : base{parent}, input_digital{input_digital} 
+				device_input(details::node& parent, input::digital& input) : base{parent}, input{input}
 					{
-					input_digital.nodes.insert(*this);
+					input.nodes.insert(*this);
 					}
-				~from_digital() { input_digital.get().nodes.erase(*this); }
+				~device_input() { input.get().nodes.erase(*this); }
 
 				virtual state_type value() const noexcept final override
 					{
-					return input_digital.get().value();
+					return input.get().value();
 					};
 				};
 			}
+
 		namespace axis1d
 			{
-			using base = root<float>;
+			using base = mapping::base<float>;
 
-			struct from_analog : base
+			struct device_input : base
 				{
-				std::reference_wrapper<input::analog> input_analog;
+				std::reference_wrapper<input::analog> input;
 
-				from_analog(details::node& parent, input::analog& input_analog) : base{parent}, input_analog{input_analog}
+				device_input(details::node& parent, input::analog& input) : base{parent}, input{input}
 					{
-					input_analog.nodes.insert(*this);
+					input.nodes.insert(*this);
 					}
-				~from_analog() { input_analog.get().nodes.erase(*this); }
+				~device_input() { input.get().nodes.erase(*this); }
 
 				virtual state_type value() const noexcept final override
 					{
-					return input_analog.get().value();
+					return input.get().value();
 					};
 				};
 			}
 
 		namespace button
 			{
-			struct from_axis : base
+			struct axis_threshold : base
 				{
+				using base::base;
+
 				float threshold{.5f};
 				std::unique_ptr<axis1d::base> axis_own;
 
-				from_axis(details::node& parent) : base{parent} {}
-
 				template <std::derived_from<axis1d::base> T, typename ...Args>
-				auto& emplace_axis(Args&& ...args) noexcept
+				T& emplace_axis(Args&& ...args) noexcept
 					{
-					axis_own = std::make_unique<T>(*this, std::forward<Args>(args)...);
-					return *axis_own;
+					std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+					utils::observer_ptr<T> created_obs{created.get()};
+					axis_own = std::move(created);
+					return *created_obs;
 					}
 
 				virtual state_type value() const noexcept final override
@@ -229,64 +229,85 @@ namespace utils::input_system
 				};
 			};
 
-		//namespace axis1d
-		//	{
-		//	struct from_button_b_minus_a : base
-		//		{
-		//		public:
-		//			std::unique_ptr<button::base> button_a_own;
-		//			std::unique_ptr<button::base> button_b_own;
-		//
-		//			from_button_b_minus_a(std::unique_ptr<button::base>&& button_a_own, std::unique_ptr<button::base>&& button_b_own) :
-		//				button_a_own{std::move(button_a_own)}, button_b_own{std::move(button_b_own)} {}
-		//		
-		//			virtual state_type value() const noexcept final override
-		//				{
-		//				return
-		//					{
-		//					static_cast<float>(input_digital_b.get().value().current  - input_digital_a.get().value().current ),
-		//					static_cast<float>(input_digital_b.get().value().previous - input_digital_a.get().value().previous),
-		//					};
-		//				};
-		//
-		//		private:
-		//			virtual void inner_map  (event::base& event) noexcept final override { input_digital_a.get().map  (event); input_digital_b.get().map  (event); }
-		//			virtual void inner_unmap(event::base& event) noexcept final override { input_digital_a.get().unmap(event); input_digital_b.get().unmap(event); }
-		//		};
-		//
-		//	}
-		//
-		//namespace axis2d
-		//	{
-		//	struct base : mapping::base<::utils::math::vec2f> {};
-		//
-		//	class from_axes : public base
-		//		{
-		//		public:
-		//			std::unique_ptr<axis1d::base> mapping_x_ptr{nullptr};
-		//			std::unique_ptr<axis1d::base> mapping_y_ptr{nullptr};
-		//
-		//			from_axes(std::unique_ptr<axis1d::base>&& mapping_x, std::unique_ptr<axis1d::base>&& mapping_y) :
-		//				mapping_x_ptr{std::move(mapping_x)}, mapping_y_ptr{std::move(mapping_y)} {}
-		//
-		//			virtual state_type value() const noexcept final override
-		//				{
-		//				return
-		//					{
-		//					::utils::math::vec2f{mapping_x_ptr->value().current , mapping_y_ptr->value().current },
-		//					::utils::math::vec2f{mapping_x_ptr->value().previous, mapping_y_ptr->value().previous},
-		//					};
-		//				};
-		//
-		//		private:
-		//			virtual void inner_map  (event::base& event) noexcept final override { mapping_x_ptr->map  (event); mapping_y_ptr->map  (event); }
-		//			virtual void inner_unmap(event::base& event) noexcept final override { mapping_x_ptr->unmap(     ); mapping_y_ptr->unmap(     ); }
-		//		};
-		//	}
+		namespace axis1d
+			{
+			struct b_minus_a : base
+				{
+				using base::base;
+
+				std::unique_ptr<axis1d::base> a_own;
+				std::unique_ptr<axis1d::base> b_own;
+
+				template <std::derived_from<axis1d::base> T, typename ...Args>
+				T& emplace_a(Args&& ...args) noexcept
+					{
+					std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+					utils::observer_ptr<T> created_obs{created.get()};
+					a_own = std::move(created);
+					return *created_obs;
+					}
+				template <std::derived_from<axis1d::base> T, typename ...Args>
+				T& emplace_b(Args&& ...args) noexcept
+					{
+					std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+					utils::observer_ptr<T> created_obs{created.get()};
+					b_own = std::move(created);
+					return *created_obs;
+					}
+				
+				virtual state_type value() const noexcept final override
+					{
+					return
+						{
+						static_cast<float>(b_own->value().current  - a_own->value().current ),
+						static_cast<float>(b_own->value().previous - a_own->value().previous),
+						};
+					};
+				};
+			}
+		
+		namespace axis2d
+			{
+			using base = mapping::base<utils::math::vec2f>;
+		
+			struct from_axes : base
+				{
+				using base::base;
+
+				std::unique_ptr<axis1d::base> x_own;
+				std::unique_ptr<axis1d::base> y_own;
+
+				template <std::derived_from<axis1d::base> T, typename ...Args>
+				T& emplace_x(Args&& ...args) noexcept
+					{
+					std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+					utils::observer_ptr<T> created_obs{created.get()};
+					x_own = std::move(created);
+					return *created_obs;
+					}
+				template <std::derived_from<axis1d::base> T, typename ...Args>
+				T& emplace_y(Args&& ...args) noexcept
+					{
+					std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+					utils::observer_ptr<T> created_obs{created.get()};
+					y_own = std::move(created);
+					return *created_obs;
+					}
+
+				virtual state_type value() const noexcept final override
+					{
+					return
+						{
+						::utils::math::vec2f{x_own->value().current , y_own->value().current },
+						::utils::math::vec2f{x_own->value().previous, y_own->value().previous},
+						};
+					};
+				};
+			}
 		}
 		
 	template <typename T>
-	class event : public details::node, public ::utils::oop::non_copyable, public ::utils::oop::non_movable
+	class event : public details::node
 		{
 		public:
 			using state_type = state_base<T>;
@@ -298,14 +319,16 @@ namespace utils::input_system
 			using state_type = state_base<T>;
 			using value_type = typename state_base<T>::value_type;
 
-			std::unique_ptr<mapping::root<T>> mapping;
+			std::unique_ptr<mapping::base<T>> mapping;
 			std::function<on_completion(const state_type& state)> callback;
 
-			template <std::derived_from<mapping::root<T>> T, typename ...Args>
-			auto& emplace_mapping(Args&& ...args) noexcept
+			template <std::derived_from<mapping::base<T>> T, typename ...Args>
+			T& emplace_mapping(Args&& ...args) noexcept
 				{
-				mapping = std::make_unique<T>(*this, std::forward<Args>(args)...);
-				return *mapping;
+				std::unique_ptr<T> created{std::make_unique<T>(*this, std::forward<Args>(args)...)};
+				utils::observer_ptr<T> created_obs{created.get()};
+				mapping = std::move(created);
+				return *created_obs;
 				}
 
 		private:
