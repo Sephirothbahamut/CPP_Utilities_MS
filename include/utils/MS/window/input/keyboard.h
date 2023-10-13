@@ -1,3 +1,19 @@
+
+//http://www.kbdedit.com/manual/low_level_vk_list.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //class input : public virtual utils::MS::window::base
 //	{
 //	public:

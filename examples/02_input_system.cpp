@@ -37,7 +37,7 @@ static void body()
 	// any input the mouse is receiving.
 	// it returns an unique_ptr-like object which is responsible for the lifetime of those callbacks.
 	// if that object is destroyed, the debug callbacks are removed.
-	std::optional<utils::input_system::device::mouse::debug_callbacks> mouse_debug_callbacks_opt{default_mouse};
+	auto mouse_debug_callbacks{default_mouse.bind_debug_callbacks()};
 
 	// Now let's add something fancier
 
@@ -47,27 +47,48 @@ static void body()
 	// Since we're not using it at all, I'm leaving it unnamed.
 
 
-	utils::input_system::event<bool> event_pippo {[&mouse_debug_callbacks_opt](const utils::input_system::state_base<bool>& state)
-		{
-		if (state.current && !state.previous)
-			{
-			std::cout << "pippo begin" << std::endl;
-			return utils::input_system::on_completion::keep;
-			}
-		if (!state.current && state.previous)
-			{
-			std::cout << "pippo end" << std::endl;
+	//utils::input_system::event::mapped<bool> event_pippo {[](const utils::input_system::state<bool>& state)
+	//	{
+	//	if (state.current && !state.previous)
+	//		{
+	//		std::cout << "pippo begin" << std::endl;
+	//		return utils::input_system::on_completion::keep;
+	//		}
+	//	if (!state.current && state.previous)
+	//		{
+	//		std::cout << "pippo end" << std::endl;
+	//
+	//		//mouse_debug_callbacks_opt = std::nullopt;
+	//
+	//		return utils::input_system::on_completion::remove;
+	//		}
+	//	static size_t count{0};
+	//	std::cout << "pippo" << count << std::endl;
+	//	count++;
+	//	return utils::input_system::on_completion::keep;
+	//	}};
+	//event_pippo.emplace_mapping<utils::input_system::mapping::button::device_input>(default_mouse.digital[utils::input_system::device::mouse::button_id::right]);
+	//
+	//auto event_raw_pippo{default_mouse.digital.emplace_event([](const auto& state)
+	//	{
+	//	if (state.current && !state.previous)
+	//		{
+	//		std::cout << "pluto begin " << utils::enums::enum_name(state.id) << std::endl;
+	//		return utils::input_system::on_completion::keep;
+	//		}
+	//	if (!state.current && state.previous)
+	//		{
+	//		std::cout << "pluto end " << utils::enums::enum_name(state.id) << std::endl;
+	//
+	//		//mouse_debug_callbacks_opt = std::nullopt;
+	//
+	//		return utils::input_system::on_completion::remove;
+	//		}
+	//
+	//	std::cout << "pluto " << utils::enums::enum_name(state.id) << std::endl;
+	//	return utils::input_system::on_completion::keep;
+	//	})};
 
-			//mouse_debug_callbacks_opt = std::nullopt;
-
-			return utils::input_system::on_completion::remove;
-			}
-		
-		std::cout << "pippo" << std::endl;
-		return utils::input_system::on_completion::keep;
-		}};
-	event_pippo.emplace_mapping<utils::input_system::mapping::button::device_input>(default_mouse.digital[utils::input_system::device::mouse::button_id::right]);
-	
 	// You can also react to buttons changes in general, and receive the button id as a parameter instead.
 	// Useful if you'd rather switch on all buttons
 	/////////////////////////////////////////////////////////////////////default_mouse.buttons.on_changed.emplace([&window](const utils::input::mouse::button_id& id, bool state, bool)
@@ -87,18 +108,21 @@ static void body()
 	/////////////////////////////////////////////////////////////////////	});
 
 	window.show();
+	//*
 	while (window.is_open())
 		{
 		window.wait_event();
 		manager_input.step();
 		}
-	//while (window.is_open())
-	//	{
-	//	while (window.poll_event());
-	//	std::cout << "___________________________________" << std::endl;
-	//	manager_input.step();
-	//	std::this_thread::sleep_for(std::chrono::milliseconds(250));
-	//	}
+	/*/
+	while (window.is_open())
+		{
+		while (window.poll_event());
+		std::cout << "___________________________________" << std::endl;
+		manager_input.step();
+		std::this_thread::sleep_for(std::chrono::milliseconds(250));
+		}
+	/**/
 	}
 
 void example::input_system()

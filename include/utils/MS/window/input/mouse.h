@@ -94,12 +94,12 @@ namespace utils::MS::window::input
 
 			void default_process_digital(const input_mouse::button_id& id, bool new_state) noexcept
 				{
-				default_mouse.digital[id].change(input_manager, new_state);
+				default_mouse.digital.change(input_manager, id, new_state);
 				}
 			void default_process_analog(utils::math::vec2f new_state) noexcept
 				{
-				default_mouse.analog[input_mouse::axis_id::x].change(input_manager, new_state.x);
-				default_mouse.analog[input_mouse::axis_id::y].change(input_manager, new_state.y);
+				default_mouse.analog.change(input_manager, input_mouse::axis_id::x, new_state.x);
+				default_mouse.analog.change(input_manager, input_mouse::axis_id::y, new_state.y);
 				}
 
 			bool wm_input(WPARAM wparam, LPARAM lparam)
