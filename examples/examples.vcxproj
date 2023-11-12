@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\utf8.cpp" />
     <ClCompile Include="00_base_window.cpp" />
     <ClCompile Include="01_windowing_system.cpp" />
     <ClCompile Include="02_input_system.cpp" />

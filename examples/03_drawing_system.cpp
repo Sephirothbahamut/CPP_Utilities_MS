@@ -34,7 +34,7 @@ static void body()
 		utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both but I don't trust I've done it correctly at all lol
 			{
 			//.d2d_factory{graphics}, //decomment for render_target, since it doesn't take a device
-			.d2d_device{graphics}, //decomment for the other 2
+			.d2d_device{graphics.d2d_device}, //decomment for the other 2
 			.draw_callback
 				{
 				[](const utils::MS::window::base& window, const utils::MS::graphics::d2d::device_context& context)
@@ -67,11 +67,18 @@ static void body()
 				}
 			}
 		};
-		
+
+	auto graphics_module_ptr{window.get_module_ptr<utils::MS::graphics::d2d::window::composition_swap_chain>()};
+
 	window.show();
 	while (window.is_open())
 		{
+		/*
 		window.wait_event();
+		/*/
+		while (window.poll_event());
+		graphics_module_ptr->draw();
+		/**/
 		}
 	}
 

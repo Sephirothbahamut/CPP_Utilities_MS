@@ -12,6 +12,7 @@ namespace utils::MS::window
 				{
 				composition_attribute,
 				DWM_blurbehind,
+				DWM_transparent,
 				DWM_margin,
 				layered,
 				none
@@ -51,6 +52,9 @@ namespace utils::MS::window
 						break;
 					case transparency_t::DWM_blurbehind:
 						details::make_glass_DWM_BlurBehind      (base.get_handle());
+						break;
+					case transparency_t::DWM_transparent:
+						details::make_transparent_DWM_BlurBehind(base.get_handle());
 						break;
 					case transparency_t::DWM_margin:
 						details::make_glass_DWM_margin          (base.get_handle());

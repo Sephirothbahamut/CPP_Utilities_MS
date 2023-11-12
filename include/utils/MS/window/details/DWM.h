@@ -105,7 +105,21 @@ namespace utils::MS::window::details
 			{
 			.dwFlags {DWM_BB_ENABLE},
 			.fEnable {true},
-			.hRgnBlur{nullptr}
+			.hRgnBlur{nullptr},
+			.fTransitionOnMaximized{false}
+			};
+
+		HRESULT result = DwmEnableBlurBehindWindow(hwnd, &bb);
+		return result == S_OK;
+		}
+	inline bool make_transparent_DWM_BlurBehind(HWND hwnd)
+		{
+		DWM_BLURBEHIND bb
+			{
+			.dwFlags {DWM_BB_ENABLE | DWM_BB_BLURREGION},
+			.fEnable {true},
+			.hRgnBlur{CreateRectRgn(0, 0, -1, -1)},
+			.fTransitionOnMaximized{false}
 			};
 
 		HRESULT result = DwmEnableBlurBehindWindow(hwnd, &bb);

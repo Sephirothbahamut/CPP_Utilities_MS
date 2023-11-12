@@ -5,6 +5,7 @@
 
 #include <utils/MS/window/window.h>
 #include <utils/MS/window/input/mouse.h>
+#include <utils/MS/window/input/keyboard.h>
 
 #include "examples.h"
 
@@ -21,7 +22,8 @@ static void body()
 		utils::MS::window::base::create_info{.size{{256u, 128u}}},
 		close_module::create_info{},
 		// Create a mouse window module. This will bridge between the OS's input and my input system
-		utils::MS::window::input::mouse::create_info{manager_input}
+		utils::MS::window::input::mouse::create_info{manager_input},
+		utils::MS::window::input::keyboard::create_info{manager_input},
 		};
 
 	// Get the mouse input module.
@@ -45,7 +47,6 @@ static void body()
 	// Note: the last parameter is the previous state. In general it's useless for digital inputs like mouse buttons,
 	// as it's always going to be !state. However it can be useful for analog ones.
 	// Since we're not using it at all, I'm leaving it unnamed.
-
 
 	//utils::input_system::event::mapped<bool> event_pippo {[](const utils::input_system::state<bool>& state)
 	//	{

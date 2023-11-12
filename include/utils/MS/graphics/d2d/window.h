@@ -1,6 +1,8 @@
 #pragma once
 #include "../d2d.h"
 
+#include <utils/oop/crtp.h>
+
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 #include <Windows.ui.composition.interop.h>
 #include <winrt/Windows.UI.Composition.h>
@@ -14,13 +16,11 @@ namespace utils::MS::graphics::d2d::window
 
 	namespace details
 		{
-		template <typename DERIVED_T>
-		class base : public utils::MS::window::module
+		template <typename derived_t>
+		class base : public utils::MS::window::module, public utils::oop::crtp<derived_t>
 			{
 			private:
-				using derived_t = DERIVED_T;
-				constexpr const derived_t& derived() const noexcept { return static_cast<const derived_t&>(*this); }
-				constexpr       derived_t& derived()       noexcept { return static_cast<      derived_t&>(*this); }
+				using crtp = utils::oop::crtp<derived_t>;
 
 			public:
 				base(utils::MS::window::base& window_base, std::function<draw_callback_signature> draw_callback) :
@@ -30,7 +30,7 @@ namespace utils::MS::graphics::d2d::window
 
 				std::function<draw_callback_signature> draw_callback;
 
-				bool draw() const noexcept { return derived().draw(draw_callback); }
+				bool draw() const noexcept { return crtp::derived().draw(draw_callback); }
 
 				// Note: kept for reference reasons.
 				// there should be no benefit/no difference between doing this and calling directly draw, assuming no other module deals with WM_PAINT
@@ -48,7 +48,7 @@ namespace utils::MS::graphics::d2d::window
 					switch (msg)
 						{
 						case WM_SIZE:
-							derived().on_resize({LOWORD(lparam), HIWORD(lparam)});
+							crtp::derived().on_resize({LOWORD(lparam), HIWORD(lparam)});
 							draw();
 							return utils::MS::window::procedure_result::next(0);
 	

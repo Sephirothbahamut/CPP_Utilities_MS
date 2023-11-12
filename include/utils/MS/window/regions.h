@@ -20,6 +20,7 @@ namespace utils::MS::window
 		resize_down_left  = HTBOTTOMLEFT  ,
 		client            = HTCLIENT ,
 		hole              = HTNOWHERE,
+		same_thread_hole  = HTTRANSPARENT, //input passthrough to windows created by the same thread
 		drag              = HTCAPTION
 		};
 

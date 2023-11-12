@@ -294,7 +294,7 @@ namespace utils::MS::window
 				.hbrBackground {hBrush                           },
 				.lpszClassName {base::class_name},
 				};
-			RegisterClassEx(&wcx);
+			RegisterClassExW(&wcx);
 			}
 		inline ~initializer() { UnregisterClass(base::class_name, nullptr); }
 		};
