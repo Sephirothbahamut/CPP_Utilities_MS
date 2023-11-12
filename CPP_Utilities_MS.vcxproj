@@ -157,6 +157,7 @@
     <ClInclude Include="include\utils\MS\window\hwnd_wrapper.h" />
     <ClInclude Include="include\utils\MS\window\input\keyboard.h" />
     <ClInclude Include="include\utils\MS\window\input\mouse.h" />
+    <ClInclude Include="include\utils\MS\window\input\passthrough.h" />
     <ClInclude Include="include\utils\MS\window\regions.h" />
     <ClInclude Include="include\utils\MS\window\snap_on_drag.h" />
     <ClInclude Include="include\utils\MS\window\style.h" />

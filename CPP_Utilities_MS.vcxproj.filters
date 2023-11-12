@@ -95,5 +95,8 @@
     <ClInclude Include="include\utils\graphics\opengl\window.h">
       <Filter>Headers\graphics\opengl</Filter>
     </ClInclude>
+    <ClInclude Include="include\utils\MS\window\input\passthrough.h">
+      <Filter>Headers\MS\window\input</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
