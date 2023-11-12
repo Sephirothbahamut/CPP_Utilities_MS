@@ -107,17 +107,10 @@ namespace utils::MS::window
 				{
 				set_window_ptr();
 				}
-			template <concepts::module_create_info ...Args>
-			inline base(create_info base_create_info, Args&&... other_create_infos) : base{base_create_info}
-				{
-				([&]
-					{
-					if constexpr (concepts::create_info_affecting_base<Args>)
-						{
-						other_create_infos.adjust_base_create_info(base_create_info);
-						}
-					}(), ...);
 
+			template <concepts::module_create_info ...Args>
+			inline base(create_info base_create_info, Args&&... other_create_infos) : base{adjust_create_info(base_create_info, std::forward<Args>(other_create_infos)...)}
+				{
 				(this->emplace_module<typename Args::module_type>(other_create_infos), ...);
 				}
 
@@ -141,6 +134,19 @@ namespace utils::MS::window
 			inline ~base() noexcept { destroy_window_if_exists(); }
 
 		private:
+			template <concepts::module_create_info ...Args>
+			inline static create_info adjust_create_info(create_info base_create_info, Args&&... other_create_infos)
+				{
+				([&]
+					{
+					if constexpr (concepts::create_info_affecting_base<Args>)
+						{
+						other_create_infos.adjust_base_create_info(base_create_info);
+						}
+					}(), ...);
+				return base_create_info;
+				}
+
 			void destroy_window_if_exists() noexcept
 				{
 				if (get_handle()) { ::DestroyWindow(get_handle()); }

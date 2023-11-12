@@ -141,8 +141,7 @@ namespace utils::MS::window::details
 	inline bool make_transparent_Layered(HWND hWnd, BYTE opacity = 127)
 		{
 		//Transparent window
-		SetWindowLong(hWnd, GWL_EXSTYLE,
-			GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
+		SetWindowLong(hWnd, GWL_EXSTYLE, GetWindowLong(hWnd, GWL_EXSTYLE) | WS_EX_LAYERED);
 
 		//HBRUSH brush = CreateSolidBrush(RGB(0, 0, 255));
 		//SetClassLongPtr(hWnd, GCLP_HBRBACKGROUND, (LONG)brush);

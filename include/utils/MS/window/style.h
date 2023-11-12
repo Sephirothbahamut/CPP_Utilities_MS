@@ -26,7 +26,7 @@ namespace utils::MS::window
 				value_t borders{value_t::_default};
 				value_t shadow {value_t::_default};
 				/// <summary> Only used by layered transparency </summary>
-				uint8_t alpha{127};
+				uint8_t alpha{255};
 
 				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
 					{
