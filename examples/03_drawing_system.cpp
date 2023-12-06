@@ -19,6 +19,9 @@ static void body()
 
 	utils::MS::window::initializer window_initializer;
 
+	std::unique_ptr<int> asd{std::make_unique<int>(3)};
+	std::unique_ptr<int> qwe{std::move(asd)};
+
 	utils::MS::window::base window
 		{
 		utils::MS::window::base::create_info{.position{{1024, 768}}, .size{{256u, 128u}}},
@@ -28,7 +31,7 @@ static void body()
 			.transparency{utils::MS::window::style::transparency_t::composition_attribute},
 			.borders{utils::MS::window::style::value_t::disable}
 			},
-			utils::MS::window::resizable_edge::create_info{.thickness{8}},
+		utils::MS::window::resizable_edge::create_info{.thickness{8}},
 		//utils::MS::graphics::d2d::window::render_target::create_info         //transparency, cannot guarantee same device for multiple windows
 		//utils::MS::graphics::d2d::window::swap_chain::create_info            //guarantees same device for multiple windows, no transparency
 		utils::MS::graphics::d2d::window::composition_swap_chain::create_info //should do both but I don't trust I've done it correctly at all lol

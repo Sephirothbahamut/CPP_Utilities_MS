@@ -98,5 +98,8 @@
     <ClInclude Include="include\utils\MS\window\input\passthrough.h">
       <Filter>Headers\MS\window\input</Filter>
     </ClInclude>
+    <ClInclude Include="include\utils\MS\base_types.h">
+      <Filter>Headers\MS</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

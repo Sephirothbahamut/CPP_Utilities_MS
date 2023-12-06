@@ -22,8 +22,9 @@ static void body()
 		utils::MS::window::base::create_info{.size{{256u, 128u}}},
 		close_module::create_info{},
 		// Create a mouse window module. This will bridge between the OS's input and my input system
-		utils::MS::window::input::mouse::create_info{manager_input},
+		utils::MS::window::input::mouse   ::create_info{manager_input},
 		utils::MS::window::input::keyboard::create_info{manager_input},
+		close_module::create_info{}
 		};
 
 	// Get the mouse input module.
