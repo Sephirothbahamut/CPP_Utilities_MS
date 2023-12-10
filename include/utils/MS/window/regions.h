@@ -1,27 +1,30 @@
 #pragma once
 
+#include <vector>
+
 #include <utils/math/vec2.h>
 #include <utils/math/rect.h>
 
 #include "window.h"
 #include "details/style.h"
+#include "../base_types.h"
 
 namespace utils::MS::window
 	{
 	enum hit_type : LRESULT
 		{
-		resize_right      = HTRIGHT ,
-		resize_left       = HTLEFT  ,
-		resize_up         = HTTOP   ,
-		resize_down       = HTBOTTOM,
-		resize_up_right   = HTTOPRIGHT ,
-		resize_up_left    = HTTOPLEFT  ,
-		resize_down_right = HTBOTTOMRIGHT ,
-		resize_down_left  = HTBOTTOMLEFT  ,
-		client            = HTCLIENT ,
-		hole              = HTNOWHERE,
-		same_thread_hole  = HTTRANSPARENT, //input passthrough to windows created by the same thread
-		drag              = HTCAPTION
+		resize_right      = nchittest_results::htright      ,
+		resize_left       = nchittest_results::htleft       ,
+		resize_up         = nchittest_results::httop        ,
+		resize_down       = nchittest_results::htbottom     ,
+		resize_up_right   = nchittest_results::httopright   ,
+		resize_up_left    = nchittest_results::httopleft    ,
+		resize_down_right = nchittest_results::htbottomright,
+		resize_down_left  = nchittest_results::htbottomleft ,
+		client            = nchittest_results::htclient     ,
+		hole              = nchittest_results::htnowhere    ,
+		same_thread_hole  = nchittest_results::httransparent, //input passthrough to windows created by the same thread
+		drag              = nchittest_results::htcaption
 		};
 
 	/// <summary>
@@ -37,62 +40,14 @@ namespace utils::MS::window
 				int thickness{8}; 
 				};
 
-			resizable_edge(window::base& base, const create_info& create_info = {}) :
-				module{base},
-				thickness{create_info.thickness}
-				{
-				}
+			resizable_edge(window::base& base, const create_info& create_info = {});
 
 			int thickness;
 
 		protected:
-			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
-				{
-				if (msg == WM_NCHITTEST)
-					{
-					if (auto ret{hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)})})
-						{
-						return procedure_result::stop(ret.value());
-						}
-					}
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override;
 
-				return procedure_result::next();
-				}
-
-			std::optional<hit_type> hit_test(utils::math::vec2i coords) const noexcept
-				{
-				const auto rect{get_base().get_window_rect()};
-
-				if (!rect.contains(coords)) { return std::nullopt; }
-
-				if (get_base().is_maximized()) { return std::nullopt; }
-
-				if (thickness)
-					{
-					const bool hit_result_left {coords.x <= rect.ll + thickness};
-					const bool hit_result_right{coords.x >= rect.rr - thickness};
-					const bool hit_result_up   {coords.y <= rect.up + thickness};
-					const bool hit_result_down {coords.y >= rect.dw - thickness};
-
-					if (hit_result_up)
-						{
-						if (hit_result_right) { return hit_type::resize_up_right; }
-						if (hit_result_left ) { return hit_type::resize_up_left ; }
-						return hit_type::resize_up;
-						}
-					if (hit_result_down)
-						{
-						if (hit_result_right) { return hit_type::resize_down_right; }
-						if (hit_result_left ) { return hit_type::resize_down_left ; }
-						return hit_type::resize_down;
-						}
-				
-					if (hit_result_right) { return hit_type::resize_right; }
-					if (hit_result_left ) { return hit_type::resize_left ; }
-					}
-
-				return std::nullopt;
-				}
+			std::optional<hit_type> hit_test(utils::math::vec2i coords) const noexcept;
 		};
 
 	class regions : public module
@@ -111,41 +66,19 @@ namespace utils::MS::window
 				std::vector<region_data_t> regions_data;
 				};
 
-			regions(window::base& base, const create_info& create_info = {}) :
-				module{base},
-				default_hit_type{create_info.default_hit_type}, 
-				regions_data{create_info.regions_data.begin(), create_info.regions_data.end()}
-				{
-				}
+			regions(window::base& base, const create_info& create_info = {});
 
 			hit_type default_hit_type;
 			std::vector<region_data_t> regions_data;
 
 		protected:
 
-			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
-				{
-				if (msg == WM_NCHITTEST)
-					{
-					return procedure_result::next(hit_test({GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)}));
-					}
-				else return procedure_result::next();
-				}
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override;
 
-			hit_type hit_test(utils::math::vec2i coords)
-				{
-				const auto rect{get_base().get_window_rect()};
-
-				if (!rect.contains(coords)) { return hit_type::hole; }
-
-				coords -= rect.top_left();
-
-				for (const auto& region_data : regions_data)
-					{
-					if (region_data.rect.contains(coords)) { return region_data.hit_type; }
-					}
-
-				return default_hit_type;
-				}
+			hit_type hit_test(utils::math::vec2i coords);
 		};
 	}
+
+#ifdef utils_implementation
+#include "regions.cpp"
+#endif

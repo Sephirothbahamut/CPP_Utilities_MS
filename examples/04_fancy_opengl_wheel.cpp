@@ -2,12 +2,12 @@
 #include <chrono>
 #include <thread>
 
-#include <utils/MS/windows.h>
 #include <utils/MS/window/window.h>
 #include <utils/MS/window/style.h>
 #include <utils/MS/window/regions.h>
 #include <utils/MS/window/input/passthrough.h>
 
+#include <utils/MS/windows.h>
 #include <utils/graphics/opengl/window.h>
 
 #include "examples.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Windows.h>
+#include "windows.h"
 #include <dcomp.h>
 #include <d2d1_3.h>
 #include <d3d11_3.h>

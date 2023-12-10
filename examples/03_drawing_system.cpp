@@ -88,6 +88,5 @@ static void body()
 void example::drawing_system()
 	{
 	try { body(); }
-	catch (const std::system_error & e) { std::cout << e.what() << std::endl; }
-	catch (const std::runtime_error& e) { std::cout << e.what() << std::endl; }
+	catch (const std::exception & e) { std::cout << e.what() << std::endl; }
 	}

@@ -130,5 +130,5 @@ static void body()
 void example::input_system()
 	{
 	try { body(); }
-	catch (const std::system_error& e) { ::MessageBoxA(nullptr, e.what(), "Unhandled Exception", MB_OK | MB_ICONERROR); }
+	catch (const std::exception& e) { std::cout << e.what() << std::endl; }
 	}

@@ -143,6 +143,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\utils\MS\window\details\style.cpp" />
+    <ClCompile Include="include\utils\MS\window\hwnd_wrapper.cpp" />
+    <ClCompile Include="include\utils\MS\window\input\keyboard.cpp" />
+    <ClCompile Include="include\utils\MS\window\input\mouse.cpp" />
+    <ClCompile Include="include\utils\MS\window\input\passthrough.cpp" />
+    <ClCompile Include="include\utils\MS\window\regions.cpp" />
+    <ClCompile Include="include\utils\MS\window\snap_on_drag.cpp" />
+    <ClCompile Include="include\utils\MS\window\style.cpp" />
+    <ClCompile Include="include\utils\MS\window\taskbar.cpp" />
+    <ClCompile Include="include\utils\MS\window\window.cpp" />
     <ClCompile Include="quick_tests.cpp" />
   </ItemGroup>
   <ItemGroup>

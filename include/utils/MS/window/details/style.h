@@ -1,69 +1,28 @@
 #pragma once
-#include "DWM.h"
+
+#include <utils/math/rect.h>
+#include "../../base_types.h"
 
 namespace utils::MS::window::details::style
 	{
 	enum class Style : DWORD
 		{
-		windowed         = WS_OVERLAPPEDWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
-		aero_borderless  = WS_POPUP            | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
-		basic_borderless = WS_POPUP            | WS_THICKFRAME | WS_SYSMENU              | WS_MINIMIZEBOX | WS_MAXIMIZEBOX
+		windowed         = window_styles::ws_overlappedwindow | window_styles::ws_thickframe | window_styles::ws_caption | window_styles::ws_sysmenu | window_styles::ws_minimizebox | window_styles::ws_maximizebox,
+		aero_borderless  = window_styles::ws_popup            | window_styles::ws_thickframe | window_styles::ws_caption | window_styles::ws_sysmenu | window_styles::ws_minimizebox | window_styles::ws_maximizebox,
+		basic_borderless = window_styles::ws_popup            | window_styles::ws_thickframe | window_styles::ws_sysmenu                             | window_styles::ws_minimizebox | window_styles::ws_maximizebox
 		};
 
-	inline bool composition_enabled() noexcept
-		{
-		BOOL composition_enabled = FALSE;
-		bool success = ::DwmIsCompositionEnabled(&composition_enabled) == S_OK;
-		return composition_enabled && success;
-		}
+	bool composition_enabled() noexcept;
 
-	inline Style select_borderless_style() noexcept
-		{
-		return composition_enabled() ? Style::aero_borderless : Style::basic_borderless;
-		}
+	Style select_borderless_style() noexcept;
 
-	inline void set_shadow(HWND handle, bool enabled)
-		{
-		if (composition_enabled())
-			{
-			static const MARGINS shadow_state[2]{{ 0,0,0,0 },{ 1,1,1,1 }};
-			::DwmExtendFrameIntoClientArea(handle, &shadow_state[enabled]);
-			}
-		}
+	void set_shadow(HWND handle, bool enabled);
 
-	inline auto maximized(HWND hwnd) -> bool
-		{
-		WINDOWPLACEMENT placement;
-		if (!::GetWindowPlacement(hwnd, &placement))
-			{
-			return false;
-			}
+	bool maximized(HWND hwnd);
 
-		return placement.showCmd == SW_MAXIMIZE;
-		}
-
-	inline auto adjust_maximized_client_rect(HWND window, RECT& rect) -> void
-		{
-		if (!maximized(window))
-			{
-			return;
-			}
-
-		auto monitor = ::MonitorFromWindow(window, MONITOR_DEFAULTTONULL);
-		if (!monitor)
-			{
-			return;
-			}
-
-		MONITORINFO monitor_info{};
-		monitor_info.cbSize = sizeof(monitor_info);
-		if (!::GetMonitorInfoW(monitor, &monitor_info))
-			{
-			return;
-			}
-
-		// when maximized, make the client area fill just the monitor (without task bar) rect,
-		// not the whole window rect which extends beyond the monitor.
-		rect = monitor_info.rcWork;
-		}
+	std::optional<utils::math::rect<long>> maximized_client_rect(HWND window);
 	}
+
+#ifdef utils_implementation
+#include "style.cpp"
+#endif

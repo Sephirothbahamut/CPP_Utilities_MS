@@ -4,6 +4,7 @@
 #include <utils/enum.h>
 
 #include <utils/MS/window/window.h>
+#include <utils/MS/windows.h>
 
 // Let it be recorded to history that I wanted to use '🗔' instead of "window" for the window namespace
 

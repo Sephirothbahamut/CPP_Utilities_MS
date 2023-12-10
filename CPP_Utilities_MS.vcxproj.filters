@@ -42,6 +42,36 @@
     <ClCompile Include="quick_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\utils\MS\window\hwnd_wrapper.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\window.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\input\keyboard.cpp">
+      <Filter>Headers\MS\window\input</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\input\mouse.cpp">
+      <Filter>Headers\MS\window\input</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\input\passthrough.cpp">
+      <Filter>Headers\MS\window\input</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\regions.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\snap_on_drag.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\style.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\taskbar.cpp">
+      <Filter>Headers\MS\window</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\window\details\style.cpp">
+      <Filter>Headers\MS\window\details</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\utils\MS\windows.h">
@@ -86,9 +116,6 @@
     <ClInclude Include="include\utils\MS\graphics\d2d.h">
       <Filter>Headers\MS\graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\utils\MS\cast.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="include\utils\utf8\utf8.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -99,6 +126,9 @@
       <Filter>Headers\MS\window\input</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\base_types.h">
+      <Filter>Headers\MS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\utils\MS\cast.h">
       <Filter>Headers\MS</Filter>
     </ClInclude>
   </ItemGroup>

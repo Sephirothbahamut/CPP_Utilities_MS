@@ -1,11 +1,7 @@
 #pragma once
-// IMPORTANT: If you include this header, remember to define WIN32_LEAN_AND_MEAN and NOMINMAX
 
 #include <vector>
-#include <string>
-#include <optional>
-#include <concepts>
-#include <functional>
+#include <memory>
 
 #include <utils/memory.h>
 #include <utils/math/vec2.h>
@@ -13,31 +9,27 @@
 #include <utils/oop/disable_move_copy.h>
 #include <utils/containers/object_pool.h>
 
-#include "../windows.h"
-
-#include "../error_to_exception.h"
+#include "../base_types.h"
 #include "hwnd_wrapper.h"
 
 
 namespace utils::MS::window
 	{
-
-
 	class base;
 	class procedure_result
 		{
 		friend class base;
 		public:
 			/// <summary> Prevents procedure from being called for modules after this one. The global procedure will return result. </summary>
-			inline static procedure_result stop(LRESULT result) noexcept { return {true , result}; }
+			static procedure_result stop(LRESULT result) noexcept;
 			/// <summary> If no other procedure after this one processed the message, the global procedure will return result. </summary>
-			inline static procedure_result next(LRESULT result) noexcept { return {false, result}; }
+			static procedure_result next(LRESULT result) noexcept;
 			/// <summary> If no other procedure after this one processed the message, it will be passed to the default window procedure. </summary>
-			inline static procedure_result next(              ) noexcept { return {false        }; }
+			static procedure_result next(              ) noexcept;
 
 		private:
-			procedure_result(bool halt, LRESULT result) : halt{halt}, result{result      } {}
-			procedure_result(bool halt                ) : halt{halt}, result{std::nullopt} {}
+			procedure_result(bool halt, LRESULT result);
+			procedure_result(bool halt                );
 			bool halt;
 			std::optional<LRESULT> result;
 		};
@@ -60,13 +52,13 @@ namespace utils::MS::window
 		public:
 			virtual ~module() {};
 
-			const base& get_base() const noexcept { return *base_ptr; }
-			      base& get_base()       noexcept { return *base_ptr; }
+			const base& get_base() const noexcept;
+			      base& get_base()       noexcept;
 
 		protected:
-			module(window::base& base) : base_ptr{&base} {}
+			module(window::base& base);
 
-			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) { return procedure_result::next(); }
+			virtual procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam);
 
 		private:
 			utils::observer_ptr<utils::MS::window::base> base_ptr;
@@ -88,7 +80,7 @@ namespace utils::MS::window
 			};
 		};
 
-	class base : public hwnd_wrapper, utils::oop::non_copyable
+	class base : public hwnd_wrapper
 		{
 		friend struct initializer;
 
@@ -100,45 +92,28 @@ namespace utils::MS::window
 				{
 				std::wstring title{L"Untitled Window"};
 				DWORD style_ex{0};
-				DWORD style   {WS_OVERLAPPEDWINDOW};
+				DWORD style   {window_styles::ws_overlappedwindow};
 				std::optional<utils::math::vec2i> position{std::nullopt};
 				std::optional<utils::math::vec2u> size    {std::nullopt};
 				utils::observer_ptr<base> parent_window   {nullptr};
 				};
 
-			inline base(const create_info& create_info) : hwnd_wrapper{create_window(create_info)}
-				{
-				set_window_ptr();
-				}
+			base(const create_info& create_info);
 
 			template <concepts::module_create_info ...Args>
-			inline base(create_info base_create_info, Args&&... other_create_infos) : base{adjust_create_info(base_create_info, std::forward<Args>(other_create_infos)...)}
+			base(create_info base_create_info, Args&&... other_create_infos) : base{adjust_create_info(base_create_info, std::forward<Args>(other_create_infos)...)}
 				{
 				(this->emplace_module<typename Args::module_type>(other_create_infos), ...);
 				}
 
-			base(base&& move) noexcept { operator=(std::move(move)); }
-			base& operator=(base&& move) noexcept
-				{
-				destroy_window_if_exists();
-				hwnd_wrapper::operator=(std::move(move));
+			base           (base&& move) noexcept;
+			base& operator=(base&& move) noexcept;
 
-				set_window_ptr();
-
-				modules = std::move(move.modules);
-
-				for (auto& module : modules)
-					{
-					module->base_ptr = this;
-					}
-				return *this;
-				}
-
-			inline ~base() noexcept { destroy_window_if_exists(); }
+			~base() noexcept;
 
 		private:
 			template <concepts::module_create_info ...Args>
-			inline static create_info adjust_create_info(create_info base_create_info, Args&&... other_create_infos)
+			static create_info adjust_create_info(create_info base_create_info, Args&&... other_create_infos)
 				{
 				([&]
 					{
@@ -150,33 +125,11 @@ namespace utils::MS::window
 				return base_create_info;
 				}
 
-			void destroy_window_if_exists() noexcept
-				{
-				if (get_handle()) { ::DestroyWindow(get_handle()); }
-				}
+			void destroy_window_if_exists() noexcept;
 
 			inline static constexpr wchar_t class_name[27]{L"CPP_Utilities Window Class"};
 
-			HWND create_window(const create_info& create_info)
-				{
-				HWND ret = ::CreateWindowExW
-				(
-					create_info.style_ex, 
-					class_name, 
-					create_info.title.c_str(),
-					create_info.style, 
-					create_info.position.has_value() ? create_info.position.value().x : CW_USEDEFAULT,
-					create_info.position.has_value() ? create_info.position.value().y : CW_USEDEFAULT,
-					create_info.size    .has_value() ? create_info.size    .value().x : CW_USEDEFAULT,
-					create_info.size    .has_value() ? create_info.size    .value().y : CW_USEDEFAULT,
-					create_info.parent_window ? create_info.parent_window->get_handle() : nullptr,
-					nullptr, nullptr, this
-				);
-
-				if (!ret) { throw last_error("Failed to create window. Did you forget to create an initializer instance for your window class? (utils::MS::window::initializer)"); }
-
-				return ret;
-				}
+			HWND create_window(const create_info& create_info);
 #pragma endregion creation and destruction
 
 #pragma region modules
@@ -231,81 +184,28 @@ namespace utils::MS::window
 
 #pragma region procedure
 		private:
-			void set_window_ptr() { SetWindowLongPtr(get_handle(), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this)); }
-			inline static utils::observer_ptr<base> get_window_ptr(HWND handle)
-				{
-				return reinterpret_cast<utils::observer_ptr<base>>(GetWindowLongPtr(handle, GWLP_USERDATA));
-				}
+			void set_window_ptr();
+			static utils::observer_ptr<base> get_window_ptr(HWND handle);
 
-			inline static LRESULT __stdcall window_procedure(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam) noexcept
-				{
-				auto window_ptr{get_window_ptr(handle)};
-				if (window_ptr) { return window_ptr->procedure(msg, wparam, lparam); }
-				else { return ::DefWindowProc(handle, msg, wparam, lparam); }
-				}
+			static LRESULT __stdcall window_procedure(HWND handle, UINT msg, WPARAM wparam, LPARAM lparam) noexcept;
 
-			inline LRESULT procedure(UINT msg, WPARAM wparam, LPARAM lparam) noexcept
-				{
-				std::optional<LRESULT> last_result{std::nullopt};
-				
-				for (auto& module : modules)
-					{
-					auto ret{module->procedure(msg, wparam, lparam)};
-					if (ret.result) { last_result = ret.result; }
-					if (ret.halt  ) { break; }
-					}
-				
-				switch (msg)
-					{
-					case WM_NCDESTROY: hwnd_wrapper::close(); return 0;
-					}
-
-				if (last_result) { return last_result.value(); }
-				return DefWindowProc(get_handle(), msg, wparam, lparam);
-				}
+			LRESULT procedure(UINT msg, WPARAM wparam, LPARAM lparam) noexcept;
 #pragma endregion procedure
 #pragma region events
-			public:
-				inline bool poll_event() const
-					{
-					MSG msg;
-					bool ret{static_cast<bool>(PeekMessage(&msg, get_handle(), 0, 0, PM_REMOVE))};
-					if (ret)
-						{
-						::TranslateMessage(&msg);
-						::DispatchMessage(&msg);
-						return true;
-						}
-					else { return false; }
-					}
-				inline void wait_event() const
-					{
-					MSG msg;
-					bool ret{static_cast<bool>(GetMessage(&msg, get_handle(), 0, 0))}; //true if WM_QUIT, false otherwise
-					::TranslateMessage(&msg);
-					::DispatchMessage(&msg);
-					}
+		public:
+			bool poll_event() const;
+			void wait_event() const;
 #pragma endregion events
 		};
 		
 	struct initializer : utils::oop::non_copyable, utils::oop::non_movable
 		{
-		inline initializer()
-			{
-			auto hBrush{CreateSolidBrush(RGB(0, 0, 0))};
-			WNDCLASSEXW wcx
-				{
-				.cbSize        {sizeof(wcx)                     },
-				.style         {CS_HREDRAW | CS_VREDRAW         },
-				.lpfnWndProc   {base::window_procedure          },
-				.hInstance     {nullptr                         },
-				.hCursor       {::LoadCursor(nullptr, IDC_ARROW)},
-				.hbrBackground {hBrush                          },
-				.lpszClassName {base::class_name},
-				};
-			RegisterClassExW(&wcx);
-			}
-		inline ~initializer() { UnregisterClassW(base::class_name, nullptr); }
+		 initializer();
+		~initializer();
 		};
 
 	}
+
+#ifdef utils_implementation
+#include "window.cpp"
+#endif

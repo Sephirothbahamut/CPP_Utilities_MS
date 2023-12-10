@@ -139,7 +139,9 @@
     <ClCompile Include="02_input_system.cpp" />
     <ClCompile Include="03_drawing_system.cpp" />
     <ClCompile Include="04_fancy_opengl_wheel.cpp" />
+    <ClCompile Include="close_module.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="close_module.h" />

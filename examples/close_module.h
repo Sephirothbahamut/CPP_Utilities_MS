@@ -13,13 +13,5 @@ class close_module : public utils::MS::window::module
 		close_module(utils::MS::window::base& base, const create_info& create_info = {}) : utils::MS::window::module{base} {}
 
 	protected:
-		virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
-			{
-			if (msg == WM_KEYUP && wparam == VK_ESCAPE)
-				{
-				get_base().close();
-				return utils::MS::window::procedure_result::stop(0);
-				}
-			else return utils::MS::window::procedure_result::next();
-			}
+		virtual utils::MS::window::procedure_result procedure(utils::MS::UINT msg, utils::MS::WPARAM wparam, utils::MS::LPARAM lparam) override;
 	};
