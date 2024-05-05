@@ -2,7 +2,7 @@
 #include "hwnd_wrapper.h"
 
 #include "../windows.h"
-#include "../cast.h"
+#include "../details/cast.h"
 
 #include "../error_to_exception.h"
 #include "details/style.h"
@@ -56,11 +56,11 @@ namespace utils::MS::window
 		if (DwmGetWindowAttribute(get_handle(), DWMWA_EXTENDED_FRAME_BOUNDS, &rect_win32, sizeof(RECT)) == S_OK) 
 			{
 			//Equivalent to using unpack_window_size on GetWindowRect
-			return cast(rect_win32);
+			return MS::details::cast(rect_win32);
 			}
 		else if (GetWindowRect(get_handle(), &rect_win32))
 			{
-			return cast(rect_win32);
+			return MS::details::cast(rect_win32);
 			}
 		else
 			{
@@ -70,7 +70,7 @@ namespace utils::MS::window
 		}
 	void hwnd_wrapper::set_window_rect(rect_t rect) noexcept
 		{
-		const RECT rectangle{cast(add_shadow_size_to(rect))};
+		const RECT rectangle{MS::details::cast(add_shadow_size_to(rect))};
 		
 		const long width {rectangle.right  - rectangle.left};
 		const long height{rectangle.bottom - rectangle.top };
@@ -81,11 +81,11 @@ namespace utils::MS::window
 		{
 		RECT rect;
 		GetClientRect(handle, &rect);//TODO error case
-		return cast(rect);
+		return MS::details::cast(rect);
 		}
 	void hwnd_wrapper::set_client_rect(rect_t rect) noexcept
 		{
-		RECT rectangle{cast(rect)};
+		RECT rectangle{MS::details::cast(rect)};
 				
 		// Updates the rect to take into account border/title bar if present
 		AdjustWindowRectEx(&rectangle, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_STYLE)), false, static_cast<DWORD>(GetWindowLongPtr(handle, GWL_EXSTYLE)));

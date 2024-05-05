@@ -9,33 +9,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Headers">
+    <Filter Include="Library">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Headers\MS">
+    <Filter Include="Library\MS">
       <UniqueIdentifier>{068bafcd-7a23-4e32-9bdb-938d8e2e9d26}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\MS\window">
+    <Filter Include="Library\MS\window">
       <UniqueIdentifier>{bf7aef48-097f-477b-b6ea-870604e66df2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\MS\window\details">
+    <Filter Include="Library\MS\window\details">
       <UniqueIdentifier>{7213bbd2-4596-4bea-82f6-5850b518a529}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\MS\window\input">
+    <Filter Include="Library\MS\window\input">
       <UniqueIdentifier>{36c4988b-3ec5-4803-a999-86ed9b81c06a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\MS\graphics">
+    <Filter Include="Library\MS\graphics">
       <UniqueIdentifier>{b65db2da-2acb-41d0-b62f-9fccffeb3c6b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\MS\graphics\d2d">
+    <Filter Include="Library\MS\graphics\d2d">
       <UniqueIdentifier>{7029d259-1cf7-4437-a217-99d2ef75f80f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\graphics">
+    <Filter Include="Library\graphics">
       <UniqueIdentifier>{80a87072-998c-45eb-9200-24f1c1d139b0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\graphics\opengl">
+    <Filter Include="Library\graphics\opengl">
       <UniqueIdentifier>{29eb33dd-0b51-461b-974d-c070e9d946f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Library\details">
+      <UniqueIdentifier>{74b5af52-c79e-457e-bc54-a4108f3bd7a3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -43,93 +46,96 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\hwnd_wrapper.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\window.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\input\keyboard.cpp">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\input\mouse.cpp">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\input\passthrough.cpp">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\regions.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\snap_on_drag.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\style.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\taskbar.cpp">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClCompile>
     <ClCompile Include="include\utils\MS\window\details\style.cpp">
-      <Filter>Headers\MS\window\details</Filter>
+      <Filter>Library\MS\window\details</Filter>
+    </ClCompile>
+    <ClCompile Include="include\utils\MS\error_to_exception.cpp">
+      <Filter>Library\MS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\utils\MS\windows.h">
-      <Filter>Headers\MS</Filter>
+      <Filter>Library\MS</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\error_to_exception.h">
-      <Filter>Headers\MS</Filter>
+      <Filter>Library\MS</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\hwnd_wrapper.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\regions.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\snap_on_drag.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\style.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\taskbar.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\window.h">
-      <Filter>Headers\MS\window</Filter>
+      <Filter>Library\MS\window</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\details\DWM.h">
-      <Filter>Headers\MS\window\details</Filter>
+      <Filter>Library\MS\window\details</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\details\style.h">
-      <Filter>Headers\MS\window\details</Filter>
+      <Filter>Library\MS\window\details</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\input\keyboard.h">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\input\mouse.h">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\graphics\d2d\window.h">
-      <Filter>Headers\MS\graphics\d2d</Filter>
+      <Filter>Library\MS\graphics\d2d</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\graphics\d2d.h">
-      <Filter>Headers\MS\graphics</Filter>
+      <Filter>Library\MS\graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\utf8\utf8.h">
-      <Filter>Headers</Filter>
+      <Filter>Library</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\graphics\opengl\window.h">
-      <Filter>Headers\graphics\opengl</Filter>
+      <Filter>Library\graphics\opengl</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\window\input\passthrough.h">
-      <Filter>Headers\MS\window\input</Filter>
+      <Filter>Library\MS\window\input</Filter>
     </ClInclude>
     <ClInclude Include="include\utils\MS\base_types.h">
-      <Filter>Headers\MS</Filter>
+      <Filter>Library\MS</Filter>
     </ClInclude>
-    <ClInclude Include="include\utils\MS\cast.h">
-      <Filter>Headers\MS</Filter>
+    <ClInclude Include="include\utils\MS\details\cast.h">
+      <Filter>Library\details</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\utils\MS\error_to_exception.cpp" />
     <ClCompile Include="include\utils\MS\window\details\style.cpp" />
     <ClCompile Include="include\utils\MS\window\hwnd_wrapper.cpp" />
     <ClCompile Include="include\utils\MS\window\input\keyboard.cpp" />
@@ -158,10 +159,10 @@
   <ItemGroup>
     <ClInclude Include="include\utils\graphics\opengl\window.h" />
     <ClInclude Include="include\utils\MS\base_types.h" />
+    <ClInclude Include="include\utils\MS\details\cast.h" />
     <ClInclude Include="include\utils\MS\error_to_exception.h" />
     <ClInclude Include="include\utils\MS\graphics\d2d.h" />
     <ClInclude Include="include\utils\MS\graphics\d2d\window.h" />
-    <ClInclude Include="include\utils\MS\cast.h" />
     <ClInclude Include="include\utils\MS\windows.h" />
     <ClInclude Include="include\utils\MS\window\details\DWM.h" />
     <ClInclude Include="include\utils\MS\window\details\style.h" />

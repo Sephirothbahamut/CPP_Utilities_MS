@@ -4,7 +4,7 @@
 #include "details/style.h"
 
 #include "../windows.h"
-#include "../cast.h"
+#include "../details/cast.h"
 #include "details/DWM.h"
 
 namespace utils::MS::window
@@ -70,7 +70,7 @@ namespace utils::MS::window
 					auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lparam);
 					if (auto opt{details::style::maximized_client_rect(get_base().get_handle())})
 						{
-						params.rgrc[0] = cast(*opt);
+						params.rgrc[0] = MS::details::cast(*opt);
 						}
 					return procedure_result::stop(0);
 					}

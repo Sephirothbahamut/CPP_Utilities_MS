@@ -10,7 +10,7 @@
 #include <utils/math/vec2.h>
 #include <utils/math/vec3.h>
 
-namespace utils::MS
+namespace utils::MS::details
 	{
 	inline utils::math::rect<long> cast(const RECT& rect) noexcept { return {.ll  {rect.left}, .up {rect.top}, .rr   {rect.right}, .dw    {rect.bottom}}; }
 	inline RECT cast(const utils::math::rect<long>& rect) noexcept { return {.left{rect.left}, .top{rect.top}, .right{rect.right}, .bottom{rect.bottom}}; }

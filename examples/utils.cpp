@@ -9,3 +9,4 @@
 #include <utils/MS/window/input/mouse.h>
 #include <utils/MS/window/input/passthrough.h>
 #include <utils/MS/window/details/style.h>
+#include <utils/MS/error_to_exception.h>

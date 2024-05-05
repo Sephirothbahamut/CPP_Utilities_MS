@@ -7,7 +7,7 @@
 #include "hwnd_wrapper.h"
 #include "window.h"
 #include "details/style.h"
-#include "../cast.h"
+#include "../details/cast.h"
 #include "../windows.h"
 
 namespace utils::MS::window
@@ -32,7 +32,7 @@ namespace utils::MS::window
 				if (true)
 					{
 					RECT& attempted_result_win32{*reinterpret_cast<utils::observer_ptr<RECT>>(lparam)};
-					rect_t attempted_result{get_base().remove_shadow_size_from(cast(attempted_result_win32))};
+					rect_t attempted_result{get_base().remove_shadow_size_from(MS::details::cast(attempted_result_win32))};
 
 					utils::math::vec2l delta{attempted_result.position() - result_previous.position()};
 					target.position() += delta;
@@ -40,7 +40,7 @@ namespace utils::MS::window
 					if (const auto& result_new_opt{evaluate_move()})
 						{
 						const auto& result_new{result_new_opt.value()};
-						attempted_result_win32 = cast(get_base().add_shadow_size_to(result_new));
+						attempted_result_win32 = MS::details::cast(get_base().add_shadow_size_to(result_new));
 
 						result_previous = result_new;
 						return procedure_result::stop(0);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DWM.h"
-#include "../../cast.h"
+#include "../../details/cast.h"
 
 namespace utils::MS::window::details::style
 	{
@@ -49,6 +49,6 @@ namespace utils::MS::window::details::style
 
 		// when maximized, make the client area fill just the monitor (without task bar) rect,
 		// not the whole window rect which extends beyond the monitor.
-		return cast(monitor_info.rcWork);
+		return MS::details::cast(monitor_info.rcWork);
 		}
 	}
