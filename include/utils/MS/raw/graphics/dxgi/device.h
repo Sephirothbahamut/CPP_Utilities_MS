@@ -4,13 +4,10 @@
 
 #include "../d3d/device.h"
 
-namespace utils::MS::raw::graphics::dxgi
+namespace utils::MS::raw::graphics::dxgi::device
 	{
-	struct device : ms_wrapper<IDXGIDevice4>
-		{
-		using ms_wrapper<IDXGIDevice4>::ms_wrapper;
-		device(ID3D11Device* d3d_device);
-		};
+	using com_ptr = winrt::com_ptr<IDXGIDevice4>;
+	com_ptr create(winrt::com_ptr<ID3D11Device> d3d_device);
 	}
 
 #ifdef utils_implementation

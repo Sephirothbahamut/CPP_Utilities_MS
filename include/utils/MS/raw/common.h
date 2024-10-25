@@ -9,9 +9,9 @@ namespace utils::MS::raw
 	bool succeeded(HRESULT result) noexcept;
 	bool failed(HRESULT result) noexcept;
 
-	std::string hr_to_string(HRESULT hr) noexcept;
+	//std::string hr_to_string(HRESULT hr) noexcept;
 
-	void throw_if_failed(HRESULT hr);
+	//void throw_if_failed(HRESULT hr);
 	}
 
 #ifdef utils_implementation

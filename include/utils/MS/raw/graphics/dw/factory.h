@@ -2,13 +2,10 @@
 
 #include "common.h"
 
-namespace utils::MS::raw::graphics::dw
+namespace utils::MS::raw::graphics::dw::factory
 	{
-	struct factory : ms_wrapper<IDWriteFactory>
-		{
-		using ms_wrapper<IDWriteFactory>::ms_wrapper;
-		factory(DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED);
-		};
+	using com_ptr = winrt::com_ptr<IDWriteFactory>;
+	com_ptr create(DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED);
 	}
 
 #ifdef utils_implementation

@@ -4,13 +4,10 @@
 
 #include "device.h"
 
-namespace utils::MS::raw::graphics::d2d
+namespace utils::MS::raw::graphics::d2d::context
 	{
-	struct context : ms_wrapper<ID2D1DeviceContext>
-		{
-		using ms_wrapper<ID2D1DeviceContext>::ms_wrapper;
-		context(ID2D1Device* d2d_device, D2D1_DEVICE_CONTEXT_OPTIONS options = D2D1_DEVICE_CONTEXT_OPTIONS_NONE);
-		};
+	using com_ptr = winrt::com_ptr<ID2D1DeviceContext>;
+	com_ptr create(winrt::com_ptr<ID2D1Device> d2d_device, D2D1_DEVICE_CONTEXT_OPTIONS options = D2D1_DEVICE_CONTEXT_OPTIONS_NONE);
 	}
 
 #ifdef utils_implementation

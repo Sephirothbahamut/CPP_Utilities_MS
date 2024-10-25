@@ -6,13 +6,10 @@
 #include "common.h"
 #include "text_format.h"
 
-namespace utils::MS::raw::graphics::dw
+namespace utils::MS::raw::graphics::dw::text_layout
 	{
-	struct text_layout : ms_wrapper<IDWriteTextLayout>
-		{
-		using ms_wrapper<IDWriteTextLayout>::ms_wrapper;
-		text_layout(IDWriteFactory* dw_factory, IDWriteTextFormat* text_format, const std::string& string, const utils::math::vec2f& sizes);
-		};
+	using com_ptr = winrt::com_ptr<IDWriteTextLayout>;
+	com_ptr create(winrt::com_ptr<IDWriteFactory> dw_factory, winrt::com_ptr<IDWriteTextFormat> text_format, const std::string& string, const utils::math::vec2f& sizes);
 	}
 
 #ifdef utils_implementation

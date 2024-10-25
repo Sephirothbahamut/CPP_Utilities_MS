@@ -2,12 +2,14 @@
 
 #include "../../../string.h"
 
-namespace utils::MS::raw::graphics::dw
+namespace utils::MS::raw::graphics::dw::text_layout
 	{
-	text_layout::text_layout(IDWriteFactory* dw_factory, IDWriteTextFormat* text_format, const std::string& string, const utils::math::vec2f& sizes) : ms_wrapper{nullptr}
+	com_ptr create(winrt::com_ptr<IDWriteFactory> dw_factory, winrt::com_ptr<IDWriteTextFormat> text_format, const std::string& string, const utils::math::vec2f& sizes)
 		{
+		com_ptr ret;
 		const auto wstring{utils::MS::string::utf8_to_wide(string)};
 
-		throw_if_failed(dw_factory->CreateTextLayout(wstring.c_str(), static_cast<uint32_t>(wstring.size()), text_format, sizes.x(), sizes.y(), &ptr));
+		winrt::check_hresult(dw_factory->CreateTextLayout(wstring.c_str(), static_cast<uint32_t>(wstring.size()), text_format.get(), sizes.x(), sizes.y(), ret.put()));
+		return ret;
 		}
 	}

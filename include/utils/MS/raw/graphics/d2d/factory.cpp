@@ -1,9 +1,11 @@
 #include "factory.h"
 
-namespace utils::MS::raw::graphics::d2d
+namespace utils::MS::raw::graphics::d2d::factory
 	{
-	factory::factory(D2D1_FACTORY_TYPE type) : ms_wrapper{nullptr}
+	com_ptr create(D2D1_FACTORY_TYPE type)
 		{
-		utils::MS::raw::throw_if_failed(D2D1CreateFactory(type, &ptr));
+		com_ptr ret;
+		winrt::check_hresult(D2D1CreateFactory(type, ret.put()));
+		return ret;
 		}
 	}

@@ -1,9 +1,11 @@
 #include "factory.h"
 
-namespace utils::MS::raw::graphics::dw
+namespace utils::MS::raw::graphics::dw::factory
 	{
-	factory::factory(DWRITE_FACTORY_TYPE type) : ms_wrapper{nullptr}
+	com_ptr create(DWRITE_FACTORY_TYPE type)
 		{
-		utils::MS::raw::throw_if_failed(DWriteCreateFactory(type, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&ptr)));
+		com_ptr ret;
+		winrt::check_hresult(DWriteCreateFactory(type, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(ret.put())));
+		return ret;
 		}
 	}

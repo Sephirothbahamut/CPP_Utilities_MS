@@ -1,9 +1,11 @@
 #include "device.h"
 
-namespace utils::MS::raw::graphics::d3d
+namespace utils::MS::raw::graphics::d3d::device
 	{
-	device::device(const device::create_info& create_info) : ms_wrapper{nullptr}
+	com_ptr create(const create_info& create_info)
 		{
+		com_ptr ret;
+
 		D3D_FEATURE_LEVEL feature_level_created;
 
 		HRESULT last{S_FALSE};
@@ -17,11 +19,13 @@ namespace utils::MS::raw::graphics::d3d
 				nullptr,                  // use the lastest feature level
 				0,                        // use the lastest feature level
 				D3D11_SDK_VERSION,
-				&ptr, // returns the Direct3D device created
+				ret.put(), // returns the Direct3D device created
 				&feature_level_created,   // returns feature level of device created
 				nullptr);
 			if (succeeded(last)) { break; }
 			}
-		throw_if_failed(last);
+		winrt::check_hresult(last);
+
+		return ret;
 		}
 	}

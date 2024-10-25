@@ -1,10 +1,11 @@
 #include "bitmap.h"
 
-namespace utils::MS::raw::graphics::d2d
+namespace utils::MS::raw::graphics::d2d::bitmap
 	{
-	bitmap::bitmap(ID2D1DeviceContext* d2d_context, const bitmap::create_info& create_info) : ms_wrapper{nullptr}
+	com_ptr create(winrt::com_ptr<ID2D1DeviceContext> d2d_context, const create_info& create_info)
 		{
-		throw_if_failed(d2d_context->CreateBitmap(D2D1_SIZE_U{static_cast<uint32_t>(create_info.resolution.x()), static_cast<uint32_t>(create_info.resolution.y())},
+		com_ptr ret;
+		winrt::check_hresult(d2d_context->CreateBitmap(D2D1_SIZE_U{static_cast<uint32_t>(create_info.resolution.x()), static_cast<uint32_t>(create_info.resolution.y())},
 			nullptr,
 			static_cast<uint32_t>(create_info.resolution.x()) * 4,
 			D2D1_BITMAP_PROPERTIES1
@@ -14,34 +15,35 @@ namespace utils::MS::raw::graphics::d2d
 			.dpiY{create_info.dpi.y()},
 			.bitmapOptions{create_info.options}
 			},
-			&ptr));
+			ret.put()));
+		return ret;
 		}
 
-	utils::matrix<utils::graphics::colour::rgba_f> bitmap::to_cpu_matrix(ID2D1DeviceContext* d2d_context)
+	utils::matrix<utils::graphics::colour::rgba_f> bitmap::to_cpu_matrix(com_ptr bitmap, winrt::com_ptr<ID2D1DeviceContext> d2d_context)
 		{
-		if (ptr->GetPixelFormat().format != DXGI_FORMAT_R32G32B32A32_FLOAT)
+		if (bitmap->GetPixelFormat().format != DXGI_FORMAT_R32G32B32A32_FLOAT)
 			{
 			throw std::logic_error{"Operation only supported for DXGI_FORMAT_R32G32B32A32_FLOAT bitmaps"};
 			}
 
-		const auto pixel_size{ptr->GetPixelSize()};
+		const auto pixel_size{bitmap->GetPixelSize()};
 		utils::math::vec2s resolution{static_cast<size_t>(pixel_size.width ), static_cast<size_t>(pixel_size.height)};
 
-		bitmap cpu_bitmap{d2d_context, bitmap::create_info
+		auto cpu_bitmap{create(d2d_context, bitmap::create_info
 			{
 			.resolution{resolution},
 			.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
 			.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
 			.options    {D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW}
-			}};
+			})};
 
 
 		D2D1_POINT_2U copy_dest_point{0, 0};
 		D2D1_RECT_U copy_src_rect{.left{0}, .top{0}, .right{static_cast<uint32_t>(resolution.x())}, .bottom{static_cast<uint32_t>(resolution.y())}};
-		cpu_bitmap->CopyFromBitmap(&copy_dest_point, *this, &copy_src_rect);
+		cpu_bitmap->CopyFromBitmap(&copy_dest_point, bitmap.get(), &copy_src_rect);
 
 		D2D1_MAPPED_RECT mapped_rect;
-		utils::MS::raw::throw_if_failed(cpu_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped_rect));
+		winrt::check_hresult(cpu_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped_rect));
 		cpu_bitmap->Unmap();
 
 		const size_t per_channel_bytes_count{sizeof(float)};

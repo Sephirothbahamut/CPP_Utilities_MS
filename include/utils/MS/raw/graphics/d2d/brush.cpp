@@ -2,10 +2,12 @@
 
 #include "cast.h"
 
-namespace utils::MS::raw::graphics::d2d
+namespace utils::MS::raw::graphics::d2d::brush
 	{
-	brush::brush(ID2D1DeviceContext* d2d_context, const utils::graphics::colour::rgba_f& colour) : ms_wrapper{nullptr}
+	com_ptr create(winrt::com_ptr<ID2D1DeviceContext> d2d_context, const utils::graphics::colour::rgba_f& colour)
 		{
-		throw_if_failed(d2d_context->CreateSolidColorBrush(cast(colour), &ptr));
+		com_ptr ret;
+		winrt::check_hresult(d2d_context->CreateSolidColorBrush(cast(colour), ret.put()));
+		return ret;
 		}
 	}

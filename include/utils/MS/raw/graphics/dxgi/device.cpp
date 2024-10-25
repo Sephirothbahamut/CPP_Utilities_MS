@@ -1,9 +1,11 @@
 #include "device.h"
 
-namespace utils::MS::raw::graphics::dxgi
+namespace utils::MS::raw::graphics::dxgi::device
 	{
-	device::device(ID3D11Device* d3d_device) : ms_wrapper{nullptr}
+	com_ptr create(winrt::com_ptr<ID3D11Device> d3d_device)
 		{
-		utils::MS::raw::throw_if_failed(d3d_device->QueryInterface<IDXGIDevice4>(&ptr));
+		com_ptr ret;
+		winrt::check_hresult(d3d_device->QueryInterface<IDXGIDevice4>(ret.put()));
+		return ret;
 		}
 	}
