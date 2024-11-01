@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../../graphics/text/effects.h"
+#include "../../../../graphics/text/properties.h"
 
 #include <Unknwn.h>
 #include <winrt/base.h>
@@ -11,8 +11,8 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	using data     = utils::MS::graphics::text::effects;
-	using data_opt = utils::MS::graphics::text::effects_opt;
+	using data     = utils::MS::graphics::text::region::rendering;
+	using data_opt = utils::MS::graphics::text::region::rendering_opt;
 
 	data from_iunknown(const data& data_default, const IUnknown* ptr);
 

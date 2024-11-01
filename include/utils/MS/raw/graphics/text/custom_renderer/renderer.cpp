@@ -116,34 +116,34 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
 
 
-		if (effects.outline_to_image)
+		if (effects.outline.to_image)
 			{
 			const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
 
-			if (effects.text_to_image)
+			if (effects.text.to_image)
 				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.text_colour)};
+				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.text.colour)};
 				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
 				}
 
-			const auto brush_outline{d2d::brush::create(contexts.render_context, effects.outline_colour)};
+			const auto brush_outline{d2d::brush::create(contexts.render_context, effects.outline.colour)};
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
 
-			if (effects.outline_to_shapes)
+			if (effects.outline.to_shapes)
 				{
 				outline_to_shapes(transformed_geometry, contexts.outlines);
 				}
 			}
 		else
 			{
-			if (effects.text_to_image)
+			if (effects.text.to_image)
 				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.text_colour)};
+				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.text.colour)};
 
 				contexts.render_context->DrawGlyphRun(D2D1_POINT_2F{baselineOriginX, baselineOriginY}, glyphRun, brush_fill.get(), measuringMode);
 				}
 
-			if (effects.outline_to_shapes)
+			if (effects.outline.to_shapes)
 				{
 				const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
 				outline_to_shapes(transformed_geometry, contexts.outlines);
@@ -164,7 +164,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
 		
-		if (effects.decorators_to_image)
+		if (effects.decorators.to_image)
 			{
 			D2D1_RECT_F rect{D2D1::RectF(0, underline->offset, underline->width, underline->offset + underline->thickness)};
 
@@ -180,7 +180,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			winrt::com_ptr<ID2D1TransformedGeometry> transformed_geometry;
 			winrt::check_hresult(d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put()));
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.decorators_colour)};
+			const auto brush{d2d::brush::create(contexts.render_context, effects.decorators.colour)};
 
 
 			//const auto brush2{d2d::brush::create(contexts.render_context, utils::graphics::colour::rgba_f{1.f, 0.f, 0.f, 1.f})};
@@ -199,7 +199,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			contexts.render_context->FillGeometry(transformed_geometry.get(), brush.get());
 			}
 
-		if (effects.decorators_to_shapes)
+		if (effects.decorators.to_shapes)
 			{
 			contexts.underlines.emplace_back(
 				utils::math::vec2f{baselineOriginX                   , baselineOriginY + underline->offset},
@@ -220,7 +220,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
 
-		if (effects.decorators_to_image)
+		if (effects.decorators.to_image)
 			{
 			HRESULT hr;
 			D2D1_RECT_F rect = D2D1::RectF(0, strikethrough->offset, strikethrough->width, strikethrough->offset + strikethrough->thickness);
@@ -240,7 +240,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 				hr = d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put());
 				}
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.decorators_colour)};
+			const auto brush{d2d::brush::create(contexts.render_context, effects.decorators.colour)};
 
 			// Draw the outline of the rectangle
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush.get());
@@ -249,7 +249,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			contexts.render_context->FillGeometry(transformed_geometry.get(), brush.get());
 			}
 
-		if (effects.decorators_to_shapes)
+		if (effects.decorators.to_shapes)
 			{
 			contexts.underlines.emplace_back(
 				utils::math::vec2f{baselineOriginX                       , baselineOriginY + strikethrough->offset},

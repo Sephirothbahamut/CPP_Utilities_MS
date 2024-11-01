@@ -10,9 +10,11 @@
 #include <utils/math/vec2.h>
 #include <utils/math/rect.h>
 #include <utils/math/geometry/shape/mixed.h>
+#include <utils/polymorphic_value.h>
 
 #include "format.h"
 #include "formatted_string.h"
+#include "../dx/initializer.h"
 
 namespace utils::MS::graphics::text
 	{
@@ -21,8 +23,7 @@ namespace utils::MS::graphics::text
 		struct implementation;
 
 		public:
-			renderer();
-			renderer(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f});
+			renderer(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f});
 			~renderer();
 			
 			void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f});
@@ -32,7 +33,7 @@ namespace utils::MS::graphics::text
 
 			utils::matrix<utils::graphics::colour::rgba_f> get_image() const;
 
-		std::unique_ptr<implementation> implementation_ptr;
+		utils::polymorphic_value<implementation> implementation_ptr;
 		};
 	}
 

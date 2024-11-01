@@ -36,8 +36,5 @@ namespace utils::MS::graphics::text
 		antialiasing antialiasing{antialiasing::greyscale};
 
 		std::string locale{"en-gb"};
-
-		utils::graphics::colour::rgba_f colour{utils::graphics::colour::base::black};
-		bool shrink_to_fit{false};
 		};
 	}
