@@ -120,14 +120,15 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			{
 			const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
 
-			//TODO test
-			const auto brush_outline{d2d::brush::create(contexts.render_context, effects.outline_colour)};
-			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
 			if (effects.text_to_image)
 				{
 				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.text_colour)};
 				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
 				}
+
+			const auto brush_outline{d2d::brush::create(contexts.render_context, effects.outline_colour)};
+			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
+
 			if (effects.outline_to_shapes)
 				{
 				outline_to_shapes(transformed_geometry, contexts.outlines);

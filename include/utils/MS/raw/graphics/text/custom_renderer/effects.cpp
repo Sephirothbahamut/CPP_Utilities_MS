@@ -4,24 +4,6 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-
-
-	data filter_data(const data& base, const data_opt& optional)
-		{
-		const data ret
-			{
-			.text_to_image       {optional.text_to_image       .has_value() ? optional.text_to_image       .value() : base.text_to_image       },
-			.text_colour         {optional.text_colour         .has_value() ? optional.text_colour         .value() : base.text_colour         },
-			.outline_to_image    {optional.outline_to_image    .has_value() ? optional.outline_to_image    .value() : base.outline_to_image    },
-			.outline_to_shapes   {optional.outline_to_shapes   .has_value() ? optional.outline_to_shapes   .value() : base.outline_to_shapes   },
-			.outline_colour      {optional.outline_colour      .has_value() ? optional.outline_colour      .value() : base.outline_colour      },
-			.decorators_to_image {optional.decorators_to_image .has_value() ? optional.decorators_to_image .value() : base.decorators_to_image },
-			.decorators_to_shapes{optional.decorators_to_shapes.has_value() ? optional.decorators_to_shapes.value() : base.decorators_to_shapes},
-			.decorators_colour   {optional.decorators_colour   .has_value() ? optional.decorators_colour   .value() : base.decorators_colour   },
-			};
-		return ret;
-		}
-
 	data from_iunknown(const data& data_default, IUnknown* ptr)
 		{
 		if (!ptr) { return data_default; }
@@ -34,7 +16,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 		const auto* elements_ptr{dynamic_cast<const effects::com_class*>(ptr)};
 
 		if (!elements_ptr) { return data_default; }
-		return filter_data(data_default, elements_ptr->data);
+		return data_default.apply_opt(elements_ptr->data);
 		}
 
 	com_class::com_class(const effects::data_opt& data) : data{data} {}

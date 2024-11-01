@@ -7,7 +7,7 @@
 #include <utils/graphics/colour.h>
 
 #include "format.h"
-#include "effect/base.h"
+//#include "effects.h"
 
 namespace utils::MS::graphics::text
 	{
@@ -21,7 +21,7 @@ namespace utils::MS::graphics::text
 		formatted_string(const std::string& string, const format& format, const utils::math::vec2f& sizes);
 		~formatted_string();
 
-		void add_effect(effect::base& effect, region region);
+		//void add_effect(effect::base& effect, region region);
 
 		std::unique_ptr<implementation> implementation_ptr;
 		};

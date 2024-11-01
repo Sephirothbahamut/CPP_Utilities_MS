@@ -5,7 +5,7 @@
 #include "../../raw/graphics/dw/factory.h"
 #include "../../raw/graphics/text/custom_renderer.h"
 
-#include "effect/implementation_base_exposed_MS.h"
+//#include "effect/implementation_base_exposed_MS.h"
 
 namespace utils::MS::graphics::text
 	{
@@ -24,11 +24,11 @@ namespace utils::MS::graphics::text
 			{
 			}
 
-		void add_effect(effect::base& effect, region region)
-			{
-			auto& com_effect_wrapper{effect.implementation_ptr->com_effect_ptr};
-			dw_layout->SetDrawingEffect(com_effect_wrapper.get(), {.startPosition{static_cast<uint32_t>(region.begin)}, .length{static_cast<uint32_t>(region.count)}});
-			}
+		//void add_effect(effect::base& effect, region region)
+		//	{
+		//	auto& com_effect_wrapper{effect.implementation_ptr->com_effect_ptr};
+		//	dw_layout->SetDrawingEffect(com_effect_wrapper.get(), {.startPosition{static_cast<uint32_t>(region.begin)}, .length{static_cast<uint32_t>(region.count)}});
+		//	}
 		};
 
 
@@ -38,5 +38,5 @@ namespace utils::MS::graphics::text
 
 	formatted_string::~formatted_string() = default;
 
-	void formatted_string::add_effect(effect::base& effect, region region) { implementation_ptr->add_effect(effect, region); }
+	//void formatted_string::add_effect(effect::base& effect, region region) { implementation_ptr->add_effect(effect, region); }
 	}
