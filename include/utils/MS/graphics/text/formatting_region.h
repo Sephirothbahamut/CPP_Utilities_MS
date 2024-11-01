@@ -22,6 +22,7 @@ namespace utils::MS::graphics::text
 		~formatted_string();
 
 		void add_effect(effect::base& effect, region region);
+		void render();
 
 		std::unique_ptr<implementation> implementation_ptr;
 		};

@@ -12,6 +12,7 @@ namespace utils::MS::raw
 	//std::string hr_to_string(HRESULT hr) noexcept;
 
 	//void throw_if_failed(HRESULT hr);
+	//use winrt::check_hresult instead
 	}
 
 #ifdef utils_implementation

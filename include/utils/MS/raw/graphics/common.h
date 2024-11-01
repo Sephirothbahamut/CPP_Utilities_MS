@@ -35,8 +35,6 @@ namespace utils::MS::raw::graphics
 		winrt::com_ptr<T> ret;
 
 		T* raw_ptr{new (std::nothrow) T{std::forward<Args>(args)...}};
-
-		raw_ptr->AddRef(); //I added this because without it i think the count was 0 since everything crashed when the com_ptr got out of scope
 		
 		*ret.put() = raw_ptr;
 

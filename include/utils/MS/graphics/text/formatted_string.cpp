@@ -29,12 +29,6 @@ namespace utils::MS::graphics::text
 			auto& com_effect_wrapper{effect.implementation_ptr->com_effect_ptr};
 			dw_layout->SetDrawingEffect(com_effect_wrapper.get(), {.startPosition{static_cast<uint32_t>(region.begin)}, .length{static_cast<uint32_t>(region.count)}});
 			}
-
-		void render()
-			{
-			auto custom_renderer{utils::MS::raw::graphics::text::custom_renderer::create()};
-			dw_layout->Draw(nullptr, custom_renderer.get(), 0.f, 0.f);
-			}
 		};
 
 
@@ -45,5 +39,4 @@ namespace utils::MS::graphics::text
 	formatted_string::~formatted_string() = default;
 
 	void formatted_string::add_effect(effect::base& effect, region region) { implementation_ptr->add_effect(effect, region); }
-	void formatted_string::render() { implementation_ptr->render(); }
 	}
