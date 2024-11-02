@@ -55,6 +55,10 @@ namespace utils::MS::graphics::text
 			d2d_context->BeginDraw();
 			d2d_context->Clear(D2D1_COLOR_F{.r{colour.r()}, .g{colour.g()}, .b{colour.b()}, .a{colour.a()}});
 			winrt::check_hresult(d2d_context->EndDraw());
+
+			contexts.outlines      .clear();
+			contexts.strikethroughs.clear();
+			contexts.underlines    .clear();
 			}
 
 		void reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f})
@@ -89,39 +93,8 @@ namespace utils::MS::graphics::text
 			auto brush{umrg::d2d::brush::create(d2d_context, utils::graphics::colour::rgba_f{0.f, 0.f, 0.f, 1.f})};
 
 			auto dw_format{umrg::dw::text_format::create(dw_factory, format)};
-			//auto dw_layout{umrg::dw::text_layout::create(dw_factory, dw_format, string, region.size())};
-			//
-			//if (format.shrink_to_fit)
-			//	{
-			//	float current_size{dw_layout->GetFontSize()};
-			//	DWRITE_TEXT_METRICS metrics;
-			//	while (true)
-			//		{
-			//		dw_layout->GetMetrics(&metrics);
-			//		if (current_size > 1.f && metrics.height > metrics.layoutHeight)
-			//			{
-			//			current_size -= 1.f;
-			//			dw_layout->SetFontSize(current_size, DWRITE_TEXT_RANGE{.startPosition{0}, .length{static_cast<unsigned int>(wstring.size())}});
-			//			}
-			//		else { break; }
-			//		}
-			//
-			//	//Test
-			//	//utils::MS::graphics::text::format shrinked_format{format};
-			//	//shrinked_format.size = current_size;
-			//	//auto shrinked_dw_format{umrg::dw::text_format::create(dw_factory, format)};
-			//	//auto shrinked_dw_layout{umrg::dw::text_layout::create(dw_factory, shrinked_dw_format, string, region.size())};
-			//	//
-			//	//d2d_context->BeginDraw();
-			//	//d2d_context->DrawTextLayout(umrg::d2d::cast(region.ul()), shrinked_dw_layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT | D2D1_DRAW_TEXT_OPTIONS_CLIP);
-			//	////d2d_context->DrawTextW(wstring.c_str(), static_cast<UINT32>(wstring.size()), dw_format, layoutRect, brush);
-			//	//winrt::check_hresult(d2d_context->EndDraw());
-			//	//return;
-			//	}
-
-
+			
 			d2d_context->BeginDraw();
-			//d2d_context->DrawTextLayout(umrg::d2d::cast(region.ul()), dw_layout.get(), brush.get(), D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT | D2D1_DRAW_TEXT_OPTIONS_CLIP);
 			d2d_context->DrawTextW(wstring.c_str(), static_cast<UINT32>(wstring.size()), dw_format.get(), layoutRect, brush.get());
 			winrt::check_hresult(d2d_context->EndDraw());
 			}
@@ -197,6 +170,18 @@ namespace utils::MS::graphics::text
 
 			return ret;
 			}
+		
+		output get_output() const
+			{
+			const output ret
+				{
+				.image         {get_image()            },
+				.outlines      {contexts.outlines      },
+				.strikethroughs{contexts.strikethroughs},
+				.underlines    {contexts.underlines    },
+				};
+			return ret;
+			}
 		};
 
 	renderer::renderer(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour) :
@@ -209,5 +194,5 @@ namespace utils::MS::graphics::text
 	void renderer::draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region) { implementation_ptr->draw_text(format, string, region); }
 	void renderer::draw_text(const formatted_string& text, const utils::math::vec2f position) { implementation_ptr->draw_text(text, position); }
 
-	utils::matrix<utils::graphics::colour::rgba_f> renderer::get_image() const { return implementation_ptr->get_image(); }
+	output renderer::get_output() const { return implementation_ptr->get_output(); }
 	}

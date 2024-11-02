@@ -9,6 +9,7 @@
 #include <utils/graphics/colour.h>
 #include <utils/math/vec2.h>
 #include <utils/math/rect.h>
+#include <utils/math/geometry/shape/ab.h>
 #include <utils/math/geometry/shape/mixed.h>
 #include <utils/polymorphic_value.h>
 
@@ -18,6 +19,18 @@
 
 namespace utils::MS::graphics::text
 	{
+	using shape_outline= utils::math::geometry::shape::mixed<utils::math::geometry::ends::closeable::create::closed()>;
+	using shape_segment = utils::math::geometry::shape::segment;
+
+	struct output
+		{
+		utils::matrix<utils::graphics::colour::rgba_f> image;
+		std::vector<shape_outline> outlines      ;
+		std::vector<shape_segment> strikethroughs;
+		std::vector<shape_segment> underlines    ;
+		};
+
+
 	class renderer : utils::oop::non_copyable, utils::oop::non_movable
 		{
 		struct implementation;
@@ -31,7 +44,7 @@ namespace utils::MS::graphics::text
 			void draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region);
 			void draw_text(const formatted_string& text, const utils::math::vec2f position);
 
-			utils::matrix<utils::graphics::colour::rgba_f> get_image() const;
+			output get_output() const;
 
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};

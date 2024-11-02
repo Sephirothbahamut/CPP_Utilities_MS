@@ -17,12 +17,17 @@ namespace utils::MS::graphics::text
 		{
 		struct implementation;
 
+		std::string        string;
+		format             format;
+		utils::math::vec2f sizes ;
+		utils::MS::graphics::text::properties_regions properties_regions;
+
 		formatted_string(dx::initializer& dx_initializer);
-		formatted_string(dx::initializer& dx_initializer, const std::string& string, const format& format, const utils::math::vec2f& sizes);
+		formatted_string(dx::initializer& dx_initializer, const std::string& string, const text::format& format, const utils::math::vec2f& sizes);
 		~formatted_string();
 
-		void apply_properties(const utils::containers::regions<region::properties>& regions_properties);
-		void shrink_to_fit();
+		void update();
+		void shrink_to_fit(float step = 1.f);
 
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};
