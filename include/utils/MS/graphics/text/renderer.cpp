@@ -193,6 +193,9 @@ namespace utils::MS::graphics::text
 	void renderer::reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour) { implementation_ptr->reset(resolution, clear_colour); }
 	void renderer::draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region) { implementation_ptr->draw_text(format, string, region); }
 	void renderer::draw_text(const formatted_string& text, const utils::math::vec2f position) { implementation_ptr->draw_text(text, position); }
+	
+	const region::rendering& renderer::get_default_rendering_properties() const noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
+	      region::rendering& renderer::get_default_rendering_properties()       noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
 
 	output renderer::get_output() const { return implementation_ptr->get_output(); }
 	}

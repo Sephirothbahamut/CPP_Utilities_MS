@@ -14,6 +14,7 @@
 #include <utils/polymorphic_value.h>
 
 #include "format.h"
+#include "properties.h"
 #include "formatted_string.h"
 #include "../dx/initializer.h"
 
@@ -45,6 +46,8 @@ namespace utils::MS::graphics::text
 			void draw_text(const formatted_string& text, const utils::math::vec2f position);
 
 			output get_output() const;
+			const region::rendering& get_default_rendering_properties() const noexcept;
+			      region::rendering& get_default_rendering_properties()       noexcept;
 
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};

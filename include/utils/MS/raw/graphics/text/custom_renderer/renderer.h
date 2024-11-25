@@ -27,6 +27,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		public:
 			com_class(d2d::factory::com_ptr& d2d_factory);
+			const effects::data& get_default_rendering_properties() const noexcept;
+			      effects::data& get_default_rendering_properties()       noexcept;
 
 			IFACEMETHOD(IsPixelSnappingDisabled)(__maybenull void* clientDrawingContext, __out BOOL* isDisabled);
 

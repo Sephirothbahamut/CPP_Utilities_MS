@@ -46,6 +46,9 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 	com_class::com_class(d2d::factory::com_ptr& d2d_factory) : d2d_factory{d2d_factory} {}
 
+	const effects::data& com_class::get_default_rendering_properties() const noexcept { return default_effects; }
+	      effects::data& com_class::get_default_rendering_properties()       noexcept { return default_effects; }
+
 	winrt::com_ptr<ID2D1TransformedGeometry> com_class::evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun)
 		{
 		// Create the path geometry.
