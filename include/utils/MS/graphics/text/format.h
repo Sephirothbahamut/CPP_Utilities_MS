@@ -19,6 +19,8 @@ namespace utils::MS::graphics::text
 		};
 	enum class style { normal, oblique, italic };
 	enum class antialiasing { none, greyscale, cleartype };
+	enum class word_wrap { none, normal, whole_word, character };
+
 
 	struct format
 		{
@@ -34,6 +36,7 @@ namespace utils::MS::graphics::text
 		weight       weight      {weight      ::normal   };
 		style        style       {style       ::normal   };
 		antialiasing antialiasing{antialiasing::greyscale};
+		word_wrap    word_wrap   {word_wrap   ::normal   };
 
 		std::string locale{"en-gb"};
 		};

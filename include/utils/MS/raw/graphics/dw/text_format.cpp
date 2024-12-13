@@ -23,6 +23,7 @@ namespace utils::MS::raw::graphics::dw::text_format
 
 		winrt::check_hresult(ret->SetTextAlignment     (cast(format.alignment.horizontal)));
 		winrt::check_hresult(ret->SetParagraphAlignment(cast(format.alignment.vertical  )));
+		winrt::check_hresult(ret->SetWordWrapping      (cast(format.word_wrap)));
 		return ret;
 		}
 	}

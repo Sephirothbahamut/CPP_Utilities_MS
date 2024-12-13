@@ -48,4 +48,16 @@ namespace utils::MS::raw::graphics::dw
 			}
 		std::unreachable();
 		}
+	
+	DWRITE_WORD_WRAPPING cast(utils::MS::graphics::text::word_wrap word_wrap) noexcept
+		{
+		switch (word_wrap)
+			{
+			case utils::MS::graphics::text::word_wrap::none      : return DWRITE_WORD_WRAPPING_NO_WRAP   ;
+			case utils::MS::graphics::text::word_wrap::normal    : return DWRITE_WORD_WRAPPING_WRAP      ;
+			case utils::MS::graphics::text::word_wrap::whole_word: return DWRITE_WORD_WRAPPING_WHOLE_WORD;
+			case utils::MS::graphics::text::word_wrap::character : return DWRITE_WORD_WRAPPING_CHARACTER ;
+			}
+		std::unreachable();
+		}
 	}
