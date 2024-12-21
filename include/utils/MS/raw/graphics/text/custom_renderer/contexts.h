@@ -19,5 +19,6 @@ namespace utils::MS::raw::graphics::text::custom_renderer
 		std::vector<shape_outline_t> outlines;
 		std::vector<shape_segment_t> strikethroughs;
 		std::vector<shape_segment_t> underlines;
+		std::vector<winrt::com_ptr<ID2D1TransformedGeometry>> dx_geometries;
 		};
 	}

@@ -30,6 +30,28 @@ namespace umrg = utils::MS::raw::graphics;
 
 namespace utils::MS::graphics::text
 	{
+	struct dx_geometry_output::implementation
+		{
+		std::vector<winrt::com_ptr<ID2D1TransformedGeometry>> geometries;
+		bool is_inside(const utils::math::vec2f& coords) const noexcept
+			{
+			for (const auto& geometry : geometries)
+				{
+				BOOL out;
+				if (geometry->FillContainsPoint(raw::graphics::d2d::cast(coords), D2D1::Matrix3x2F::Identity(), &out) != S_OK) { continue; }
+				if (out) { return true; }
+				}
+			return false;
+			}
+		};
+
+	dx_geometry_output::dx_geometry_output() : implementation_ptr{utils::make_polymorphic_value<dx_geometry_output::implementation>()} {}
+	dx_geometry_output::~dx_geometry_output() = default;
+	bool dx_geometry_output::is_inside(const utils::math::vec2f& coords) const noexcept { return implementation_ptr->is_inside(coords); }
+
+
+
+
 	struct renderer::implementation
 		{
 		utils::math::vec2s resolution;
@@ -59,6 +81,7 @@ namespace utils::MS::graphics::text
 			contexts.outlines      .clear();
 			contexts.strikethroughs.clear();
 			contexts.underlines    .clear();
+			contexts.dx_geometries .clear();
 			}
 
 		void reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f})
@@ -182,6 +205,13 @@ namespace utils::MS::graphics::text
 				};
 			return ret;
 			}
+
+		dx_geometry_output get_dx_geometry_output() const noexcept
+			{
+			dx_geometry_output ret;
+			ret.implementation_ptr->geometries = contexts.dx_geometries;
+			return ret;
+			}
 		};
 
 	renderer::renderer(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour) :
@@ -198,4 +228,5 @@ namespace utils::MS::graphics::text
 	      region::rendering& renderer::get_default_rendering_properties()       noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
 
 	output renderer::get_output() const { return implementation_ptr->get_output(); }
+	dx_geometry_output renderer::get_dx_geometry_output() const { return implementation_ptr->get_dx_geometry_output(); }
 	}

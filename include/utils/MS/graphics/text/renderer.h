@@ -31,6 +31,18 @@ namespace utils::MS::graphics::text
 		std::vector<shape_segment> underlines    ;
 		};
 
+	/// <summary> Only exists to workaround my inability to make polyline.side work properly with bad fonts that have self intersecting curves. </summary>
+	class dx_geometry_output
+		{
+		struct implementation;
+
+		public:
+			dx_geometry_output();
+			~dx_geometry_output();
+			bool is_inside(const utils::math::vec2f& coords) const noexcept;
+
+			utils::polymorphic_value<implementation> implementation_ptr;
+		};
 
 	class renderer : utils::oop::non_copyable, utils::oop::non_movable
 		{
@@ -46,6 +58,9 @@ namespace utils::MS::graphics::text
 			void draw_text(const formatted_string& text, const utils::math::vec2f position);
 
 			output get_output() const;
+
+			/// <summary> Only exists to workaround my inability to make polyline.side work properly with bad fonts that have self intersecting curves. </summary>
+			dx_geometry_output get_dx_geometry_output() const;
 			const region::rendering& get_default_rendering_properties() const noexcept;
 			      region::rendering& get_default_rendering_properties()       noexcept;
 

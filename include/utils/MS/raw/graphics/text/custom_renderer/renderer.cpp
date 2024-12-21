@@ -86,7 +86,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		}
 
 
-	void com_class::outline_to_shapes(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<shape_outline_t>& shapes_out)
+	void com_class::outline_to_shapes(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<shape_outline_t>& shapes_out, std::vector<winrt::com_ptr<ID2D1TransformedGeometry>>& dx_geometries_out)
 		{
 		//TODO
 		//https://learn.microsoft.com/en-us/windows/win32/api/d2d1/nf-d2d1-id2d1geometry-outline(constd2d1_matrix_3x2_f_id2d1simplifiedgeometrysink)
@@ -103,6 +103,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			{
 			shapes_out.emplace_back(std::move(shape));
 			}
+		dx_geometries_out.emplace_back(transformed_geometry);
 		}
 
 	IFACEMETHODIMP com_class::DrawGlyphRun(
@@ -134,7 +135,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if (effects.outline.to_shapes)
 				{
-				outline_to_shapes(transformed_geometry, contexts.outlines);
+				outline_to_shapes(transformed_geometry, contexts.outlines, contexts.dx_geometries);
 				}
 			}
 		else
@@ -149,7 +150,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			if (effects.outline.to_shapes)
 				{
 				const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
-				outline_to_shapes(transformed_geometry, contexts.outlines);
+				outline_to_shapes(transformed_geometry, contexts.outlines, contexts.dx_geometries);
 				}
 			}
 
