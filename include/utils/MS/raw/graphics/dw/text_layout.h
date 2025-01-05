@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <utils/math/vec2.h>
+#include <utils/math/vec.h>
 
 #include "common.h"
 #include "text_format.h"

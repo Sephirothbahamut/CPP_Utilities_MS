@@ -7,7 +7,7 @@
 #include <utils/matrix.h>
 #include <utils/alignment.h>
 #include <utils/graphics/colour.h>
-#include <utils/math/vec2.h>
+#include <utils/math/vec.h>
 #include <utils/math/rect.h>
 #include <utils/math/geometry/shape/ab.h>
 #include <utils/math/geometry/shape/mixed.h>

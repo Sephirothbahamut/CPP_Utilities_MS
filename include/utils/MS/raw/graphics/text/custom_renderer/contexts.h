@@ -7,7 +7,7 @@
 #include <functional>
 
 #include <utils/memory.h>
-#include <utils/math/vec2.h>
+#include <utils/math/vec.h>
 #include <utils/math/geometry/shape/ab.h>
 #include <utils/math/geometry/shape/mixed.h>
 

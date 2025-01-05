@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include <utils/math/vec2.h>
+#include <utils/math/vec.h>
 #include <utils/graphics/colour.h>
 #include <utils/polymorphic_value.h>
 

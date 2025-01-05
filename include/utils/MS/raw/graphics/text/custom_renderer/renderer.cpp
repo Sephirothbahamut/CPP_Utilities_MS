@@ -97,7 +97,9 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			1.0f, 0.0f,
 			0.0f, 1.0f,
 			0.0f, 0.0f);
-		transformed_geometry->Outline(matrix, geometry_sink.get());
+
+		transformed_geometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES, D2D1::Matrix3x2F::Identity(), geometry_sink.get());
+		//transformed_geometry->Outline(matrix, geometry_sink.get());
 		
 		for (const auto& shape : geometry_sink->outlines)
 			{
