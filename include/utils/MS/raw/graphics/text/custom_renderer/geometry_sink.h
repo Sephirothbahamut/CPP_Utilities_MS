@@ -25,7 +25,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer::geometry_sink
 			void __stdcall EndFigure(D2D1_FIGURE_END figureEnd) override;
 			HRESULT __stdcall Close() override;
 
-			std::vector<custom_renderer::shape_outline_t> outlines;
+
+			std::vector<custom_renderer::glyph_t> glyphs;
 			custom_renderer::shape_outline_t current_outline;
 		};
 

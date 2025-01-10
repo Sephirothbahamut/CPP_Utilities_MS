@@ -49,6 +49,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 	const effects::data& com_class::get_default_rendering_properties() const noexcept { return default_effects; }
 	      effects::data& com_class::get_default_rendering_properties()       noexcept { return default_effects; }
 
+	template <bool simplified>
 	winrt::com_ptr<ID2D1TransformedGeometry> com_class::evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun)
 		{
 		// Create the path geometry.
@@ -73,6 +74,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		// Close the geometry sink
 		winrt::check_hresult(pSink->Close());
 
+
 		// Initialize a matrix to translate the origin of the glyph run.
 		D2D1::Matrix3x2F const matrix{D2D1::Matrix3x2F(
 			1.0f, 0.0f,
@@ -81,31 +83,39 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		// Create the transformed geometry
 		winrt::com_ptr<ID2D1TransformedGeometry> transformed_geometry;
-		winrt::check_hresult(d2d_factory->CreateTransformedGeometry(path_geometry.get(), &matrix, transformed_geometry.put()));
+
+		if constexpr (simplified)
+			{
+			winrt::com_ptr<ID2D1PathGeometry> path_geometry_simplified;
+			winrt::check_hresult(d2d_factory->CreatePathGeometry(path_geometry_simplified.put()));
+
+			winrt::com_ptr<ID2D1GeometrySink> pSink_simplified;
+			winrt::check_hresult(path_geometry_simplified->Open(pSink_simplified.put()));
+			path_geometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES, D2D1::Matrix3x2F::Identity(), pSink_simplified.get());
+			winrt::check_hresult(pSink_simplified->Close());
+
+			winrt::check_hresult(d2d_factory->CreateTransformedGeometry(path_geometry_simplified.get(), &matrix, transformed_geometry.put()));
+			}
+		else if constexpr (!simplified)
+			{
+			winrt::check_hresult(d2d_factory->CreateTransformedGeometry(path_geometry.get(), &matrix, transformed_geometry.put()));
+			}
+
 		return transformed_geometry;
 		}
 
-
-	void com_class::outline_to_shapes(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<shape_outline_t>& shapes_out, std::vector<winrt::com_ptr<ID2D1TransformedGeometry>>& dx_geometries_out)
+	void com_class::ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out)
 		{
 		//TODO
 		//https://learn.microsoft.com/en-us/windows/win32/api/d2d1/nf-d2d1-id2d1geometry-outline(constd2d1_matrix_3x2_f_id2d1simplifiedgeometrysink)
-		//transformed_geometry->Outline();
 		auto geometry_sink{geometry_sink::create()};
 
-		D2D1::Matrix3x2F const matrix = D2D1::Matrix3x2F(
-			1.0f, 0.0f,
-			0.0f, 1.0f,
-			0.0f, 0.0f);
-
-		transformed_geometry->Simplify(D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES, D2D1::Matrix3x2F::Identity(), geometry_sink.get());
-		//transformed_geometry->Outline(matrix, geometry_sink.get());
+		transformed_geometry->Outline(D2D1::Matrix3x2F::Identity(), geometry_sink.get());
 		
-		for (const auto& shape : geometry_sink->outlines)
+		for (const auto& glyph : geometry_sink->glyphs)
 			{
-			shapes_out.emplace_back(std::move(shape));
+			glyphs_out.emplace_back(std::move(glyph));
 			}
-		dx_geometries_out.emplace_back(transformed_geometry);
 		}
 
 	IFACEMETHODIMP com_class::DrawGlyphRun(
@@ -124,7 +134,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		if (effects.outline.to_image)
 			{
-			const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
+			const auto transformed_geometry{evaluate_transformed_geometry<true>(baselineOriginX, baselineOriginY, glyphRun)};
 
 			if (effects.text.to_image)
 				{
@@ -137,7 +147,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if (effects.outline.to_shapes)
 				{
-				outline_to_shapes(transformed_geometry, contexts.outlines, contexts.dx_geometries);
+				ms_outline_to_utils(transformed_geometry, contexts.glyphs);
 				}
 			}
 		else
@@ -151,8 +161,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if (effects.outline.to_shapes)
 				{
-				const auto transformed_geometry{evaluate_transformed_geometry(baselineOriginX, baselineOriginY, glyphRun)};
-				outline_to_shapes(transformed_geometry, contexts.outlines, contexts.dx_geometries);
+				const auto transformed_geometry{evaluate_transformed_geometry<true>(baselineOriginX, baselineOriginY, glyphRun)};
+				ms_outline_to_utils(transformed_geometry, contexts.glyphs);
 				}
 			}
 

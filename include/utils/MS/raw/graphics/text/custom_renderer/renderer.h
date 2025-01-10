@@ -15,8 +15,9 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			unsigned long ref_count{1};
 			d2d::factory::com_ptr d2d_factory;
 
+			template <bool simplified>
 			winrt::com_ptr<ID2D1TransformedGeometry> evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun);
-			void outline_to_shapes(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<shape_outline_t>& shapes_out, std::vector<winrt::com_ptr<ID2D1TransformedGeometry>>& dx_geometries_out);
+			void ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out);
 
 		public:
 			effects::data default_effects;

@@ -16,9 +16,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer
 	struct contexts
 		{
 		d2d::context::com_ptr render_context;
-		std::vector<shape_outline_t> outlines;
+		std::vector<glyph_t        > glyphs;
 		std::vector<shape_segment_t> strikethroughs;
 		std::vector<shape_segment_t> underlines;
-		std::vector<winrt::com_ptr<ID2D1TransformedGeometry>> dx_geometries;
 		};
 	}

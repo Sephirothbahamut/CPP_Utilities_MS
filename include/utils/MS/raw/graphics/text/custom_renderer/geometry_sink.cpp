@@ -42,6 +42,9 @@ namespace utils::MS::raw::graphics::text::custom_renderer::geometry_sink
 
 	void __stdcall com_class::SetFillMode(D2D1_FILL_MODE fillMode)
 		{
+		//It appears SetFillMode is called once before each separate glyph.
+		//I couldn't find any confirmation of this assumption is MS documentation.
+		glyphs.emplace_back();
 		}
 	void __stdcall com_class::SetSegmentFlags(D2D1_PATH_SEGMENT vertexFlags)
 		{
@@ -56,7 +59,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::geometry_sink
 		for (size_t i{0}; i < pointsCount; i++)
 			{
 			const auto point{utils::MS::raw::graphics::d2d::cast(points[i])};
-			current_outline.add_segment(point);
+			current_outline.add_segment/*_cutting_intersection_with_last_element*/(point);
 			}
 		}
 	void __stdcall com_class::AddBeziers(const D2D1_BEZIER_SEGMENT* beziers, UINT32 beziersCount)
@@ -67,12 +70,13 @@ namespace utils::MS::raw::graphics::text::custom_renderer::geometry_sink
 			const auto point_1{utils::MS::raw::graphics::d2d::cast(bezier.point1)};
 			const auto point_2{utils::MS::raw::graphics::d2d::cast(bezier.point2)};
 			const auto point_3{utils::MS::raw::graphics::d2d::cast(bezier.point3)};
-			current_outline.add_bezier_4pt(point_1, point_2, point_3);
+			current_outline.add_bezier_4pt/*_cutting_intersection_with_last_element*/(point_1, point_2, point_3);
 			}
 		}
 	void __stdcall com_class::EndFigure(D2D1_FIGURE_END figureEnd)
 		{
-		outlines.emplace_back(std::move(current_outline));
+		current_outline.close();
+		glyphs.rbegin()->emplace_back(std::move(current_outline));
 		}
 	HRESULT __stdcall com_class::Close()
 		{
