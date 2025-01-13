@@ -39,13 +39,14 @@ namespace utils::MS::graphics::text
 		umrg::d2d::bitmap::com_ptr d2d_bitmap;
 		umrg::text::custom_renderer::contexts contexts;
 
-		implementation(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f}) :
+		implementation(dx::initializer& dx_initializer, const create_info& create_info) :
 			dw_factory {dx_initializer.implementation_ptr->dw_factory},
 			dw_renderer{umrg::text::custom_renderer::renderer::create(dx_initializer.implementation_ptr->d2d_factory)},
 			d2d_context{umrg::d2d::context::create(dx_initializer.implementation_ptr->d2d_device)},
 			contexts{.render_context{d2d_context}}
 			{
-			reset(resolution, clear_colour);
+			d2d_context->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+			reset(create_info);
 			}
 		
 		void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f})
@@ -61,13 +62,13 @@ namespace utils::MS::graphics::text
 			contexts.underlines    .clear();
 			}
 
-		void reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f})
+		void reset(const create_info& create_info)
 			{
-			create_bitmap(resolution);
-			clear(clear_colour);
+			create_bitmap(create_info.resolution, create_info.dpi);
+			clear(create_info.clear_colour);
 			}
 
-		void create_bitmap(const utils::math::vec2s& resolution)
+		void create_bitmap(const utils::math::vec2s& resolution, const utils::math::vec2f& dpi)
 			{
 			this->resolution = resolution;
 			d2d_context->SetTarget(nullptr);
@@ -77,9 +78,11 @@ namespace utils::MS::graphics::text
 				.resolution{resolution},
 				.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
 				.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
+				//.dpi        {dpi.x(), dpi.y()},
 				.options    {D2D1_BITMAP_OPTIONS_TARGET}
 				});
 			d2d_context->SetTarget(d2d_bitmap.get());
+			d2d_context->SetDpi(dpi.x(), dpi.y());
 			}
 
 		void draw_text(const format& format, const std::string& string, const utils::math::rect<float> region)
@@ -93,14 +96,15 @@ namespace utils::MS::graphics::text
 			auto brush{umrg::d2d::brush::create(d2d_context, utils::graphics::colour::rgba_f{0.f, 0.f, 0.f, 1.f})};
 
 			auto dw_format{umrg::dw::text_format::create(dw_factory, format)};
-			
+
 			d2d_context->BeginDraw();
 			d2d_context->DrawTextW(wstring.c_str(), static_cast<UINT32>(wstring.size()), dw_format.get(), layoutRect, brush.get());
 			winrt::check_hresult(d2d_context->EndDraw());
 			}
 
-		void draw_text(const formatted_string& text, const utils::math::vec2f position)
+		void draw_text(const formatted_string::renderable& text, const utils::math::vec2f position)
 			{
+			assert(!!text.implementation_ptr->dw_layout); //Did you forget to call text.update() or text.shrink_to_fit()?
 			const auto& dw_layout{text.implementation_ptr->dw_layout};
 			d2d_context->BeginDraw();
 			dw_layout->Draw(&contexts, dw_renderer.get(), position.x(), position.y());
@@ -184,15 +188,15 @@ namespace utils::MS::graphics::text
 			}
 		};
 
-	renderer::renderer(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour) :
-		implementation_ptr{utils::make_polymorphic_value<renderer::implementation>(dx_initializer, resolution, clear_colour)} {}
+	renderer::renderer(dx::initializer& dx_initializer, const create_info& create_info) :
+		implementation_ptr{utils::make_polymorphic_value<renderer::implementation>(dx_initializer, create_info)} {}
 
 	renderer::~renderer() = default;
 
 	void renderer::clear(const utils::graphics::colour::rgba_f& colour) { implementation_ptr->clear(colour); }
-	void renderer::reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour) { implementation_ptr->reset(resolution, clear_colour); }
+	void renderer::reset(const create_info& create_info) { implementation_ptr->reset(create_info); }
 	void renderer::draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region) { implementation_ptr->draw_text(format, string, region); }
-	void renderer::draw_text(const formatted_string& text, const utils::math::vec2f position) { implementation_ptr->draw_text(text, position); }
+	void renderer::draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position) { implementation_ptr->draw_text(text, position); }
 	
 	const region::rendering& renderer::get_default_rendering_properties() const noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
 	      region::rendering& renderer::get_default_rendering_properties()       noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }

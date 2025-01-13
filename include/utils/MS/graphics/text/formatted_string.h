@@ -13,23 +13,29 @@
 
 namespace utils::MS::graphics::text
 	{
-	struct formatted_string : utils::oop::non_copyable, utils::oop::non_movable
+	struct formatted_string
 		{
-		struct implementation;
+		class renderable : utils::oop::non_copyable, utils::oop::non_movable
+			{
+			friend struct utils::MS::graphics::text::formatted_string;
+			public:
+				struct implementation;
+				utils::polymorphic_value<implementation> implementation_ptr;
+				~renderable();
+
+			private:
+				renderable(dx::initializer& dx_initializer, const formatted_string& formatted_string);
+				renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step);
+			};
 
 		std::string        string;
 		format             format;
+		/// <summary> The sizes of the text are in actual pixels, not DPI scaled!</summary>
 		utils::math::vec2f sizes ;
 		utils::MS::graphics::text::properties_regions properties_regions;
 
-		formatted_string(dx::initializer& dx_initializer);
-		formatted_string(dx::initializer& dx_initializer, const std::string& string, const text::format& format, const utils::math::vec2f& sizes);
-		~formatted_string();
-
-		void update();
-		void shrink_to_fit(float step = 1.f);
-
-		utils::polymorphic_value<implementation> implementation_ptr;
+		renderable finalize     (dx::initializer& dx_initializer) const noexcept;
+		renderable shrink_to_fit(dx::initializer& dx_initializer, float step = 1.f) noexcept;
 		};
 	}
 

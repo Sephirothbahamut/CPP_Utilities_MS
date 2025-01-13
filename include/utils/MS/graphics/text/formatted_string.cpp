@@ -9,12 +9,25 @@ namespace utils::MS::graphics::text
 		return {utils::math::cast_clamp<UINT32>(region.begin), utils::math::cast_clamp<UINT32>(region.count)};
 		}
 
-	formatted_string::implementation::implementation(dx::initializer& dx_initializer) :
+	formatted_string::renderable::implementation::implementation(dx::initializer& dx_initializer) :
 		dw_factory{dx_initializer.implementation_ptr->dw_factory}
+		{}
+
+	formatted_string::renderable::renderable(dx::initializer& dx_initializer, const formatted_string& formatted_string) :
+		implementation_ptr{utils::make_polymorphic_value<formatted_string::renderable::implementation>(dx_initializer)}
 		{
+		implementation_ptr->create_layout(formatted_string);
+		}
+	formatted_string::renderable::renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step) :
+		implementation_ptr{utils::make_polymorphic_value<formatted_string::renderable::implementation>(dx_initializer)}
+		{
+		implementation_ptr->create_layout(formatted_string);
+		implementation_ptr->shrink_to_fit(formatted_string, step);
 		}
 
-	void formatted_string::implementation::create_layout(const formatted_string& formatted_string)
+	formatted_string::renderable::~renderable() = default;
+
+	void formatted_string::renderable::implementation::create_layout(const formatted_string& formatted_string)
 		{
 		auto dw_format{utils::MS::raw::graphics::dw::text_format::create(dw_factory, formatted_string.format)};
 		dw_layout = utils::MS::raw::graphics::dw::text_layout::create(dw_factory, dw_format, formatted_string.string, formatted_string.sizes);
@@ -27,9 +40,8 @@ namespace utils::MS::graphics::text
 			const auto& slot{properties_regions.slot_at(i)};
 			if (!slot.value_opt_ref) { continue; }
 			const auto& properties{slot.value_opt_ref.value().get()};
-
+			
 			const auto dx_region{cast(slot.region)};
-				
 			if (properties.formatting.font  .has_value()) { dw_layout->SetFontFamilyName(utils::MS::string::utf8_to_wide   (properties.formatting.font  .value()).c_str(), dx_region); }
 			if (properties.formatting.size  .has_value()) { dw_layout->SetFontSize      (                                   properties.formatting.size  .value()         , dx_region); }
 			if (properties.formatting.weight.has_value()) { dw_layout->SetFontWeight    (utils::MS::raw::graphics::dw::cast(properties.formatting.weight.value())        , dx_region); }
@@ -41,7 +53,7 @@ namespace utils::MS::graphics::text
 			}
 		}
 
-	void formatted_string::implementation::shrink_to_fit(formatted_string& formatted_string, float step)
+	void formatted_string::renderable::implementation::shrink_to_fit(formatted_string& formatted_string, float step)
 		{
 		DWRITE_TEXT_METRICS metrics;
 		if (!dw_layout) { create_layout(formatted_string); }
@@ -80,13 +92,12 @@ namespace utils::MS::graphics::text
 			}
 		}
 
-	formatted_string::formatted_string(dx::initializer& dx_initializer) : implementation_ptr{utils::make_polymorphic_value<formatted_string::implementation>(dx_initializer)} {}
-	formatted_string::formatted_string(dx::initializer& dx_initializer, const std::string& string, const text::format& format, const utils::math::vec2f& sizes) :
-		string{string}, format{format}, sizes{sizes},
-		implementation_ptr{utils::make_polymorphic_value<formatted_string::implementation>(dx_initializer)} {}
-
-	formatted_string::~formatted_string() = default;
-
-	void formatted_string::update() { implementation_ptr->create_layout(*this); }
-	void formatted_string::shrink_to_fit(float step) { implementation_ptr->shrink_to_fit(*this, step); }
+	formatted_string::renderable formatted_string::finalize(dx::initializer& dx_initializer) const noexcept
+		{
+		return formatted_string::renderable{dx_initializer, *this};
+		}
+	formatted_string::renderable formatted_string::shrink_to_fit(dx::initializer& dx_initializer, float step) noexcept
+		{
+		return formatted_string::renderable{dx_initializer, *this, step};
+		}
 	}

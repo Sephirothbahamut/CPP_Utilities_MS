@@ -130,7 +130,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
-
+		
 
 		if (effects.outline.to_image)
 			{

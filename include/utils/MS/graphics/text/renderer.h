@@ -37,13 +37,20 @@ namespace utils::MS::graphics::text
 		struct implementation;
 
 		public:
-			renderer(dx::initializer& dx_initializer, const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f});
+			struct create_info
+				{
+				utils::math::vec2s resolution;
+				utils::graphics::colour::rgba_f clear_colour{0.f};
+				utils::math::vec2f dpi{1.f, 1.f};
+				};
+
+			renderer(dx::initializer& dx_initializer, const create_info& create_info);
 			~renderer();
 			
 			void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f});
-			void reset(const utils::math::vec2s& resolution, const utils::graphics::colour::rgba_f& clear_colour = utils::graphics::colour::rgba_f{0.f});
+			void reset(const create_info& create_info);
 			void draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region);
-			void draw_text(const formatted_string& text, const utils::math::vec2f position);
+			void draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position);
 
 			output get_output() const;
 

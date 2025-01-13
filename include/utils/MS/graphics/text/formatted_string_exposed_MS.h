@@ -13,7 +13,7 @@
 
 namespace utils::MS::graphics::text
 	{
-	struct formatted_string::implementation
+	struct formatted_string::renderable::implementation
 		{
 		utils::MS::raw::graphics::dw::factory    ::com_ptr dw_factory{nullptr};
 		utils::MS::raw::graphics::dw::text_layout::com_ptr dw_layout {nullptr};
