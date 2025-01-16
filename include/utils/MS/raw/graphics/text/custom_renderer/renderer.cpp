@@ -1,5 +1,7 @@
 #include "renderer.h"
 
+#include "../../../../graphics/conversions.h"
+
 namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 	{
 	IFACEMETHODIMP_(unsigned long) com_class::AddRef()
@@ -104,7 +106,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		return transformed_geometry;
 		}
 
-	void com_class::ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out)
+	void com_class::ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out, const utils::math::vec2f& dpi)
 		{
 		//TODO
 		//https://learn.microsoft.com/en-us/windows/win32/api/d2d1/nf-d2d1-id2d1geometry-outline(constd2d1_matrix_3x2_f_id2d1simplifiedgeometrysink)
@@ -112,7 +114,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		transformed_geometry->Outline(D2D1::Matrix3x2F::Identity(), geometry_sink.get());
 		
-		for (const auto& glyph : geometry_sink->glyphs)
+		for (auto& glyph : geometry_sink->glyphs)
 			{
 			glyphs_out.emplace_back(std::move(glyph));
 			}
@@ -131,6 +133,12 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
 		
+		const auto dpi{[&]()
+			{
+			utils::math::vec2f ret;
+			contexts.render_context->GetDpi(&ret.x(), &ret.y());
+			return ret;
+			}()};
 
 		if (effects.outline.to_image)
 			{
@@ -147,7 +155,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if (effects.outline.to_shapes)
 				{
-				ms_outline_to_utils(transformed_geometry, contexts.glyphs);
+				ms_outline_to_utils(transformed_geometry, contexts.glyphs, dpi);
 				}
 			}
 		else
@@ -162,7 +170,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			if (effects.outline.to_shapes)
 				{
 				const auto transformed_geometry{evaluate_transformed_geometry<true>(baselineOriginX, baselineOriginY, glyphRun)};
-				ms_outline_to_utils(transformed_geometry, contexts.glyphs);
+				ms_outline_to_utils(transformed_geometry, contexts.glyphs, dpi);
 				}
 			}
 
@@ -298,7 +306,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 	IFACEMETHODIMP com_class::GetCurrentTransform(__maybenull void* clientDrawingContext, __out DWRITE_MATRIX* transform)
 		{
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
-		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
+		const contexts& contexts{*reinterpret_cast<const custom_renderer::contexts*>(clientDrawingContext)};
 		
 		D2D1_MATRIX_3X2_F d2d_transform;
 		contexts.render_context->GetTransform(&d2d_transform);
@@ -314,7 +322,17 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 	IFACEMETHODIMP com_class::GetPixelsPerDip(__maybenull void* clientDrawingContext, __out FLOAT* pixelsPerDip)
 		{
-		*pixelsPerDip = 1.0f;
+		if (clientDrawingContext == nullptr) { return E_POINTER; }
+		const contexts& contexts{*reinterpret_cast<const custom_renderer::contexts*>(clientDrawingContext)};
+
+		const utils::math::vec2f dpi{[&]()
+			{
+			utils::math::vec2f ret;
+			contexts.render_context->GetDpi(&ret.x(), &ret.y());
+			return ret;
+			}()};
+
+		*pixelsPerDip = utils::MS::graphics::conversions::multipliers::dips_to_px(dpi).x();
 		return S_OK;
 		}
 

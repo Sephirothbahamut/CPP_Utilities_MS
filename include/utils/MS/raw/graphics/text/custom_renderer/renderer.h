@@ -17,7 +17,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			template <bool simplified>
 			winrt::com_ptr<ID2D1TransformedGeometry> evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun);
-			void ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out);
+			void ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out, const utils::math::vec2f& dpi);
 
 		public:
 			effects::data default_effects;

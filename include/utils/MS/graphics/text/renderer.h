@@ -39,6 +39,7 @@ namespace utils::MS::graphics::text
 		public:
 			struct create_info
 				{
+				/// <summary> Output resolution in pixels </summary>
 				utils::math::vec2s resolution;
 				utils::graphics::colour::rgba_f clear_colour{0.f};
 				utils::math::vec2f dpi{1.f, 1.f};
@@ -49,10 +50,15 @@ namespace utils::MS::graphics::text
 			
 			void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f});
 			void reset(const create_info& create_info);
+
+			/// <summary> Region is in dips (see utils::MS::graphics::conversions) </summary>
 			void draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region);
+
+			/// <summary> Position is in dips (see utils::MS::graphics::conversions) </summary>
 			void draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position);
 
-			output get_output() const;
+			/// <summary> Output geometries are in dips (see utils::MS::graphics::conversions) </summary>
+			utils::MS::graphics::text::output get_output() const;
 
 			const region::rendering& get_default_rendering_properties() const noexcept;
 			      region::rendering& get_default_rendering_properties()       noexcept;

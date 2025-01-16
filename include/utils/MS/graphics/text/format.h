@@ -26,6 +26,7 @@ namespace utils::MS::graphics::text
 		{
 		std::string font;
 
+		/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 		float size{16.f};
 		struct alignment
 			{

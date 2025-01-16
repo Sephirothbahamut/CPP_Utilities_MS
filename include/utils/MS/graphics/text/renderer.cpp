@@ -45,7 +45,7 @@ namespace utils::MS::graphics::text
 			d2d_context{umrg::d2d::context::create(dx_initializer.implementation_ptr->d2d_device)},
 			contexts{.render_context{d2d_context}}
 			{
-			d2d_context->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+			d2d_context->SetUnitMode(D2D1_UNIT_MODE_DIPS);
 			reset(create_info);
 			}
 		
@@ -81,8 +81,8 @@ namespace utils::MS::graphics::text
 				//.dpi        {dpi.x(), dpi.y()},
 				.options    {D2D1_BITMAP_OPTIONS_TARGET}
 				});
-			d2d_context->SetTarget(d2d_bitmap.get());
 			d2d_context->SetDpi(dpi.x(), dpi.y());
+			d2d_context->SetTarget(d2d_bitmap.get());
 			}
 
 		void draw_text(const format& format, const std::string& string, const utils::math::rect<float> region)
@@ -104,7 +104,6 @@ namespace utils::MS::graphics::text
 
 		void draw_text(const formatted_string::renderable& text, const utils::math::vec2f position)
 			{
-			assert(!!text.implementation_ptr->dw_layout); //Did you forget to call text.update() or text.shrink_to_fit()?
 			const auto& dw_layout{text.implementation_ptr->dw_layout};
 			d2d_context->BeginDraw();
 			dw_layout->Draw(&contexts, dw_renderer.get(), position.x(), position.y());
@@ -114,11 +113,19 @@ namespace utils::MS::graphics::text
 
 		utils::matrix<utils::graphics::colour::rgba_f> get_image() const
 			{
+			const utils::math::vec2f dpi{[&]()
+				{
+				utils::math::vec2f ret;
+				d2d_context->GetDpi(&ret.x(), &ret.y());
+				return ret;
+				}()};
+
 			auto cpu_bitmap{umrg::d2d::bitmap::create(d2d_context, umrg::d2d::bitmap::create_info
 				{
 				.resolution{resolution},
 				.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
 				.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
+				//.dpi        {dpi},
 				.options    {D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW}
 				})};
 
@@ -130,10 +137,14 @@ namespace utils::MS::graphics::text
 			D2D1_MAPPED_RECT mapped_rect;
 			winrt::check_hresult(cpu_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped_rect));
 			cpu_bitmap->Unmap();
-	
+			
 			const size_t per_channel_bytes_count{sizeof(float)};
 			const size_t per_pixel_bytes_count{per_channel_bytes_count * 4};
-			const size_t per_row_bytes_count{per_pixel_bytes_count * resolution.x()};
+
+			//Note: the mapped rect may be actually larger than the bitmap
+			//so scanning on pure pixels data size can lead to a skewed image with excess zeroed out pixels.
+			//need to use mapped_rect.pitch to get the address of each line to skip those excess pixels.
+			const size_t per_row_bytes_count{mapped_rect.pitch};//per_pixel_bytes_count * resolution.x()};
 
 			utils::matrix<utils::graphics::colour::rgba_f> ret{resolution};
 

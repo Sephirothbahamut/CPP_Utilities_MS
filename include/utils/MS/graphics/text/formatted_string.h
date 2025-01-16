@@ -30,8 +30,11 @@ namespace utils::MS::graphics::text
 
 		std::string        string;
 		format             format;
-		/// <summary> The sizes of the text are in actual pixels, not DPI scaled!</summary>
-		utils::math::vec2f sizes ;
+		/// <summary> 
+		/// If your renderer is DPI-aware, sizes is in DIPs
+		/// </summary>
+		utils::math::vec2f sizes;
+
 		utils::MS::graphics::text::properties_regions properties_regions;
 
 		renderable finalize     (dx::initializer& dx_initializer) const noexcept;
