@@ -4,7 +4,7 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	data from_iunknown(const data& data_default, IUnknown* ptr)
+	utils::MS::graphics::text::regions::properties from_iunknown(const utils::MS::graphics::text::regions::properties& data_default, IUnknown* ptr)
 		{
 		if (!ptr) { return data_default; }
 
@@ -16,10 +16,17 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 		const auto* elements_ptr{dynamic_cast<const effects::com_class*>(ptr)};
 
 		if (!elements_ptr) { return data_default; }
-		return data_default.apply_opt(elements_ptr->data);
+		const utils::MS::graphics::text::regions::properties::optional& properties_opt{elements_ptr->data};
+		utils::MS::graphics::text::regions::properties ret;
+		utils::aggregate::apply<utils::MS::graphics::text::regions::properties::accessors_helper>([](const auto& field_opt, const auto& field_default, auto& field_return)
+			{
+			field_return = field_opt.value_or(field_default);
+			}, elements_ptr->data, data_default, ret);
+
+		return ret;
 		}
 
-	com_class::com_class(const effects::data_opt& data) : data{data} {}
+	com_class::com_class(const utils::MS::graphics::text::regions::properties::optional& data) : data{data} {}
 
 	IFACEMETHODIMP_(unsigned long) com_class::AddRef()
 		{
@@ -56,5 +63,5 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 		}
 
 	com_ptr create() { return utils::MS::raw::graphics::create_com_ptr<com_class>(); }
-	com_ptr create(const data_opt& data) { return utils::MS::raw::graphics::create_com_ptr<com_class>(data); }
+	com_ptr create(const utils::MS::graphics::text::regions::properties::optional& data) { return utils::MS::raw::graphics::create_com_ptr<com_class>(data); }
 	}

@@ -13,24 +13,13 @@
 #include <utils/math/geometry/shape/mixed.h>
 #include <utils/polymorphic_value.h>
 
+#include "output.h"
 #include "format.h"
-#include "properties.h"
 #include "formatted_string.h"
 #include "../dx/initializer.h"
 
 namespace utils::MS::graphics::text
 	{
-	using shape_outline = utils::math::geometry::shape::mixed<utils::math::geometry::ends::closeable::create::closed()>;
-	using glyph         = std::vector<shape_outline>;
-	using shape_segment = utils::math::geometry::shape::segment;
-
-	struct output
-		{
-		utils::matrix<utils::graphics::colour::rgba_f> image;
-		std::vector<glyph        > glyphs        ;
-		std::vector<shape_segment> strikethroughs;
-		std::vector<shape_segment> underlines    ;
-		};
 
 	class renderer : utils::oop::non_copyable, utils::oop::non_movable
 		{
@@ -42,7 +31,7 @@ namespace utils::MS::graphics::text
 				/// <summary> Output resolution in pixels </summary>
 				utils::math::vec2s resolution;
 				utils::graphics::colour::rgba_f clear_colour{0.f};
-				utils::math::vec2f dpi{1.f, 1.f};
+				utils::math::vec2f dpi{96.f, 96.f};
 				};
 
 			renderer(dx::initializer& dx_initializer, const create_info& create_info);
@@ -59,9 +48,10 @@ namespace utils::MS::graphics::text
 
 			/// <summary> Output geometries are in dips (see utils::MS::graphics::conversions) </summary>
 			utils::MS::graphics::text::output get_output() const;
+			utils::MS::graphics::text::output_image get_output_image() const;
 
-			const region::rendering& get_default_rendering_properties() const noexcept;
-			      region::rendering& get_default_rendering_properties()       noexcept;
+			const utils::MS::graphics::text::regions::properties& get_default_rendering_properties() const noexcept;
+			      utils::MS::graphics::text::regions::properties& get_default_rendering_properties()       noexcept;
 
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};

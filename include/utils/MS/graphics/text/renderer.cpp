@@ -57,9 +57,7 @@ namespace utils::MS::graphics::text
 			d2d_context->Clear(D2D1_COLOR_F{.r{colour.r()}, .g{colour.g()}, .b{colour.b()}, .a{colour.a()}});
 			winrt::check_hresult(d2d_context->EndDraw());
 
-			contexts.glyphs        .clear();
-			contexts.strikethroughs.clear();
-			contexts.underlines    .clear();
+			contexts.output.clear();
 			}
 
 		void reset(const create_info& create_info)
@@ -185,18 +183,9 @@ namespace utils::MS::graphics::text
 
 			return ret;
 			}
-		
-		output get_output() const
-			{
-			const output ret
-				{
-				.image         {get_image()            },
-				.glyphs        {contexts.glyphs        },
-				.strikethroughs{contexts.strikethroughs},
-				.underlines    {contexts.underlines    },
-				};
-			return ret;
-			}
+
+		output       get_output      () const { return contexts.output; }
+		output_image get_output_image() const { return get_image()    ; }
 		};
 
 	renderer::renderer(dx::initializer& dx_initializer, const create_info& create_info) :
@@ -209,8 +198,9 @@ namespace utils::MS::graphics::text
 	void renderer::draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region) { implementation_ptr->draw_text(format, string, region); }
 	void renderer::draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position) { implementation_ptr->draw_text(text, position); }
 	
-	const region::rendering& renderer::get_default_rendering_properties() const noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
-	      region::rendering& renderer::get_default_rendering_properties()       noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
+	const utils::MS::graphics::text::regions::properties& renderer::get_default_rendering_properties() const noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
+	      utils::MS::graphics::text::regions::properties& renderer::get_default_rendering_properties()       noexcept { return implementation_ptr->dw_renderer->get_default_rendering_properties(); }
 
-	output renderer::get_output() const { return implementation_ptr->get_output(); }
+	output       renderer::get_output      () const { return implementation_ptr->get_output      (); }
+	output_image renderer::get_output_image() const { return implementation_ptr->get_output_image(); }
 	}

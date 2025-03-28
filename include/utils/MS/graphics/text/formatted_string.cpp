@@ -27,28 +27,55 @@ namespace utils::MS::graphics::text
 
 	formatted_string::renderable::~renderable() = default;
 
+
+
+	void for_each_slot(auto regions, auto callback)
+		{
+		for (size_t i{0}; i < regions.slots_count(); i++)
+			{
+			const auto slot{regions.slot_at_index_of_slots(i)};
+			if (!slot.value_ptr) { continue; }
+			const auto& value{*slot.value_ptr};
+			const auto dx_region{cast(slot.region)};
+			callback(value, dx_region);
+			}
+		}
+
+
+
 	void formatted_string::renderable::implementation::create_layout(const formatted_string& formatted_string)
 		{
 		auto dw_format{utils::MS::raw::graphics::dw::text_format::create(dw_factory, formatted_string.format)};
 		dw_layout = utils::MS::raw::graphics::dw::text_layout::create(dw_factory, dw_format, formatted_string.string, formatted_string.sizes);
-
-
-		const auto properties_regions{formatted_string.properties_regions.evaluate_region_properties()};
-
-		for (size_t i{0}; i < properties_regions.slots_size(); i++)
+		
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.font, [&](const std::string& value, DWRITE_TEXT_RANGE region)
 			{
-			const auto& slot{properties_regions.slot_at(i)};
-			if (!slot.value_opt_ref) { continue; }
-			const auto& properties{slot.value_opt_ref.value().get()};
+			if (value.empty()) { return; }
+			dw_layout->SetFontFamilyName(utils::MS::string::utf8_to_wide(value).c_str(), region);
+			});
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.locale, [&](const std::string& value, DWRITE_TEXT_RANGE region)
+			{
+			if (value.empty()) { return; }
+			dw_layout->SetLocaleName(utils::MS::string::utf8_to_wide(value).c_str(), region);
+			});
+
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.size         , [&](const size_t                    & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontSize      (                                   value , region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.weight       , [&](const MS::graphics::text::weight& value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontWeight    (utils::MS::raw::graphics::dw::cast(value), region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.style        , [&](const MS::graphics::text::style & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontStyle     (utils::MS::raw::graphics::dw::cast(value), region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.strikethrough, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetStrikethrough (                                   value , region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.underline    , [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetUnderline     (                                   value , region); });
+
+		const auto combined{formatted_string.properties_regions.combine_regions()};
+
+		for (size_t i{0}; i < combined.slots_count(); i++)
+			{
+			const auto& slot{combined.slot_at_index_of_slots(i)};
+			if (!slot.value_ptr) { continue; }
+			const auto& properties{*slot.value_ptr};
 			
 			const auto dx_region{cast(slot.region)};
-			if (properties.formatting.font  .has_value()) { dw_layout->SetFontFamilyName(utils::MS::string::utf8_to_wide   (properties.formatting.font  .value()).c_str(), dx_region); }
-			if (properties.formatting.size  .has_value()) { dw_layout->SetFontSize      (                                   properties.formatting.size  .value()         , dx_region); }
-			if (properties.formatting.weight.has_value()) { dw_layout->SetFontWeight    (utils::MS::raw::graphics::dw::cast(properties.formatting.weight.value())        , dx_region); }
-			if (properties.formatting.style .has_value()) { dw_layout->SetFontStyle     (utils::MS::raw::graphics::dw::cast(properties.formatting.style .value())        , dx_region); }
-			if (properties.formatting.locale.has_value()) { dw_layout->SetLocaleName    (utils::MS::string::utf8_to_wide   (properties.formatting.locale.value()).c_str(), dx_region); }
 
-			const auto effects_com_ptr{utils::MS::raw::graphics::text::custom_renderer::effects::create(properties.rendering)};
+			const auto effects_com_ptr{utils::MS::raw::graphics::text::custom_renderer::effects::create(properties)};
 			dw_layout->SetDrawingEffect(effects_com_ptr.get(), dx_region);
 			}
 		}
@@ -64,11 +91,11 @@ namespace utils::MS::graphics::text
 				{
 				float min_size{formatted_string.format.size};
 
-				for (size_t i{0}; i < formatted_string.properties_regions.formatting.size.slots_size(); i++)
+				for (size_t i{0}; i < formatted_string.properties_regions.regions_per_field.format.size.slots_count(); i++)
 					{
-					const auto slot{formatted_string.properties_regions.formatting.size.slot_at(i)};
-					if (!slot.value_opt_ref.has_value()) { continue; }
-					const auto& value{slot.value_opt_ref.value().get()};
+					const auto slot{formatted_string.properties_regions.regions_per_field.format.size.slot_at_index_of_slots(i)};
+					if (!slot.value_ptr) { continue; }
+					const float& value{*slot.value_ptr};
 					min_size = std::min(min_size, value);
 					}
 
@@ -76,11 +103,11 @@ namespace utils::MS::graphics::text
 					{
 					formatted_string.format.size -= step;
 
-					for (size_t i{0}; i < formatted_string.properties_regions.formatting.size.slots_size(); i++)
+					for (size_t i{0}; i < formatted_string.properties_regions.regions_per_field.format.size.slots_count(); i++)
 						{
-						auto slot{formatted_string.properties_regions.formatting.size.slot_at(i)};
-						if (!slot.value_opt_ref.has_value()) { continue; }
-						auto& value{slot.value_opt_ref.value().get()};
+						auto slot{formatted_string.properties_regions.regions_per_field.format.size.slot_at_index_of_slots(i)};
+						if (!slot.value_ptr) { continue; }
+						auto& value{*slot.value_ptr};
 						value -= step;
 						}
 

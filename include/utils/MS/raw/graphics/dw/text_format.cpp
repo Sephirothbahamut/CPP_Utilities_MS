@@ -21,8 +21,8 @@ namespace utils::MS::raw::graphics::dw::text_format
 			locale.c_str(),
 			ret.put()));
 
-		winrt::check_hresult(ret->SetTextAlignment     (cast(format.alignment.horizontal)));
-		winrt::check_hresult(ret->SetParagraphAlignment(cast(format.alignment.vertical  )));
+		winrt::check_hresult(ret->SetTextAlignment     (cast(format.alignment.horizontal_alignment)));
+		winrt::check_hresult(ret->SetParagraphAlignment(cast(format.alignment.vertical_alignment)));
 		winrt::check_hresult(ret->SetWordWrapping      (cast(format.word_wrap)));
 		return ret;
 		}

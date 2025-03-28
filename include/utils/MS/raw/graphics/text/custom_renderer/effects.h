@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../../graphics/text/properties.h"
+#include "../../../../graphics/text/format.h"
 
 #include <Unknwn.h>
 #include <winrt/base.h>
@@ -11,10 +11,7 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	using data     = utils::MS::graphics::text::region::rendering;
-	using data_opt = utils::MS::graphics::text::region::rendering_opt;
-
-	data from_iunknown(const data& data_default, const IUnknown* ptr);
+	utils::MS::graphics::text::regions::properties from_iunknown(const utils::MS::graphics::text::regions::properties& data_default, const IUnknown* ptr);
 
 	class com_class : public IUnknown
 		{
@@ -22,18 +19,18 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 			unsigned long ref_count{1};
 		public:
 			com_class() = default;
-			com_class(const data_opt& data);
+			com_class(const utils::MS::graphics::text::regions::properties::optional& data);
 
 			IFACEMETHOD_(unsigned long, AddRef) ();
 			IFACEMETHOD_(unsigned long, Release) ();
 			IFACEMETHOD(QueryInterface) (IID const& riid, void** ppvObject);
-			data_opt data;
+			utils::MS::graphics::text::regions::properties::optional data;
 		};
 
 	using com_ptr = winrt::com_ptr<com_class>;
 
 	com_ptr create();
-	com_ptr create(const data_opt& data);
+	com_ptr create(const utils::MS::graphics::text::regions::properties::optional& data);
 	}
 
 #ifdef utils_implementation

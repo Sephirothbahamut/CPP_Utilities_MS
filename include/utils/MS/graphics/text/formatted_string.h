@@ -8,7 +8,6 @@
 #include <utils/polymorphic_value.h>
 
 #include "format.h"
-#include "properties.h"
 #include "../dx/initializer.h"
 
 namespace utils::MS::graphics::text
@@ -35,7 +34,14 @@ namespace utils::MS::graphics::text
 		/// </summary>
 		utils::math::vec2f sizes;
 
-		utils::MS::graphics::text::properties_regions properties_regions;
+		using properties_regions_t = utils::containers::aggregate_regions
+			<
+			utils::MS::graphics::text::regions::properties, 
+			utils::MS::graphics::text::regions::properties::optional, 
+			utils::MS::graphics::text::regions::properties::regions, 
+			utils::MS::graphics::text::regions::properties::accessors_helper
+			>;
+		properties_regions_t properties_regions;
 
 		renderable finalize     (dx::initializer& dx_initializer) const noexcept;
 		renderable shrink_to_fit(dx::initializer& dx_initializer, float step = 1.f) noexcept;

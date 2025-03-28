@@ -17,10 +17,9 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			template <bool simplified>
 			winrt::com_ptr<ID2D1TransformedGeometry> evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun);
-			void ms_outline_to_utils(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out, const utils::math::vec2f& dpi);
 
 		public:
-			effects::data default_effects;
+			utils::MS::graphics::text::regions::properties default_effects;
 
 			IFACEMETHOD_(unsigned long, AddRef ) ();
 			IFACEMETHOD_(unsigned long, Release) ();
@@ -28,8 +27,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		public:
 			com_class(d2d::factory::com_ptr& d2d_factory);
-			const effects::data& get_default_rendering_properties() const noexcept;
-			      effects::data& get_default_rendering_properties()       noexcept;
+			const utils::MS::graphics::text::regions::properties& get_default_rendering_properties() const noexcept;
+			      utils::MS::graphics::text::regions::properties& get_default_rendering_properties()       noexcept;
 
 			IFACEMETHOD(IsPixelSnappingDisabled)(__maybenull void* clientDrawingContext, __out BOOL* isDisabled);
 
