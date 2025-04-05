@@ -29,7 +29,7 @@ namespace utils::MS::graphics::text
 
 
 
-	void for_each_slot(auto regions, auto callback)
+	void for_each_slot(const auto& regions, auto callback)
 		{
 		for (size_t i{0}; i < regions.slots_count(); i++)
 			{
@@ -59,11 +59,11 @@ namespace utils::MS::graphics::text
 			dw_layout->SetLocaleName(utils::MS::string::utf8_to_wide(value).c_str(), region);
 			});
 
-		for_each_slot(formatted_string.properties_regions.regions_per_field.format.size         , [&](const size_t                    & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontSize      (                                   value , region); });
-		for_each_slot(formatted_string.properties_regions.regions_per_field.format.weight       , [&](const MS::graphics::text::weight& value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontWeight    (utils::MS::raw::graphics::dw::cast(value), region); });
-		for_each_slot(formatted_string.properties_regions.regions_per_field.format.style        , [&](const MS::graphics::text::style & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontStyle     (utils::MS::raw::graphics::dw::cast(value), region); });
-		for_each_slot(formatted_string.properties_regions.regions_per_field.format.strikethrough, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetStrikethrough (                                   value , region); });
-		for_each_slot(formatted_string.properties_regions.regions_per_field.format.underline    , [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetUnderline     (                                   value , region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.size                 , [&](const float                     & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontSize     (                                   value , region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.weight               , [&](const MS::graphics::text::weight& value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontWeight   (utils::MS::raw::graphics::dw::cast(value), region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.style                , [&](const MS::graphics::text::style & value, DWRITE_TEXT_RANGE region) { dw_layout->SetFontStyle    (utils::MS::raw::graphics::dw::cast(value), region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.strikethrough.enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetStrikethrough(                                   value , region); });
+		for_each_slot(formatted_string.properties_regions.regions_per_field.format.underline    .enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetUnderline    (                                   value , region); });
 
 		const auto combined{formatted_string.properties_regions.combine_regions()};
 

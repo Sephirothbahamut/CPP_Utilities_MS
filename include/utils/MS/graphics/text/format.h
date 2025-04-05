@@ -44,51 +44,78 @@ namespace utils::MS::graphics::text
 
 	namespace regions
 		{
-		enum class lines_type { one, two, three, squiggly };
-		struct lines
+		struct optional_coloured
 			{
-			lines_type type{regions::lines_type::one};
-			utils::graphics::colour::rgba_f colour;
+			bool                            enabled;
+			utils::graphics::colour::rgba_f colour ;
+			
+			bool operator==(const optional_coloured& other) const noexcept = default;
+
+			struct regions
+				{
+				utils::containers::regions<bool                           > enabled;
+				utils::containers::regions<utils::graphics::colour::rgba_f> colour ;
+				};
+	
+			struct optional
+				{
+				std::optional<bool                           > enabled{std::nullopt};
+				std::optional<utils::graphics::colour::rgba_f> colour {std::nullopt};
+
+				bool operator==(const optional& other) const noexcept = default;
+				};
+	
+			using accessors_helper = utils::aggregate::accessors_helper
+				<
+				[](auto& instance) noexcept -> auto& { return instance.enabled; },
+				[](auto& instance) noexcept -> auto& { return instance.colour ; }
+				>;
 			};
 
 		struct format
 			{
 			std::string font{};
+			std::string locale{"en-gb"};
 
 			/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 			float size{16.f};
 		
-			weight       weight      {weight::normal};
-			style        style       {style ::normal};
-
-			std::string locale{"en-gb"};
-			bool strikethrough{false};
-			bool underline    {false};
+			weight weight{weight::normal};
+			style  style {style ::normal};
+			optional_coloured fill         {.enabled{true }};
+			optional_coloured outline      {.enabled{false}};
+			optional_coloured highlight    {.enabled{false}};
+			optional_coloured strikethrough{.enabled{false}};
+			optional_coloured underline    {.enabled{false}};
 
 			bool operator==(const format& other) const noexcept = default;
 
 			struct regions
 				{
-				utils::containers::regions<std::string                    > font         ;
-				utils::containers::regions<float                          > size         ;
-				utils::containers::regions<text::weight                   > weight       ;
-				utils::containers::regions<text::style                    > style        ;
-				utils::containers::regions<std::string                    > locale       ;
-				utils::containers::regions<lines                          > strikethrough;
-				utils::containers::regions<lines                          > underline    ;
-				utils::containers::regions<utils::graphics::colour::rgba_f> highlight    ;
+				utils::containers::regions<std::string > font         ;
+				utils::containers::regions<std::string > locale       ;
+				utils::containers::regions<float       > size         ;
+				utils::containers::regions<text::weight> weight       ;
+				utils::containers::regions<text::style > style        ;
+				typename optional_coloured::regions            fill         ;
+				typename optional_coloured::regions            outline      ;
+				typename optional_coloured::regions            strikethrough;
+				typename optional_coloured::regions            underline    ;
+				typename optional_coloured::regions            highlight    ;
 				};
 	
 			struct optional
 				{
-				std::optional<std::string                    > font         {std::nullopt};
-				std::optional<float                          > size         {std::nullopt};
-				std::optional<text::weight                   > weight       {std::nullopt};
-				std::optional<text::style                    > style        {std::nullopt};
-				std::optional<std::string                    > locale       {std::nullopt};
-				std::optional<lines                          > strikethrough{std::nullopt};
-				std::optional<lines                          > underline    {std::nullopt};
-				std::optional<utils::graphics::colour::rgba_f> highlight    {std::nullopt};
+				std::optional<std::string >          font         {std::nullopt};
+				std::optional<std::string >          locale       {std::nullopt};
+				std::optional<float       >          size         {std::nullopt};
+				std::optional<text::weight>          weight       {std::nullopt};
+				std::optional<text::style >          style        {std::nullopt};
+				typename optional_coloured::optional fill         {std::nullopt};
+				typename optional_coloured::optional outline      {std::nullopt};
+				typename optional_coloured::optional strikethrough{std::nullopt};
+				typename optional_coloured::optional underline    {std::nullopt};
+				typename optional_coloured::optional highlight    {std::nullopt};
 
 				bool operator==(const optional& other) const noexcept = default;
 				};
@@ -96,41 +123,39 @@ namespace utils::MS::graphics::text
 			using accessors_helper = utils::aggregate::accessors_helper
 				<
 				[](auto& instance) noexcept -> auto& { return instance.font         ; },
+				[](auto& instance) noexcept -> auto& { return instance.locale       ; },
 				[](auto& instance) noexcept -> auto& { return instance.size         ; },
 				[](auto& instance) noexcept -> auto& { return instance.weight       ; },
 				[](auto& instance) noexcept -> auto& { return instance.style        ; },
-				[](auto& instance) noexcept -> auto& { return instance.locale       ; },
-				[](auto& instance) noexcept -> auto& { return instance.strikethrough; },
-				[](auto& instance) noexcept -> auto& { return instance.underline    ; },
-				[](auto& instance) noexcept -> auto& { return instance.highlight    ; }
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.fill         ; }, typename optional_coloured::accessors_helper> {},
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.outline      ; }, typename optional_coloured::accessors_helper> {},
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.strikethrough; }, typename optional_coloured::accessors_helper> {},
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.underline    ; }, typename optional_coloured::accessors_helper> {},
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.highlight    ; }, typename optional_coloured::accessors_helper> {}
 				>;
 			};
 
 		struct render_element
 			{
-			bool                            to_image;
-			bool                            to_shapes;
-			utils::graphics::colour::rgba_f colour;
+			bool to_image ;
+			bool to_shapes;
 			bool operator==(const render_element& other) const noexcept = default;
 		
 			struct regions
 				{
-				utils::containers::regions<bool                           > to_image;
-				utils::containers::regions<bool                           > to_shapes;
-				utils::containers::regions<utils::graphics::colour::rgba_f> colour;
+				utils::containers::regions<bool> to_image ;
+				utils::containers::regions<bool> to_shapes;
 				};
 			struct optional
 				{
-				std::optional<bool                           > to_image {std::nullopt};
-				std::optional<bool                           > to_shapes{std::nullopt};
-				std::optional<utils::graphics::colour::rgba_f> colour   {std::nullopt};
+				std::optional<bool> to_image {std::nullopt};
+				std::optional<bool> to_shapes{std::nullopt};
 				bool operator==(const optional& other) const noexcept = default;
 				};
 			using accessors_helper = utils::aggregate::accessors_helper
 				<
 				[](auto& instance) noexcept -> auto& { return instance.to_image ; },
-				[](auto& instance) noexcept -> auto& { return instance.to_shapes; },
-				[](auto& instance) noexcept -> auto& { return instance.colour   ; }
+				[](auto& instance) noexcept -> auto& { return instance.to_shapes; }
 				>;
 			};
 
@@ -138,6 +163,7 @@ namespace utils::MS::graphics::text
 			{
 			render_element fill         ;
 			render_element outline      ;
+			render_element rect         ;
 			render_element strikethrough;
 			render_element underline    ;
 			bool operator==(const render& other) const noexcept = default;
@@ -146,6 +172,7 @@ namespace utils::MS::graphics::text
 				{
 				render_element::regions fill         ;
 				render_element::regions outline      ;
+				render_element::regions rect         ;
 				render_element::regions strikethrough;
 				render_element::regions underline    ;
 				};
@@ -153,6 +180,7 @@ namespace utils::MS::graphics::text
 				{
 				render_element::optional fill         ;
 				render_element::optional outline      ;
+				render_element::optional rect         ;
 				render_element::optional strikethrough;
 				render_element::optional underline    ;
 				bool operator==(const optional& other) const noexcept = default;
@@ -161,6 +189,7 @@ namespace utils::MS::graphics::text
 				<
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.fill         ; }, typename render_element::accessors_helper> {},
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.outline      ; }, typename render_element::accessors_helper> {},
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.rect         ; }, typename render_element::accessors_helper> {},
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.strikethrough; }, typename render_element::accessors_helper> {},
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.underline    ; }, typename render_element::accessors_helper> {}
 				>;

@@ -47,8 +47,8 @@ namespace utils::MS::graphics::text
 			void draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position);
 
 			/// <summary> Output geometries are in dips (see utils::MS::graphics::conversions) </summary>
-			utils::MS::graphics::text::output get_output() const;
-			utils::MS::graphics::text::output_image get_output_image() const;
+			utils::MS::graphics::text::output_shapes get_output_shapes() const;
+			utils::MS::graphics::text::output_image  get_output_image () const;
 
 			const utils::MS::graphics::text::regions::properties& get_default_rendering_properties() const noexcept;
 			      utils::MS::graphics::text::regions::properties& get_default_rendering_properties()       noexcept;

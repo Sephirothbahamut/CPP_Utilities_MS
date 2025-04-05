@@ -4,6 +4,47 @@
 
 // Some ideas from https://www.charlespetzold.com/blog/2014/01/Character-Formatting-Extensions-with-DirectWrite.html
 
+
+utils::math::rect<float> evaluate_rectangle(const DWRITE_GLYPH_RUN* glyph_run, FLOAT baseline_origin_x, FLOAT baseline_origin_y)
+	{
+	// Get width of text
+	float total_width = 0;
+
+	for (UINT32 index = 0; index < glyph_run->glyphCount; index++)
+		{
+		total_width += glyph_run->glyphAdvances[index];
+		}
+
+	// Get height of text
+	DWRITE_FONT_METRICS fontMetrics;
+	glyph_run->fontFace->GetMetrics(&fontMetrics);
+	float adjust = glyph_run->fontEmSize / fontMetrics.designUnitsPerEm;
+	const float ascent {adjust * fontMetrics.ascent};
+	const float descent{adjust * fontMetrics.descent};
+
+	return utils::math::rect<float>
+		{
+		baseline_origin_x,
+		baseline_origin_y - ascent,
+		baseline_origin_x + total_width,
+		baseline_origin_y + descent
+		};
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 	{
 	IFACEMETHODIMP_(unsigned long) com_class::AddRef()
@@ -108,37 +149,24 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		return transformed_geometry;
 		}
 
-	utils::containers::region ms_outline_to_output_glyphs(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, std::vector<glyph_t>& glyphs_out)
+	void ms_outline_to_output(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, const utils::containers::region& region_in_string, utils::MS::graphics::text::output_shapes& out_output)
 		{
 		//TODO
 		//https://learn.microsoft.com/en-us/windows/win32/api/d2d1/nf-d2d1-id2d1geometry-outline(constd2d1_matrix_3x2_f_id2d1simplifiedgeometrysink)
 		auto geometry_sink{geometry_sink::create()};
 
 		transformed_geometry->Outline(D2D1::Matrix3x2F::Identity(), geometry_sink.get());
-		
-		const utils::containers::region ret{.begin{glyphs_out.size()}, .count{geometry_sink->glyphs.size()}};
 
-		for (auto& glyph : geometry_sink->glyphs)
-			{
-			glyphs_out.emplace_back(std::move(glyph));
-			}
-
-		return ret;
-		}
-
-	void ms_outline_to_output(const winrt::com_ptr<ID2D1TransformedGeometry>& transformed_geometry, const utils::containers::region& region_in_string, utils::MS::graphics::text::output& out_output)
-		{
-		const auto region_in_glyphs{ms_outline_to_output_glyphs(transformed_geometry, out_output.glyphs)};
-		out_output.source_string_regions_of_glyphs_indices.add(region_in_glyphs, region_in_string);
+		out_output.glyphs.emplace_back(region_in_string, std::move(geometry_sink->glyphs));
 		}
 
 	IFACEMETHODIMP com_class::DrawGlyphRun(
 		__maybenull void* clientDrawingContext,
-		FLOAT baselineOriginX,
-		FLOAT baselineOriginY,
-		DWRITE_MEASURING_MODE measuringMode,
-		__in DWRITE_GLYPH_RUN const* glyphRun,
-		__in DWRITE_GLYPH_RUN_DESCRIPTION const* glyphRunDescription,
+		FLOAT baseline_origin_x,
+		FLOAT baseline_origin_y,
+		DWRITE_MEASURING_MODE measuring_mode,
+		__in DWRITE_GLYPH_RUN const* glyph_run,
+		__in DWRITE_GLYPH_RUN_DESCRIPTION const* glyph_run_description,
 		::IUnknown* clientDrawingEffect)
 		{
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
@@ -152,42 +180,37 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			return ret;
 			}()};
 
-		const utils::containers::region region_in_string{glyphRunDescription->textPosition, glyphRunDescription->stringLength};
+		const utils::containers::region region_in_string{glyph_run_description->textPosition, glyph_run_description->stringLength};
 
-		if (effects.render.outline.to_image)
+		if ((effects.render.fill.to_image && effects.format.fill.enabled) && !effects.render.fill.to_shapes && !effects.format.outline.enabled)
 			{
-			const auto transformed_geometry{evaluate_transformed_geometry<true>(baselineOriginX, baselineOriginY, glyphRun)};
-
-			if (effects.render.fill.to_image)
-				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.render.fill.colour)};
-				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
-				}
-
-			const auto brush_outline{d2d::brush::create(contexts.render_context, effects.render.outline.colour)};
-			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
-
-			if (effects.render.outline.to_shapes)
-				{
-				ms_outline_to_output(transformed_geometry, region_in_string, contexts.output);
-				}
+			const auto brush_fill{d2d::brush::create(contexts.render_context, effects.format.fill.colour)};
+			contexts.render_context->DrawGlyphRun(D2D1_POINT_2F{baseline_origin_x, baseline_origin_y}, glyph_run, brush_fill.get(), measuring_mode);
 			}
 		else
+		if (((effects.render.outline.to_image || effects.render.outline.to_shapes) && (effects.format.outline.enabled)) || (effects.render.fill.to_shapes && effects.format.fill.enabled))
 			{
-			if (effects.render.fill.to_image)
-				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.render.fill.colour)};
+			const auto transformed_geometry{evaluate_transformed_geometry<true>(baseline_origin_x, baseline_origin_y, glyph_run)};
 
-				contexts.render_context->DrawGlyphRun(D2D1_POINT_2F{baselineOriginX, baselineOriginY}, glyphRun, brush_fill.get(), measuringMode);
+			if (effects.format.fill.enabled && effects.render.fill.to_image)
+				{
+				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.format.fill.colour)};
+				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
+				}
+			if (effects.format.outline.enabled && effects.render.outline.to_image)
+				{
+				const auto brush_outline{d2d::brush::create(contexts.render_context, effects.format.outline.colour)};
+				contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
 				}
 
-			if (effects.render.outline.to_shapes)
+			if ((effects.format.fill.enabled && effects.render.fill.to_shapes) || (effects.format.outline.enabled && effects.render.outline.to_shapes))
 				{
-				const auto transformed_geometry{evaluate_transformed_geometry<true>(baselineOriginX, baselineOriginY, glyphRun)};
-				ms_outline_to_output(transformed_geometry, region_in_string, contexts.output);
+				ms_outline_to_output(transformed_geometry, region_in_string, contexts.output_shapes);
 				}
 			}
+		evaluate_rectangle(glyph_run, baseline_origin_x, baseline_origin_y);
 
+		//evaluate_rectangle
 		return S_OK;
 		}
 
@@ -201,7 +224,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
 		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
-		
+
 		if (effects.render.underline.to_image)
 			{
 			D2D1_RECT_F rect{D2D1::RectF(0, underline->offset, underline->width, underline->offset + underline->thickness)};
@@ -218,7 +241,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			winrt::com_ptr<ID2D1TransformedGeometry> transformed_geometry;
 			winrt::check_hresult(d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put()));
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.render.underline.colour)};
+			const auto brush{d2d::brush::create(contexts.render_context, effects.format.underline.colour)};
 
 			// Draw the outline of the rectangle
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush.get());
@@ -229,9 +252,13 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		if (effects.render.underline.to_shapes)
 			{
-			contexts.output.underlines.emplace_back(
-				utils::math::vec2f{baselineOriginX                   , baselineOriginY + underline->offset},
-				utils::math::vec2f{baselineOriginX + underline->width, baselineOriginY + underline->offset});
+			contexts.output_shapes.underlines.emplace_back
+				(
+				baselineOriginX,
+				baselineOriginY - underline->runHeight,
+				baselineOriginX + underline->width,
+				baselineOriginY + underline->offset
+				);
 			}
 		
 		return S_OK;
@@ -268,7 +295,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 				hr = d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put());
 				}
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.render.strikethrough.colour)};
+			const auto brush{d2d::brush::create(contexts.render_context, effects.format.strikethrough.colour)};
 
 			// Draw the outline of the rectangle
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush.get());
@@ -279,9 +306,11 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		if (effects.render.strikethrough.to_shapes)
 			{
-			contexts.output.strikethroughs.emplace_back(
+			contexts.output_shapes.strikethroughs.emplace_back
+				(
 				utils::math::vec2f{baselineOriginX                       , baselineOriginY + strikethrough->offset},
-				utils::math::vec2f{baselineOriginX + strikethrough->width, baselineOriginY + strikethrough->offset});
+				utils::math::vec2f{baselineOriginX + strikethrough->width, baselineOriginY + strikethrough->offset}
+				);
 			}
 
 		return S_OK;
@@ -339,6 +368,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		*pixelsPerDip = utils::MS::graphics::conversions::multipliers::dips_to_px(dpi).x();
 		return S_OK;
 		}
+
 
 	com_ptr create(d2d::factory::com_ptr& d2d_factory)
 		{
