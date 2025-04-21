@@ -34,14 +34,17 @@ namespace utils::MS::graphics::text
 		/// </summary>
 		utils::math::vec2f sizes;
 
-		using properties_regions_t = utils::containers::aggregate_regions
-			<
-			utils::MS::graphics::text::regions::properties, 
-			utils::MS::graphics::text::regions::properties::optional, 
-			utils::MS::graphics::text::regions::properties::regions, 
-			utils::MS::graphics::text::regions::properties::accessors_helper
-			>;
-		properties_regions_t properties_regions;
+		utils::MS::graphics::text::regions::properties::regions properties_regions;
+		/// <summary> 
+		/// Indices at which you wish to force splitting shapes groups. Useful for applying additonal formatting outside of text rendering.
+		/// Generated outline shapes may merge multiple characters of the source string, so if you want to do your own changes to specific regions,
+		/// you must make sure that such regions are not in a merged outline with what comes before or after.
+		/// Example: I want to make the text's outline squiggly in region [5, 8]
+		/// Add a custom split at indices 5 and 8
+		/// The rendered outlines will be separate in regions [0, 4], [5, 8] and [9, ...]
+		/// Then take the outlines in region [5, 8] and make them squiggly.
+		/// </summary>
+		std::vector<size_t> custom_splits;
 
 		renderable finalize     (dx::initializer& dx_initializer) const noexcept;
 		renderable shrink_to_fit(dx::initializer& dx_initializer, float step = 1.f) noexcept;

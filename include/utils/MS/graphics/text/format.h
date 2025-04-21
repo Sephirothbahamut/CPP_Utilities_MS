@@ -82,11 +82,11 @@ namespace utils::MS::graphics::text
 		
 			weight weight{weight::normal};
 			style  style {style ::normal};
-			optional_coloured fill         {.enabled{true }};
-			optional_coloured outline      {.enabled{false}};
-			optional_coloured highlight    {.enabled{false}};
-			optional_coloured strikethrough{.enabled{false}};
-			optional_coloured underline    {.enabled{false}};
+			optional_coloured fill         {.enabled{true }, .colour{utils::graphics::colour::base::black}};
+			optional_coloured outline      {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+			optional_coloured highlight    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+			optional_coloured strikethrough{.enabled{false}, .colour{utils::graphics::colour::base::black}};
+			optional_coloured underline    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 
 			bool operator==(const format& other) const noexcept = default;
 
@@ -137,8 +137,8 @@ namespace utils::MS::graphics::text
 
 		struct render_element
 			{
-			bool to_image ;
-			bool to_shapes;
+			bool to_image {true };
+			bool to_shapes{false};
 			bool operator==(const render_element& other) const noexcept = default;
 		
 			struct regions
@@ -197,8 +197,8 @@ namespace utils::MS::graphics::text
 
 		struct properties
 			{
-			format format;
-			render render;
+			format format{};
+			render render{};
 			bool operator==(const properties& other) const noexcept = default;
 		
 			struct regions
