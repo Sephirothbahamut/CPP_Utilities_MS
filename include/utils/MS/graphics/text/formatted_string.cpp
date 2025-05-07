@@ -86,7 +86,7 @@ namespace utils::MS::graphics::text
 			assert(split_indices.size() > 1);
 			for (size_t i = 0; i < (split_indices.size() - 1); i++)
 				{
-				const utils::containers::region split_region{split_indices[i], split_indices[i] + 1};
+				const utils::containers::region split_region{split_indices[i], split_indices[i + 1]};
 				const auto dx_region{cast(split_region)};
 				const auto effects_com_ptr{utils::MS::raw::graphics::text::custom_renderer::effects::create(formatted_string.properties_regions, split_indices[i])};
 				dw_layout->SetDrawingEffect(effects_com_ptr.get(), dx_region);
@@ -98,6 +98,28 @@ namespace utils::MS::graphics::text
 		{
 		DWRITE_TEXT_METRICS metrics;
 		if (!dw_layout) { create_layout(formatted_string); }
+
+
+
+
+
+		//// Declare a typography pointer.
+		//IDWriteTypography* typography_ptr = NULL;
+		//
+		//// Create a typography interface object.
+		//dw_factory->CreateTypography(&typography_ptr);
+		//
+		//DWRITE_FONT_FEATURE font_feature{.nameTag{DWRITE_FONT_FEATURE_TAG_STYLISTIC_SET_7}, .parameter{1}};
+		//typography_ptr->AddFontFeature(font_feature);
+		//
+		//dw_layout->SetTypography(typography_ptr, DWRITE_TEXT_RANGE{0, 28});
+		dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, 0.6f, 1.f);
+
+
+
+
+
+
 		while (true)
 			{
 			dw_layout->GetMetrics(&metrics);
