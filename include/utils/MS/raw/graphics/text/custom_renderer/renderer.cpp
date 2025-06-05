@@ -91,9 +91,6 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 	com_class::com_class(d2d::factory::com_ptr& d2d_factory) : d2d_factory{d2d_factory} {}
 
-	const utils::MS::graphics::text::regions::properties& com_class::get_default_rendering_properties() const noexcept { return default_effects; }
-	      utils::MS::graphics::text::regions::properties& com_class::get_default_rendering_properties()       noexcept { return default_effects; }
-
 	template <bool simplified>
 	winrt::com_ptr<ID2D1TransformedGeometry> com_class::evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun)
 		{
@@ -171,7 +168,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		{
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
-		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
+		const auto effects{effects::from_iunknown(clientDrawingEffect)};
 
 		const auto dpi{[&]()
 			{
@@ -223,7 +220,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		{
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
-		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
+		const auto effects{effects::from_iunknown(clientDrawingEffect)};
 
 		if (effects.render.underline.to_image)
 			{
@@ -273,7 +270,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		{
 		if (clientDrawingContext == nullptr) { return E_POINTER; }
 		contexts& contexts{*reinterpret_cast<custom_renderer::contexts*>(clientDrawingContext)};
-		const auto effects{effects::from_iunknown(default_effects, clientDrawingEffect)};
+		const auto effects{effects::from_iunknown(clientDrawingEffect)};
 
 		if (effects.render.strikethrough.to_image)
 			{

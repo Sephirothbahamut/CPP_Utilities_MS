@@ -27,6 +27,8 @@ namespace utils::MS::graphics::text
 				renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step);
 			};
 
+		void reset_properties_regions_to_format() noexcept;
+
 		std::string        string;
 		format             format;
 		/// <summary> 

@@ -27,6 +27,7 @@ namespace utils::MS::graphics::text
 	struct format
 		{
 		std::string font{};
+		std::string locale{"en-gb"};
 
 		/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 		float size{16.f};
@@ -37,7 +38,6 @@ namespace utils::MS::graphics::text
 		antialiasing antialiasing{antialiasing::greyscale};
 		word_wrap    word_wrap   {word_wrap   ::normal   };
 
-		std::string locale{"en-gb"};
 
 		bool operator==(const format& other) const noexcept = default;
 		};
@@ -55,14 +55,6 @@ namespace utils::MS::graphics::text
 				{
 				utils::containers::regions<bool                           > enabled;
 				utils::containers::regions<utils::graphics::colour::rgba_f> colour ;
-				};
-	
-			struct optional
-				{
-				std::optional<bool                           > enabled{std::nullopt};
-				std::optional<utils::graphics::colour::rgba_f> colour {std::nullopt};
-
-				bool operator==(const optional& other) const noexcept = default;
 				};
 	
 			using accessors_helper = utils::aggregate::accessors_helper
@@ -84,40 +76,24 @@ namespace utils::MS::graphics::text
 			style  style {style ::normal};
 			optional_coloured fill         {.enabled{true }, .colour{utils::graphics::colour::base::black}};
 			optional_coloured outline      {.enabled{false}, .colour{utils::graphics::colour::base::black}};
-			optional_coloured highlight    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 			optional_coloured strikethrough{.enabled{false}, .colour{utils::graphics::colour::base::black}};
 			optional_coloured underline    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+			optional_coloured highlight    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 
 			bool operator==(const format& other) const noexcept = default;
 
 			struct regions
 				{
-				utils::containers::regions<std::string > font         ;
-				utils::containers::regions<std::string > locale       ;
-				utils::containers::regions<float       > size         ;
-				utils::containers::regions<text::weight> weight       ;
-				utils::containers::regions<text::style > style        ;
-				typename optional_coloured::regions            fill         ;
-				typename optional_coloured::regions            outline      ;
-				typename optional_coloured::regions            strikethrough;
-				typename optional_coloured::regions            underline    ;
-				typename optional_coloured::regions            highlight    ;
-				};
-	
-			struct optional
-				{
-				std::optional<std::string >          font         {std::nullopt};
-				std::optional<std::string >          locale       {std::nullopt};
-				std::optional<float       >          size         {std::nullopt};
-				std::optional<text::weight>          weight       {std::nullopt};
-				std::optional<text::style >          style        {std::nullopt};
-				typename optional_coloured::optional fill         {std::nullopt};
-				typename optional_coloured::optional outline      {std::nullopt};
-				typename optional_coloured::optional strikethrough{std::nullopt};
-				typename optional_coloured::optional underline    {std::nullopt};
-				typename optional_coloured::optional highlight    {std::nullopt};
-
-				bool operator==(const optional& other) const noexcept = default;
+				utils::containers::regions<std::string > font    ;
+				utils::containers::regions<std::string > locale  ;
+				utils::containers::regions<float       > size    {16.f};
+				utils::containers::regions<text::weight> weight  {weight::normal};
+				utils::containers::regions<text::style > style   {style ::normal};
+				typename optional_coloured::regions fill         {.enabled{true }, .colour{utils::graphics::colour::base::black}};
+				typename optional_coloured::regions outline      {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+				typename optional_coloured::regions strikethrough{.enabled{false}, .colour{utils::graphics::colour::base::black}};
+				typename optional_coloured::regions underline    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+				typename optional_coloured::regions highlight    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 				};
 	
 			using accessors_helper = utils::aggregate::accessors_helper
@@ -143,14 +119,8 @@ namespace utils::MS::graphics::text
 		
 			struct regions
 				{
-				utils::containers::regions<bool> to_image ;
-				utils::containers::regions<bool> to_shapes;
-				};
-			struct optional
-				{
-				std::optional<bool> to_image {std::nullopt};
-				std::optional<bool> to_shapes{std::nullopt};
-				bool operator==(const optional& other) const noexcept = default;
+				utils::containers::regions<bool> to_image {true };
+				utils::containers::regions<bool> to_shapes{false};
 				};
 			using accessors_helper = utils::aggregate::accessors_helper
 				<
@@ -176,15 +146,6 @@ namespace utils::MS::graphics::text
 				render_element::regions strikethrough;
 				render_element::regions underline    ;
 				};
-			struct optional
-				{
-				render_element::optional fill         ;
-				render_element::optional outline      ;
-				render_element::optional rect         ;
-				render_element::optional strikethrough;
-				render_element::optional underline    ;
-				bool operator==(const optional& other) const noexcept = default;
-				};
 			using accessors_helper = utils::aggregate::accessors_helper
 				<
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.fill         ; }, typename render_element::accessors_helper> {},
@@ -205,12 +166,26 @@ namespace utils::MS::graphics::text
 				{
 				text::regions::format::regions format;
 				text::regions::render::regions render;
-				};
-			struct optional
-				{
-				text::regions::format::optional format;
-				text::regions::render::optional render;
-				bool operator==(const optional& other) const noexcept = default;
+
+				struct create : utils::oop::non_constructible
+					{
+					inline static regions from_base_format(const text::format& format)
+						{
+						const regions ret
+							{
+							.format
+								{
+								.font  {format.font  },
+								.locale{format.locale},
+								.size  {format.size  },
+								.weight{format.weight},
+								.style {format.style }
+								},
+							.render{}
+							};
+						return ret;
+						}
+					};
 				};
 			using accessors_helper = utils::aggregate::accessors_helper
 				<

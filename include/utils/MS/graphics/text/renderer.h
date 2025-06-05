@@ -50,9 +50,6 @@ namespace utils::MS::graphics::text
 			utils::MS::graphics::text::output_shapes get_output_shapes() const;
 			utils::MS::graphics::text::output_image  get_output_image () const;
 
-			const utils::MS::graphics::text::regions::properties& get_default_rendering_properties() const noexcept;
-			      utils::MS::graphics::text::regions::properties& get_default_rendering_properties()       noexcept;
-
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};
 	}

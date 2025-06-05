@@ -11,7 +11,7 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	utils::MS::graphics::text::regions::properties from_iunknown(const utils::MS::graphics::text::regions::properties& default_properties, const IUnknown* ptr);
+	utils::MS::graphics::text::regions::properties from_iunknown(const IUnknown* ptr);
 
 	class com_class : public IUnknown
 		{

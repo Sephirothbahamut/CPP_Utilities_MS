@@ -4,9 +4,9 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	utils::MS::graphics::text::regions::properties from_iunknown(const utils::MS::graphics::text::regions::properties& default_properties, IUnknown* ptr)
+	utils::MS::graphics::text::regions::properties from_iunknown(IUnknown* ptr)
 		{
-		if (!ptr) { return default_properties; }
+		assert(ptr);
 
 		// Not using this because my class doesn't have an uuid
 		// so as<T> that calls QueryInterface can't work
@@ -15,11 +15,12 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 
 		const auto* elements_ptr{dynamic_cast<const effects::com_class*>(ptr)};
 
-		if (!elements_ptr) { return default_properties; }
-		using aggregate_regions_t = utils::containers::aggregate_regions<utils::MS::graphics::text::regions::properties, utils::MS::graphics::text::regions::properties::optional, utils::MS::graphics::text::regions::properties::regions, utils::MS::graphics::text::regions::properties::accessors_helper, true>;
+		assert(elements_ptr);
+
+		using aggregate_regions_t = utils::containers::aggregate_regions<utils::MS::graphics::text::regions::properties, utils::MS::graphics::text::regions::properties::regions, utils::MS::graphics::text::regions::properties::accessors_helper, true>;
 		const aggregate_regions_t aggregate_regions{*elements_ptr->properties_regions_ptr};
 
-		const auto ret{aggregate_regions.at(elements_ptr->region_begin, default_properties)};
+		const auto ret{aggregate_regions.at(elements_ptr->region_begin)};
 		return ret;
 		}
 
