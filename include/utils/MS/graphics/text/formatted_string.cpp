@@ -6,7 +6,17 @@ namespace utils::MS::graphics::text
 	{
 	DWRITE_TEXT_RANGE cast(const utils::containers::region& region)
 		{
-		return {utils::math::cast_clamp<UINT32>(region.begin), utils::math::cast_clamp<UINT32>(region.count)};
+		const auto uint32_begin{utils::math::cast_clamp<UINT32>(region.begin)};
+		const auto uint32_end  {utils::math::cast_clamp<UINT32>(region.count)};
+		if (utils::math::will_overflow_sum(uint32_begin, uint32_end))
+			{
+			const auto adapted_end{std::numeric_limits<UINT32>::max() - uint32_begin};
+			return {uint32_begin, adapted_end};
+			}
+		else
+			{
+			return {uint32_begin, uint32_end};
+			}
 		}
 
 	formatted_string::renderable::implementation::implementation(dx::initializer& dx_initializer) :
@@ -153,6 +163,15 @@ namespace utils::MS::graphics::text
 				}
 			else { break; }
 			}
+		}
+
+	formatted_string::formatted_string(const formatted_string::create_info& create_info) : formatted_string{create_info.string, create_info.format, create_info.sizes} {}
+	formatted_string::formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes) :
+		string{string},
+		format{format},
+		sizes {sizes },
+		properties_regions{utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format)}
+		{
 		}
 
 	void formatted_string::reset_properties_regions_to_format() noexcept

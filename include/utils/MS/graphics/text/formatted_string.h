@@ -14,6 +14,14 @@ namespace utils::MS::graphics::text
 	{
 	struct formatted_string
 		{
+		struct create_info
+			{
+			std::u16string     string;
+			format             format;
+			/// <summary> If your renderer is DPI-aware, sizes is in DIPs </summary>
+			utils::math::vec2f sizes;
+			};
+
 		class renderable : utils::oop::non_copyable, utils::oop::non_movable
 			{
 			friend struct utils::MS::graphics::text::formatted_string;
@@ -27,13 +35,13 @@ namespace utils::MS::graphics::text
 				renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step);
 			};
 
+		formatted_string(const create_info& create_info);
+		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes);
 		void reset_properties_regions_to_format() noexcept;
 
-		std::string        string;
+		std::u16string     string;
 		format             format;
-		/// <summary> 
-		/// If your renderer is DPI-aware, sizes is in DIPs
-		/// </summary>
+		/// <summary> If your renderer is DPI-aware, sizes is in DIPs </summary>
 		utils::math::vec2f sizes;
 
 		utils::MS::graphics::text::regions::properties::regions properties_regions;
