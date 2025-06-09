@@ -1,5 +1,7 @@
 #include "formatted_string_exposed_MS.h"
 
+#include <utils/string.h>
+
 #include "../dx/initializer/exposed_MS.h"
 
 namespace utils::MS::graphics::text
@@ -54,18 +56,18 @@ namespace utils::MS::graphics::text
 		auto dw_format{utils::MS::raw::graphics::dw::text_format::create(dw_factory, formatted_string.format)};
 		dw_layout = utils::MS::raw::graphics::dw::text_layout::create(dw_factory, dw_format, formatted_string.string, formatted_string.sizes);
 		
-		for_each_slot(formatted_string.properties_regions.format.font, [&](const std::string& value, DWRITE_TEXT_RANGE region)
+		for_each_slot(formatted_string.properties_regions.format.font, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
 			{
 			if (value != formatted_string.format.font)
 				{
-				dw_layout->SetFontFamilyName(utils::MS::string::utf8_to_wide(value).c_str(), region);
+				dw_layout->SetFontFamilyName(utils::string::cast<wchar_t>(value).c_str(), region);
 				}
 			});
-		for_each_slot(formatted_string.properties_regions.format.locale, [&](const std::string& value, DWRITE_TEXT_RANGE region)
+		for_each_slot(formatted_string.properties_regions.format.locale, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
 			{
 			if (value != formatted_string.format.locale)
 				{
-				dw_layout->SetFontFamilyName(utils::MS::string::utf8_to_wide(value).c_str(), region);
+				dw_layout->SetFontFamilyName(utils::string::cast<wchar_t>(value).c_str(), region);
 				}
 			});
 

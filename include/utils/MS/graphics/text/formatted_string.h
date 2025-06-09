@@ -10,6 +10,7 @@
 #include "format.h"
 #include "../dx/initializer.h"
 
+
 namespace utils::MS::graphics::text
 	{
 	struct formatted_string

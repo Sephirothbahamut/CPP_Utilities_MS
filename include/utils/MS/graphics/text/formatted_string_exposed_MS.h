@@ -21,7 +21,7 @@ namespace utils::MS::graphics::text
 		implementation(dx::initializer& dx_initializer);
 
 		void create_layout(const formatted_string& formatted_string);
-		void shrink_to_fit(formatted_string& formatted_string, float step);
+		void shrink_to_fit(      formatted_string& formatted_string, float step);
 		};
 	}
 

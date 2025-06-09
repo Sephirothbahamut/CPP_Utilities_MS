@@ -26,8 +26,8 @@ namespace utils::MS::graphics::text
 	
 	struct format
 		{
-		std::string font{};
-		std::string locale{"en-gb"};
+		std::u16string font{};
+		std::u16string locale{u"en-gb"};
 
 		/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 		float size{16.f};
@@ -66,8 +66,8 @@ namespace utils::MS::graphics::text
 
 		struct format
 			{
-			std::string font{};
-			std::string locale{"en-gb"};
+			std::u16string font{};
+			std::u16string locale{u"en-gb"};
 
 			/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 			float size{16.f};
@@ -84,11 +84,11 @@ namespace utils::MS::graphics::text
 
 			struct regions
 				{
-				utils::containers::regions<std::string > font    ;
-				utils::containers::regions<std::string > locale  ;
-				utils::containers::regions<float       > size    {16.f};
-				utils::containers::regions<text::weight> weight  {weight::normal};
-				utils::containers::regions<text::style > style   {style ::normal};
+				utils::containers::regions<std::u16string> font    ;
+				utils::containers::regions<std::u16string> locale  ;
+				utils::containers::regions<float         > size    {16.f};
+				utils::containers::regions<text::weight  > weight  {weight::normal};
+				utils::containers::regions<text::style   > style   {style ::normal};
 				typename optional_coloured::regions fill         {.enabled{true }, .colour{utils::graphics::colour::base::black}};
 				typename optional_coloured::regions outline      {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 				typename optional_coloured::regions strikethrough{.enabled{false}, .colour{utils::graphics::colour::base::black}};

@@ -1,5 +1,6 @@
 #include "text_format.h"
 
+#include <utils/string.h>
 #include "cast.h"
 #include "../../../string.h"
 
@@ -8,8 +9,8 @@ namespace utils::MS::raw::graphics::dw::text_format
 	com_ptr create(winrt::com_ptr<IDWriteFactory> dw_factory, const utils::MS::graphics::text::format& format)
 		{
 		com_ptr ret;
-		const std::wstring font  {utils::MS::string::utf8_to_wide(format.font  )};
-		const std::wstring locale{utils::MS::string::utf8_to_wide(format.locale)};
+		const std::wstring font  {utils::string::cast<wchar_t>(format.font  )};
+		const std::wstring locale{utils::string::cast<wchar_t>(format.locale)};
 
 		winrt::check_hresult(dw_factory->CreateTextFormat(
 			font.c_str(),                // Font family name.
