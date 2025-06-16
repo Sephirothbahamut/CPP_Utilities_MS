@@ -38,6 +38,7 @@ namespace utils::MS::graphics::text
 
 		formatted_string(const create_info& create_info);
 		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes);
+		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::properties::regions& properties_regions);
 		void reset_properties_regions_to_format() noexcept;
 
 		std::u16string     string;
@@ -56,6 +57,9 @@ namespace utils::MS::graphics::text
 		/// Then take the outlines in region [5, 8] and make them squiggly.
 		/// </summary>
 		std::vector<size_t> custom_splits;
+
+		utils::math::rect<float> glyphs_enclosing_rect(dx::initializer& dx_initializer) const noexcept;
+		utils::math::rect<float> glyphs_enclosing_rect_with_overhangs(dx::initializer& dx_initializer) const noexcept;
 
 		renderable finalize     (dx::initializer& dx_initializer) const noexcept;
 		renderable shrink_to_fit(dx::initializer& dx_initializer, float step = 1.f) noexcept;

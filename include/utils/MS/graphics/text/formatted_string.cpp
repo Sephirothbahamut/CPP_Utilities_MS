@@ -137,6 +137,7 @@ namespace utils::MS::graphics::text
 		while (true)
 			{
 			dw_layout->GetMetrics(&metrics);
+			
 			if (metrics.height > metrics.layoutHeight)
 				{
 				float min_size{formatted_string.format.size};
@@ -176,11 +177,42 @@ namespace utils::MS::graphics::text
 		{
 		}
 
+
+	formatted_string::formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::properties::regions& properties_regions) :
+		string{string},
+		format{format},
+		sizes{sizes},
+		properties_regions{properties_regions}
+		{}
+
 	void formatted_string::reset_properties_regions_to_format() noexcept
 		{
 		properties_regions = utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format);
 		}
-	
+
+	utils::math::rect<float> formatted_string::glyphs_enclosing_rect(dx::initializer& dx_initializer) const noexcept
+		{
+		const auto renderable{finalize(dx_initializer)};
+		const auto& layout{renderable.implementation_ptr->dw_layout};
+		DWRITE_TEXT_METRICS metrics{};
+		if (S_OK != layout->GetMetrics(std::addressof(metrics)))
+			{
+			return utils::math::rect<float>::create::infinite();
+			}
+		return utils::math::rect<float>::create::from_possize(utils::math::vec2f{metrics.left, metrics.top}, utils::math::vec2f{metrics.width, metrics.height});
+		}
+	utils::math::rect<float> formatted_string::glyphs_enclosing_rect_with_overhangs(dx::initializer& dx_initializer) const noexcept
+		{
+		const auto renderable{finalize(dx_initializer)};
+		const auto& layout{renderable.implementation_ptr->dw_layout};
+		DWRITE_OVERHANG_METRICS metrics{};
+		if (S_OK != layout->GetOverhangMetrics(std::addressof(metrics)))
+			{
+			return utils::math::rect<float>::create::infinite();
+			}
+		return utils::math::rect<float>{metrics.left, metrics.top, metrics.right, metrics.bottom};
+		}
+
 	formatted_string::renderable formatted_string::finalize(dx::initializer& dx_initializer) const noexcept
 		{
 		return formatted_string::renderable{dx_initializer, *this};

@@ -189,15 +189,15 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			{
 			const auto transformed_geometry{evaluate_transformed_geometry<true>(baseline_origin_x, baseline_origin_y, glyph_run)};
 
-			if (effects.format.fill.enabled && effects.render.fill.to_image)
-				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.format.fill.colour)};
-				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
-				}
 			if (effects.format.outline.enabled && effects.render.outline.to_image)
 				{
 				const auto brush_outline{d2d::brush::create(contexts.render_context, effects.format.outline.colour)};
 				contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
+				}
+			if (effects.format.fill.enabled && effects.render.fill.to_image)
+				{
+				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.format.fill.colour)};
+				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
 				}
 
 			if ((effects.format.fill.enabled && effects.render.fill.to_shapes) || (effects.format.outline.enabled && effects.render.outline.to_shapes))
