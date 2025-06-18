@@ -11,15 +11,17 @@
 
 namespace utils::MS::graphics::text
 	{
-	enum class weight
-		{
-		thin       = 100,
-		light      = 300,
-		semi_light = 350,
-		normal     = 400,
-		semi_bold  = 600,
-		bold       = 700,
-		};
+	//Could use the same values as MS, but magic_enum acts funky with holes in values like this
+	//enum class weight
+	//	{
+	//	thin       = 100,
+	//	light      = 300,
+	//	semi_light = 350,
+	//	normal     = 400,
+	//	semi_bold  = 600,
+	//	bold       = 700,
+	//	};
+	enum class weight       { thin, light, semi_light, normal, semi_bold, bold };
 	enum class style        { normal, oblique, italic };
 	enum class antialiasing { none, greyscale, cleartype };
 	enum class word_wrap    { none, normal, whole_word, character };
