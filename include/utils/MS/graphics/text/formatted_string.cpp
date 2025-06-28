@@ -39,6 +39,27 @@ namespace utils::MS::graphics::text
 
 	formatted_string::renderable::~renderable() = default;
 
+	utils::math::rect<float> formatted_string::renderable::glyphs_enclosing_rect() const noexcept
+		{
+		const auto& layout{implementation_ptr->dw_layout};
+		DWRITE_TEXT_METRICS metrics{};
+		if (S_OK != layout->GetMetrics(std::addressof(metrics)))
+			{
+			return utils::math::rect<float>::create::infinite();
+			}
+		return utils::math::rect<float>::create::from_possize(utils::math::vec2f{metrics.left, metrics.top}, utils::math::vec2f{metrics.width, metrics.height});
+		}
+
+	utils::math::rect<float> formatted_string::renderable::glyphs_enclosing_rect_with_overhangs() const noexcept
+		{
+		const auto& layout{implementation_ptr->dw_layout};
+		DWRITE_OVERHANG_METRICS metrics{};
+		if (S_OK != layout->GetOverhangMetrics(std::addressof(metrics)))
+			{
+			return utils::math::rect<float>::create::infinite();
+			}
+		return utils::math::rect<float>{metrics.left, metrics.top, metrics.right, metrics.bottom};
+		}
 
 
 	void for_each_slot(const auto& regions, auto callback)
@@ -130,10 +151,6 @@ namespace utils::MS::graphics::text
 		dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, 0.6f, 1.f);
 
 
-
-
-
-
 		while (true)
 			{
 			dw_layout->GetMetrics(&metrics);
@@ -190,27 +207,74 @@ namespace utils::MS::graphics::text
 		properties_regions = utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format);
 		}
 
+	void formatted_string::chage_font_sizes(float delta, float minimum, float maximum) noexcept
+		{
+		if (delta > 0.f) 
+			{
+			increase_font_sizes(delta, maximum); 
+			}
+		else
+			{
+			decrease_font_sizes(delta, minimum);
+			}
+		}
+
+	void formatted_string::increase_font_sizes(float delta, float maximum) noexcept
+		{
+		assert(delta >= 0.f);
+		float current_max{format.size};
+		for (const auto& slot : properties_regions.format.size.slot_index_view())
+			{
+			current_max = std::max(current_max, slot.value);
+			}
+		if (current_max > maximum)
+			{
+			return; 
+			}
+
+		const float max_delta{maximum - current_max};
+		delta = std::min(delta, max_delta);
+
+		format.size += delta;
+		for (auto slot : properties_regions.format.size.unsafe_slots_index_view())
+			{
+			slot.value += delta;
+			}
+		}
+
+	void formatted_string::decrease_font_sizes(float delta, float minimum) noexcept
+		{
+		assert(delta <= 0.f);
+		float current_min{format.size};
+		for (const auto& slot : properties_regions.format.size.slot_index_view())
+			{
+			current_min = std::min(current_min, slot.value);
+			}
+		if (current_min < minimum)
+			{
+			return;
+			}
+
+		const float min_delta{minimum - current_min};
+		delta = std::max(delta, min_delta);
+
+		format.size += delta;
+		for (auto slot : properties_regions.format.size.unsafe_slots_index_view())
+			{
+			slot.value += delta;
+			}
+		}
+
 	utils::math::rect<float> formatted_string::glyphs_enclosing_rect(dx::initializer& dx_initializer) const noexcept
 		{
 		const auto renderable{finalize(dx_initializer)};
-		const auto& layout{renderable.implementation_ptr->dw_layout};
-		DWRITE_TEXT_METRICS metrics{};
-		if (S_OK != layout->GetMetrics(std::addressof(metrics)))
-			{
-			return utils::math::rect<float>::create::infinite();
-			}
-		return utils::math::rect<float>::create::from_possize(utils::math::vec2f{metrics.left, metrics.top}, utils::math::vec2f{metrics.width, metrics.height});
+		return renderable.glyphs_enclosing_rect();
 		}
+
 	utils::math::rect<float> formatted_string::glyphs_enclosing_rect_with_overhangs(dx::initializer& dx_initializer) const noexcept
 		{
 		const auto renderable{finalize(dx_initializer)};
-		const auto& layout{renderable.implementation_ptr->dw_layout};
-		DWRITE_OVERHANG_METRICS metrics{};
-		if (S_OK != layout->GetOverhangMetrics(std::addressof(metrics)))
-			{
-			return utils::math::rect<float>::create::infinite();
-			}
-		return utils::math::rect<float>{metrics.left, metrics.top, metrics.right, metrics.bottom};
+		return renderable.glyphs_enclosing_rect_with_overhangs();
 		}
 
 	formatted_string::renderable formatted_string::finalize(dx::initializer& dx_initializer) const noexcept
@@ -221,7 +285,4 @@ namespace utils::MS::graphics::text
 		{
 		return formatted_string::renderable{dx_initializer, *this, step};
 		}
-
-
-
 	}
