@@ -205,9 +205,22 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 				ms_outline_to_output(transformed_geometry, region_in_string, contexts.output_shapes);
 				}
 			}
-		evaluate_rectangle(glyph_run, baseline_origin_x, baseline_origin_y);
 
-		//evaluate_rectangle
+
+		if (effects.format.highlight.enabled)
+			{
+			const auto rectangle{evaluate_rectangle(glyph_run, baseline_origin_x, baseline_origin_y)};
+
+			if (effects.render.rect.to_image)
+				{
+				assert(false); //TODO
+				}
+			if (effects.render.rect.to_shapes)
+				{
+				contexts.output_shapes.rects.emplace_back(region_in_string, rectangle);
+				}
+			}
+		
 		return S_OK;
 		}
 
