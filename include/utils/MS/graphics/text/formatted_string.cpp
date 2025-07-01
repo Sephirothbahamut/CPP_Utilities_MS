@@ -211,15 +211,15 @@ namespace utils::MS::graphics::text
 		{
 		if (delta > 0.f) 
 			{
-			increase_font_sizes(delta, maximum); 
+			increase_font_sizes( delta, maximum); 
 			}
 		else
 			{
-			decrease_font_sizes(delta, minimum);
+			decrease_font_sizes(-delta, minimum);
 			}
 		}
 
-	void formatted_string::increase_font_sizes(float delta, float maximum) noexcept
+	bool formatted_string::increase_font_sizes(float delta, float maximum) noexcept
 		{
 		assert(delta >= 0.f);
 		float current_max{format.size};
@@ -229,7 +229,7 @@ namespace utils::MS::graphics::text
 			}
 		if (current_max > maximum)
 			{
-			return; 
+			return false; 
 			}
 
 		const float max_delta{maximum - current_max};
@@ -240,11 +240,14 @@ namespace utils::MS::graphics::text
 			{
 			slot.value += delta;
 			}
+		return true;
 		}
 
-	void formatted_string::decrease_font_sizes(float delta, float minimum) noexcept
+	bool formatted_string::decrease_font_sizes(float delta, float minimum) noexcept
 		{
+		delta *= -1.f;
 		assert(delta <= 0.f);
+
 		float current_min{format.size};
 		for (const auto& slot : properties_regions.format.size.slot_index_view())
 			{
@@ -252,7 +255,7 @@ namespace utils::MS::graphics::text
 			}
 		if (current_min < minimum)
 			{
-			return;
+			return false;
 			}
 
 		const float min_delta{minimum - current_min};
@@ -263,6 +266,7 @@ namespace utils::MS::graphics::text
 			{
 			slot.value += delta;
 			}
+		return true;
 		}
 
 	utils::math::rect<float> formatted_string::glyphs_enclosing_rect(dx::initializer& dx_initializer) const noexcept

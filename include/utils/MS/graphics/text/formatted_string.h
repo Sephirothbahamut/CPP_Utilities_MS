@@ -62,8 +62,8 @@ namespace utils::MS::graphics::text
 		std::vector<size_t> custom_splits;
 
 		void chage_font_sizes(float delta, float minimum = 1.f, float maximum = std::numeric_limits<float>::infinity()) noexcept;
-		void increase_font_sizes(float delta, float maximum = std::numeric_limits<float>::infinity()) noexcept;
-		void decrease_font_sizes(float delta, float minimum = 1.f) noexcept;
+		bool increase_font_sizes(float delta, float maximum = std::numeric_limits<float>::infinity()) noexcept;
+		bool decrease_font_sizes(float delta, float minimum = 1.f) noexcept;
 
 		utils::math::rect<float> glyphs_enclosing_rect(dx::initializer& dx_initializer) const noexcept;
 		utils::math::rect<float> glyphs_enclosing_rect_with_overhangs(dx::initializer& dx_initializer) const noexcept;

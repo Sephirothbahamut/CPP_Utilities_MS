@@ -31,6 +31,7 @@ namespace utils::MS::graphics::text
 		inline void clear() noexcept
 			{
 			glyphs        .clear();
+			rects         .clear();
 			strikethroughs.clear();
 			underlines    .clear();
 			}
