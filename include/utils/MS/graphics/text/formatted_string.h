@@ -39,6 +39,7 @@ namespace utils::MS::graphics::text
 				renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step);
 			};
 
+		formatted_string() = default;
 		formatted_string(const create_info& create_info);
 		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes);
 		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::properties::regions& properties_regions);

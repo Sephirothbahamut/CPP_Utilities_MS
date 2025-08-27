@@ -253,12 +253,13 @@ namespace utils::MS::graphics::text
 			{
 			current_min = std::min(current_min, slot.value);
 			}
-		if (current_min < minimum)
+		if (current_min <= minimum)
 			{
 			return false;
 			}
 
 		const float min_delta{minimum - current_min};
+		//if (min_delta <= 0.f) {}
 		delta = std::max(delta, min_delta);
 
 		format.size += delta;

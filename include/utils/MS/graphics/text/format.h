@@ -33,12 +33,11 @@ namespace utils::MS::graphics::text
 
 		/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 		float size{16.f};
-		utils::alignment alignment{utils::alignment::horizontal::left, utils::alignment::vertical::top};
-
-		weight       weight      {weight      ::normal   };
-		style        style       {style       ::normal   };
-		antialiasing antialiasing{antialiasing::greyscale};
-		word_wrap    word_wrap   {word_wrap   ::normal   };
+		utils::alignment alignment   {utils::alignment::horizontal::left, utils::alignment::vertical::top};
+		weight           weight      {weight      ::normal   };
+		style            style       {style       ::normal   };
+		antialiasing     antialiasing{antialiasing::greyscale};
+		word_wrap        word_wrap   {word_wrap   ::normal   };
 
 
 		bool operator==(const format& other) const noexcept = default;
