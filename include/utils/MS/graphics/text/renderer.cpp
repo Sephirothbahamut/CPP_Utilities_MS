@@ -48,15 +48,24 @@ namespace utils::MS::graphics::text
 			d2d_context->SetUnitMode(D2D1_UNIT_MODE_DIPS);
 			reset(create_info);
 			}
-		
+
 		void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f})
+			{
+			clear_image ();
+			clear_shapes();
+			}
+
+		void clear_image(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f})
 			{
 			if (!d2d_bitmap) { return; }
 
 			d2d_context->BeginDraw();
 			d2d_context->Clear(D2D1_COLOR_F{.r{colour.r()}, .g{colour.g()}, .b{colour.b()}, .a{colour.a()}});
 			winrt::check_hresult(d2d_context->EndDraw());
+			}
 
+		void clear_shapes()
+			{
 			contexts.output_shapes.clear();
 			}
 
@@ -194,6 +203,8 @@ namespace utils::MS::graphics::text
 	renderer::~renderer() = default;
 
 	void renderer::clear(const utils::graphics::colour::rgba_f& colour) { implementation_ptr->clear(colour); }
+	void renderer::clear_image(const utils::graphics::colour::rgba_f& colour) { implementation_ptr->clear_image(colour); };
+	void renderer::clear_shapes() { implementation_ptr->clear_shapes(); };
 	void renderer::reset(const create_info& create_info) { implementation_ptr->reset(create_info); }
 	void renderer::draw_text(const format& format, const std::string& string, const utils::math::rect<float>& region) { implementation_ptr->draw_text(format, string, region); }
 	void renderer::draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position)            { implementation_ptr->draw_text(text, position); }

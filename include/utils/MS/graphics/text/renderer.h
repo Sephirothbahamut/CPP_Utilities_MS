@@ -36,8 +36,11 @@ namespace utils::MS::graphics::text
 
 			renderer(dx::initializer& dx_initializer, const create_info& create_info);
 			~renderer();
-			
+
 			void clear(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f});
+			void clear_image(const utils::graphics::colour::rgba_f& colour = utils::graphics::colour::rgba_f{0.f});
+			void clear_shapes();
+
 			void reset(const create_info& create_info);
 
 			/// <summary> Region is in dips (see utils::MS::graphics::conversions) </summary>
