@@ -202,50 +202,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if ((effects.format.fill.enabled && effects.render.fill.to_shapes) || (effects.format.outline.enabled && effects.render.outline.to_shapes))
 				{
-				//Split the glyph run in multiple one-glyph glyph runs to separate outlines
-				//Warning: only working with left to right, didn't support nor test right to left
-				//for (size_t i{0}; i < glyph_run->glyphCount; i++)
-				//	{
-				//	const float tmp_advances{[&]()
-				//		{
-				//		if (glyph_run->glyphAdvances == NULL) { return utils::math::constants::fnan; }
-				//		float tmp{0.f};
-				//		for (size_t j = 0; j <= i; j++)
-				//			{
-				//			tmp += glyph_run->glyphAdvances[j];
-				//			}
-				//		return tmp;
-				//		}()};
-				//	const DWRITE_GLYPH_OFFSET tmp_offsets{[&]()
-				//		{
-				//		if (glyph_run->glyphOffsets == NULL) { return DWRITE_GLYPH_OFFSET{utils::math::constants::fnan, utils::math::constants::fnan}; }
-				//		DWRITE_GLYPH_OFFSET tmp{0.f, 0.f};
-				//		for (size_t j = 0; j <= i; j++)
-				//			{
-				//			tmp.advanceOffset  += glyph_run->glyphOffsets[j].advanceOffset;
-				//			tmp.ascenderOffset += glyph_run->glyphOffsets[j].ascenderOffset;
-				//			}
-				//		return tmp;
-				//		}()};
-				//	
-				//	DWRITE_GLYPH_RUN inner_run
-				//		{
-				//		.fontFace     {glyph_run->fontFace         },
-				//		.fontEmSize   {glyph_run->fontEmSize       },
-				//		.glyphCount   {1                           },
-				//		.glyphIndices {glyph_run->glyphIndices  == NULL ? NULL : glyph_run->glyphIndices  + i},
-				//		.glyphAdvances{glyph_run->glyphAdvances == NULL ? NULL : glyph_run->glyphAdvances + i},
-				//		.glyphOffsets {glyph_run->glyphOffsets  == NULL ? NULL : glyph_run->glyphOffsets  + i},
-				//		.isSideways   {glyph_run->isSideways       },
-				//		.bidiLevel    {glyph_run->bidiLevel        }
-				//		};
-				//
-				//	const auto transformed_geometry{evaluate_transformed_geometry<true>(baseline_origin_x + tmp_offsets.advanceOffset, baseline_origin_y, &inner_run)};
-				//	ms_outline_to_output(transformed_geometry, region_in_string, contexts.output_shapes);
-				//	}
-				
 				ms_outline_to_output(transformed_geometry, region_in_string, contexts.output_shapes);
-
 				}
 			}
 

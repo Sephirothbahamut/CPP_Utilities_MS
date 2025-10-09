@@ -111,7 +111,7 @@ namespace utils::MS::graphics::text
 		const auto split_indices{[&]()
 			{
 			auto tmp{aggregate_properties.split_indices_set()};
-			std::copy(formatted_string.custom_splits.begin(), formatted_string.custom_splits.end(), std::inserter(tmp, tmp.end()));
+			tmp.insert(formatted_string.custom_splits.begin(), formatted_string.custom_splits.end());
 			tmp.insert(0);
 			tmp.insert(std::numeric_limits<size_t>::max());
 			return std::vector<size_t>{tmp.begin(), tmp.end()};
@@ -205,6 +205,22 @@ namespace utils::MS::graphics::text
 	void formatted_string::reset_properties_regions_to_format() noexcept
 		{
 		properties_regions = utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format);
+		}
+
+	void formatted_string::split_shapes_output_glyphs() noexcept
+		{
+		for (size_t i{0}; i < string.size(); i++)
+			{
+			const bool format_fill   {properties_regions.format.fill   .enabled  .at_element_index(i).value()};
+			const bool render_fill   {properties_regions.render.fill   .to_shapes.at_element_index(i).value()};
+			const bool format_outline{properties_regions.format.outline.enabled  .at_element_index(i).value()};
+			const bool render_outline{properties_regions.render.outline.to_shapes.at_element_index(i).value()};
+			if ((format_fill && render_fill) || (format_outline && render_outline))
+				{
+				custom_splits.insert(i);
+				custom_splits.insert(i + 1);
+				}
+			}
 		}
 
 	void formatted_string::chage_font_sizes(float delta, float minimum, float maximum) noexcept

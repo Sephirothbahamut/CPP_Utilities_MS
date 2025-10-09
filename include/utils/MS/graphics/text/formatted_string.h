@@ -60,7 +60,9 @@ namespace utils::MS::graphics::text
 		/// The rendered outlines will be separate in regions [0, 4], [5, 8] and [9, ...]
 		/// Then take the outlines in region [5, 8] and make them squiggly.
 		/// </summary>
-		std::vector<size_t> custom_splits;
+		std::set<size_t> custom_splits;
+
+		void split_shapes_output_glyphs() noexcept;
 
 		void chage_font_sizes(float delta, float minimum = 1.f, float maximum = std::numeric_limits<float>::infinity()) noexcept;
 		bool increase_font_sizes(float delta, float maximum = std::numeric_limits<float>::infinity()) noexcept;
