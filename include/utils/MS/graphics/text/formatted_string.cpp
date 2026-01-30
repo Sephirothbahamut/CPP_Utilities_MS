@@ -33,8 +33,8 @@ namespace utils::MS::graphics::text
 	formatted_string::renderable::renderable(dx::initializer& dx_initializer, formatted_string& formatted_string, float step) :
 		implementation_ptr{utils::make_polymorphic_value<formatted_string::renderable::implementation>(dx_initializer)}
 		{
-		implementation_ptr->create_layout(formatted_string);
-		implementation_ptr->shrink_to_fit(formatted_string, step);
+		implementation_ptr->create_layout        (formatted_string);
+		implementation_ptr->shrink_to_fit        (formatted_string, step);
 		}
 
 	formatted_string::renderable::~renderable() = default;
@@ -76,7 +76,16 @@ namespace utils::MS::graphics::text
 		{
 		auto dw_format{utils::MS::raw::graphics::dw::text_format::create(dw_factory, formatted_string.format)};
 		dw_layout = utils::MS::raw::graphics::dw::text_layout::create(dw_factory, dw_format, formatted_string.string, formatted_string.sizes);
-		
+
+		if (formatted_string.format.line_spacing_multiplier != 1.f)
+			{//Set line spacing
+			DWRITE_LINE_SPACING_METHOD lsm;
+			float spacing;
+			float baseline;
+			dw_layout->GetLineSpacing(std::addressof(lsm), std::addressof(spacing), std::addressof(baseline));
+			dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, formatted_string.format.line_spacing_multiplier, formatted_string.format.line_spacing_multiplier * .8f);
+			}
+
 		for_each_slot(formatted_string.properties_regions.format.font, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
 			{
 			if (value != formatted_string.format.font)
@@ -136,8 +145,6 @@ namespace utils::MS::graphics::text
 
 
 
-
-
 		//// Declare a typography pointer.
 		//IDWriteTypography* typography_ptr = NULL;
 		//
@@ -148,14 +155,15 @@ namespace utils::MS::graphics::text
 		//typography_ptr->AddFontFeature(font_feature);
 		//
 		//dw_layout->SetTypography(typography_ptr, DWRITE_TEXT_RANGE{0, 28});
-		dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, 0.6f, 1.f);
+	
+		dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, 1.f, 0.8f);
 
 
 		while (true)
 			{
 			dw_layout->GetMetrics(&metrics);
 			
-			if (metrics.height > metrics.layoutHeight)
+			if (metrics.height > metrics.layoutHeight || metrics.width > metrics.layoutWidth)
 				{
 				float min_size{formatted_string.format.size};
 

@@ -33,6 +33,7 @@ namespace utils::MS::graphics::text
 
 		/// <summary> Font size is in dips (see utils::MS::graphics::conversions) </summary>
 		float size{16.f};
+		float line_spacing_multiplier{1.f};
 		utils::alignment alignment   {utils::alignment::horizontal::left, utils::alignment::vertical::top};
 		weight           weight      {weight      ::normal   };
 		style            style       {style       ::normal   };

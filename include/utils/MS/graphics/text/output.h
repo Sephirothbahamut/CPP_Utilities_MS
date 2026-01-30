@@ -8,6 +8,8 @@
 #include <utils/math/geometry/shape/ab.h>
 #include <utils/math/geometry/shape/aabb.h>
 #include <utils/math/geometry/shape/mixed.h>
+#include <utils/math/geometry/bounds/aabb.h>
+#include <utils/math/geometry/bounds/mixed.h>
 
 namespace utils::MS::graphics::text
 	{
@@ -36,4 +38,16 @@ namespace utils::MS::graphics::text
 			underlines    .clear();
 			}
 		};
+
+	inline utils::math::rect<float> glyph_bounding_box(const glyph& glyph) noexcept
+		{
+		auto ret{utils::math::rect<float>::create::inverse_infinite()};
+		for (const auto& outline : glyph)
+			{
+			const utils::math::rect<float> outline_bb{outline.bounding_box()};
+			ret.merge_self(outline_bb);
+			}
+		return ret;
+		};
+
 	}
