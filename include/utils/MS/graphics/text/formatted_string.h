@@ -42,15 +42,15 @@ namespace utils::MS::graphics::text
 		formatted_string() = default;
 		formatted_string(const create_info& create_info);
 		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes);
-		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::properties::regions& properties_regions);
-		void reset_properties_regions_to_format() noexcept;
+		formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::format::regions& regions);
+		void reset_regions_to_format() noexcept;
 
 		std::u16string     string;
 		format             format;
 		/// <summary> If your renderer is DPI-aware, sizes is in DIPs </summary>
 		utils::math::vec2f sizes;
 
-		utils::MS::graphics::text::regions::properties::regions properties_regions;
+		utils::MS::graphics::text::regions::format::regions regions;
 		/// <summary> 
 		/// Indices at which you wish to force splitting shapes groups. Useful for applying additonal formatting outside of text rendering.
 		/// Generated outline shapes may merge multiple characters of the source string, so if you want to do your own changes to specific regions,

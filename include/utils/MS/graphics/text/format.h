@@ -48,21 +48,44 @@ namespace utils::MS::graphics::text
 		{
 		struct optional_coloured
 			{
+			struct render_targets
+				{
+				bool image{true };
+				bool shape{false};
+				
+				bool operator==(const render_targets& other) const noexcept = default;
+
+				struct regions
+					{
+					utils::containers::regions<bool> image;
+					utils::containers::regions<bool> shape;
+					};
+	
+				using accessors_helper = utils::aggregate::accessors_helper
+					<
+					[](auto& instance) noexcept -> auto& { return instance.image; },
+					[](auto& instance) noexcept -> auto& { return instance.shape; }
+					>;
+				};
+
 			bool                            enabled;
-			utils::graphics::colour::rgba_f colour ;
+			utils::graphics::colour::rgba_f colour;
+			render_targets                  render_to;
 			
 			bool operator==(const optional_coloured& other) const noexcept = default;
 
 			struct regions
 				{
 				utils::containers::regions<bool                           > enabled;
-				utils::containers::regions<utils::graphics::colour::rgba_f> colour ;
+				utils::containers::regions<utils::graphics::colour::rgba_f> colour;
+				typename render_targets::regions                            render_to;
 				};
 	
 			using accessors_helper = utils::aggregate::accessors_helper
 				<
 				[](auto& instance) noexcept -> auto& { return instance.enabled; },
-				[](auto& instance) noexcept -> auto& { return instance.colour ; }
+				[](auto& instance) noexcept -> auto& { return instance.colour ; },
+				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.render_to; }, typename render_targets::accessors_helper> {}
 				>;
 			};
 
@@ -96,6 +119,23 @@ namespace utils::MS::graphics::text
 				typename optional_coloured::regions strikethrough{.enabled{false}, .colour{utils::graphics::colour::base::black}};
 				typename optional_coloured::regions underline    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
 				typename optional_coloured::regions highlight    {.enabled{false}, .colour{utils::graphics::colour::base::black}};
+				
+				
+				struct create : utils::oop::non_constructible
+					{
+					inline static regions from_base_format(const text::format& format)
+						{
+						const regions ret
+							{
+							.font  {format.font  },
+							.locale{format.locale},
+							.size  {format.size  },
+							.weight{format.weight},
+							.style {format.style }
+							};
+						return ret;
+						}
+					};
 				};
 	
 			using accessors_helper = utils::aggregate::accessors_helper
@@ -110,89 +150,6 @@ namespace utils::MS::graphics::text
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.strikethrough; }, typename optional_coloured::accessors_helper> {},
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.underline    ; }, typename optional_coloured::accessors_helper> {},
 				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.highlight    ; }, typename optional_coloured::accessors_helper> {}
-				>;
-			};
-
-		struct render_element
-			{
-			bool to_image {true };
-			bool to_shapes{false};
-			bool operator==(const render_element& other) const noexcept = default;
-		
-			struct regions
-				{
-				utils::containers::regions<bool> to_image {true };
-				utils::containers::regions<bool> to_shapes{false};
-				};
-			using accessors_helper = utils::aggregate::accessors_helper
-				<
-				[](auto& instance) noexcept -> auto& { return instance.to_image ; },
-				[](auto& instance) noexcept -> auto& { return instance.to_shapes; }
-				>;
-			};
-
-		struct render
-			{
-			render_element fill         ;
-			render_element outline      ;
-			render_element rect         ;
-			render_element strikethrough;
-			render_element underline    ;
-			bool operator==(const render& other) const noexcept = default;
-		
-			struct regions
-				{
-				render_element::regions fill         ;
-				render_element::regions outline      ;
-				render_element::regions rect         ;
-				render_element::regions strikethrough;
-				render_element::regions underline    ;
-				};
-			using accessors_helper = utils::aggregate::accessors_helper
-				<
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.fill         ; }, typename render_element::accessors_helper> {},
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.outline      ; }, typename render_element::accessors_helper> {},
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.rect         ; }, typename render_element::accessors_helper> {},
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.strikethrough; }, typename render_element::accessors_helper> {},
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.underline    ; }, typename render_element::accessors_helper> {}
-				>;
-			};
-
-		struct properties
-			{
-			format format{};
-			render render{};
-			bool operator==(const properties& other) const noexcept = default;
-		
-			struct regions
-				{
-				text::regions::format::regions format;
-				text::regions::render::regions render;
-
-				struct create : utils::oop::non_constructible
-					{
-					inline static regions from_base_format(const text::format& format)
-						{
-						const regions ret
-							{
-							.format
-								{
-								.font  {format.font  },
-								.locale{format.locale},
-								.size  {format.size  },
-								.weight{format.weight},
-								.style {format.style }
-								},
-							.render{}
-							};
-						return ret;
-						}
-					};
-				};
-			using accessors_helper = utils::aggregate::accessors_helper
-				<
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.format; }, typename text::regions::format::accessors_helper> {},
-				utils::aggregate::accessors_recursive_helper<[](auto& owner) noexcept -> auto& { return owner.render; }, typename text::regions::render::accessors_helper> {}
 				>;
 			};
 		}

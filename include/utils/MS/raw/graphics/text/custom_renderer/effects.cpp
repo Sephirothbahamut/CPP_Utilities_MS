@@ -4,7 +4,7 @@
 
 namespace utils::MS::raw::graphics::text::custom_renderer::effects
 	{
-	utils::MS::graphics::text::regions::properties from_iunknown(IUnknown* ptr)
+	utils::MS::graphics::text::regions::format from_iunknown(IUnknown* ptr)
 		{
 		assert(ptr);
 
@@ -17,14 +17,11 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 
 		assert(elements_ptr);
 
-		using aggregate_regions_t = utils::containers::aggregate_regions<utils::MS::graphics::text::regions::properties, utils::MS::graphics::text::regions::properties::regions, utils::MS::graphics::text::regions::properties::accessors_helper, true>;
-		const aggregate_regions_t aggregate_regions{*elements_ptr->properties_regions_ptr};
-
-		const auto ret{aggregate_regions.at(elements_ptr->region_begin)};
+		const auto ret{elements_ptr->format_in_region};
 		return ret;
 		}
 
-	com_class::com_class(const utils::MS::graphics::text::regions::properties::regions& properties_regions, const size_t& region_begin) : properties_regions_ptr{&properties_regions}, region_begin{region_begin} {}
+	com_class::com_class(const utils::MS::graphics::text::regions::format& format_in_region, const utils::MS::graphics::text::regions::format::regions& regions, const size_t& region_begin) : format_in_region{format_in_region}, regions_ptr{&regions}, region_begin{region_begin} {}
 
 	IFACEMETHODIMP_(unsigned long) com_class::AddRef()
 		{
@@ -61,5 +58,8 @@ namespace utils::MS::raw::graphics::text::custom_renderer::effects
 		}
 
 	com_ptr create() { return utils::MS::raw::graphics::create_com_ptr<com_class>(); }
-	com_ptr create(const utils::MS::graphics::text::regions::properties::regions& properties_regions, const size_t& region_begin) { return utils::MS::raw::graphics::create_com_ptr<com_class>(properties_regions, region_begin); }
+	com_ptr create(const utils::MS::graphics::text::regions::format& format_in_region, const utils::MS::graphics::text::regions::format::regions& regions, const size_t& region_begin) 
+		{
+		return utils::MS::raw::graphics::create_com_ptr<com_class>(format_in_region, regions, region_begin); 
+		}
 	}

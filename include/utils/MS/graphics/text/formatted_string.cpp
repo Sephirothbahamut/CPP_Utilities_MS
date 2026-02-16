@@ -86,14 +86,14 @@ namespace utils::MS::graphics::text
 			dw_layout->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_PROPORTIONAL, formatted_string.format.line_spacing_multiplier, formatted_string.format.line_spacing_multiplier * .8f);
 			}
 
-		for_each_slot(formatted_string.properties_regions.format.font, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
+		for_each_slot(formatted_string.regions.font, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
 			{
 			if (value != formatted_string.format.font)
 				{
 				dw_layout->SetFontFamilyName(utils::string::cast<wchar_t>(value).c_str(), region);
 				}
 			});
-		for_each_slot(formatted_string.properties_regions.format.locale, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
+		for_each_slot(formatted_string.regions.locale, [&](const std::u16string& value, DWRITE_TEXT_RANGE region)
 			{
 			if (value != formatted_string.format.locale)
 				{
@@ -101,25 +101,25 @@ namespace utils::MS::graphics::text
 				}
 			});
 
-		for_each_slot(formatted_string.properties_regions.format.size                 , [&](const float                     & value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.size  ) { dw_layout->SetFontSize  (                                   value , region); } });
-		for_each_slot(formatted_string.properties_regions.format.weight               , [&](const MS::graphics::text::weight& value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.weight) { dw_layout->SetFontWeight(utils::MS::raw::graphics::dw::cast(value), region); } });
-		for_each_slot(formatted_string.properties_regions.format.style                , [&](const MS::graphics::text::style & value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.style ) { dw_layout->SetFontStyle (utils::MS::raw::graphics::dw::cast(value), region); } });
-		for_each_slot(formatted_string.properties_regions.format.strikethrough.enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetStrikethrough(value , region); });
-		for_each_slot(formatted_string.properties_regions.format.underline    .enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetUnderline    (value , region); });
+		for_each_slot(formatted_string.regions.size                 , [&](const float                     & value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.size  ) { dw_layout->SetFontSize  (                                   value , region); } });
+		for_each_slot(formatted_string.regions.weight               , [&](const MS::graphics::text::weight& value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.weight) { dw_layout->SetFontWeight(utils::MS::raw::graphics::dw::cast(value), region); } });
+		for_each_slot(formatted_string.regions.style                , [&](const MS::graphics::text::style & value, DWRITE_TEXT_RANGE region) { if(value != formatted_string.format.style ) { dw_layout->SetFontStyle (utils::MS::raw::graphics::dw::cast(value), region); } });
+		for_each_slot(formatted_string.regions.strikethrough.enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetStrikethrough(value , region); });
+		for_each_slot(formatted_string.regions.underline    .enabled, [&](const bool                      & value, DWRITE_TEXT_RANGE region) { dw_layout->SetUnderline    (value , region); });
 
 
 		using aggregate_properties_t = utils::containers::aggregate_regions
 			<
-			utils::MS::graphics::text::regions::properties,
-			utils::MS::graphics::text::regions::properties::regions,
-			utils::MS::graphics::text::regions::properties::accessors_helper,
+			utils::MS::graphics::text::regions::format,
+			utils::MS::graphics::text::regions::format::regions,
+			utils::MS::graphics::text::regions::format::accessors_helper,
 			true
 			>;
-		const aggregate_properties_t aggregate_properties{formatted_string.properties_regions};
+		const aggregate_properties_t aggregate_regions{formatted_string.regions};
 
 		const auto split_indices{[&]()
 			{
-			auto tmp{aggregate_properties.split_indices_set()};
+			auto tmp{aggregate_regions.split_indices_set()};
 			tmp.insert(formatted_string.custom_splits.begin(), formatted_string.custom_splits.end());
 			tmp.insert(0);
 			tmp.insert(std::numeric_limits<size_t>::max());
@@ -132,7 +132,9 @@ namespace utils::MS::graphics::text
 				{
 				const utils::containers::region split_region{utils::containers::region::create::from_to(split_indices[i], split_indices[i + 1])};
 				const auto dx_region{cast(split_region)};
-				const auto effects_com_ptr{utils::MS::raw::graphics::text::custom_renderer::effects::create(formatted_string.properties_regions, split_indices[i])};
+				
+				const utils::MS::graphics::text::regions::format format_in_region{aggregate_regions.at(split_region.begin)};
+				const auto effects_com_ptr{utils::MS::raw::graphics::text::custom_renderer::effects::create(format_in_region, formatted_string.regions, split_indices[i])};
 				dw_layout->SetDrawingEffect(effects_com_ptr.get(), dx_region);
 				}
 			}
@@ -167,7 +169,7 @@ namespace utils::MS::graphics::text
 				{
 				float min_size{formatted_string.format.size};
 
-				for (const auto& slot : formatted_string.properties_regions.format.size)
+				for (const auto& slot : formatted_string.regions.size)
 					{
 					const float& value{slot.value};
 					min_size = std::min(min_size, value);
@@ -177,7 +179,7 @@ namespace utils::MS::graphics::text
 					{
 					formatted_string.format.size -= step;
 
-					for (const auto& slot : formatted_string.properties_regions.format.size.unsafe_slots_index_view())
+					for (const auto& slot : formatted_string.regions.size.unsafe_slots_index_view())
 						{
 						if (slot.value)
 							{
@@ -198,32 +200,30 @@ namespace utils::MS::graphics::text
 		string{string},
 		format{format},
 		sizes {sizes },
-		properties_regions{utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format)}
+		regions{utils::MS::graphics::text::regions::format::regions::create::from_base_format(format)}
 		{
 		}
 
 
-	formatted_string::formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::properties::regions& properties_regions) :
+	formatted_string::formatted_string(const std::u16string& string, const text::format& format, const utils::math::vec2f& sizes, const utils::MS::graphics::text::regions::format::regions& regions) :
 		string{string},
 		format{format},
 		sizes{sizes},
-		properties_regions{properties_regions}
+		regions{regions}
 		{}
 
-	void formatted_string::reset_properties_regions_to_format() noexcept
+	void formatted_string::reset_regions_to_format() noexcept
 		{
-		properties_regions = utils::MS::graphics::text::regions::properties::regions::create::from_base_format(format);
+		regions = utils::MS::graphics::text::regions::format::regions::create::from_base_format(format);
 		}
 
 	void formatted_string::split_shapes_output_glyphs() noexcept
 		{
 		for (size_t i{0}; i < string.size(); i++)
 			{
-			const bool format_fill   {properties_regions.format.fill   .enabled  .at_element_index(i).value()};
-			const bool render_fill   {properties_regions.render.fill   .to_shapes.at_element_index(i).value()};
-			const bool format_outline{properties_regions.format.outline.enabled  .at_element_index(i).value()};
-			const bool render_outline{properties_regions.render.outline.to_shapes.at_element_index(i).value()};
-			if ((format_fill && render_fill) || (format_outline && render_outline))
+			const bool fill   {regions.fill   .enabled  .at_element_index(i).value()};
+			const bool outline{regions.outline.enabled  .at_element_index(i).value()};
+			if (fill || outline)
 				{
 				custom_splits.insert(i);
 				custom_splits.insert(i + 1);
@@ -247,7 +247,7 @@ namespace utils::MS::graphics::text
 		{
 		assert(delta >= 0.f);
 		float current_max{format.size};
-		for (const auto& slot : properties_regions.format.size.slot_index_view())
+		for (const auto& slot : regions.size.slot_index_view())
 			{
 			current_max = std::max(current_max, slot.value);
 			}
@@ -260,7 +260,7 @@ namespace utils::MS::graphics::text
 		delta = std::min(delta, max_delta);
 
 		format.size += delta;
-		for (auto slot : properties_regions.format.size.unsafe_slots_index_view())
+		for (auto slot : regions.size.unsafe_slots_index_view())
 			{
 			slot.value += delta;
 			}
@@ -273,7 +273,7 @@ namespace utils::MS::graphics::text
 		assert(delta <= 0.f);
 
 		float current_min{format.size};
-		for (const auto& slot : properties_regions.format.size.slot_index_view())
+		for (const auto& slot : regions.size.slot_index_view())
 			{
 			current_min = std::min(current_min, slot.value);
 			}
@@ -287,7 +287,7 @@ namespace utils::MS::graphics::text
 		delta = std::max(delta, min_delta);
 
 		format.size += delta;
-		for (auto slot : properties_regions.format.size.unsafe_slots_index_view())
+		for (auto slot : regions.size.unsafe_slots_index_view())
 			{
 			slot.value += delta;
 			}
