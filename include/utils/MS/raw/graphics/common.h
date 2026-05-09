@@ -11,6 +11,7 @@
 #include "../common.h"
 
 #include <winrt/base.h>
+#pragma comment (lib, "runtimeobject.lib")
 
 namespace utils::MS::raw::graphics
 	{
