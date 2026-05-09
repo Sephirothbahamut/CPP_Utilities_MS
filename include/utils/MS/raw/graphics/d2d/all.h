@@ -7,3 +7,4 @@
 #include "device.h"
 #include "factory.h"
 #include "context.h"
+#include "render_target.h"

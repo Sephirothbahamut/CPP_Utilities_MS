@@ -41,29 +41,17 @@ namespace utils::MS::raw::graphics
 		return ret;
 		}
 
-	//template <typename ms_type>
-	//struct ms_wrapper : utils::oop::non_copyable
-	//	{
-	//	//Disambiguate between ms_wrapper(ms_type* ms_ptr) and potential children constructors that take a pointer to something else.
-	//	ms_wrapper(nullptr_t) : ptr{nullptr} {};
-	//	ms_wrapper(ms_type* ms_ptr) : ptr{ms_ptr} {};
-	//	ms_wrapper(ms_wrapper&& move) noexcept : ptr{move.ptr} { move.ptr = nullptr; }
-	//	ms_wrapper& operator=(ms_wrapper&& move) noexcept
-	//		{
-	//		safe_release(ptr);
-	//		ptr = move.ptr;
-	//		move.ptr = nullptr;
-	//		return *this;
-	//		}
-	//
-	//	~ms_wrapper() 
-	//		{
-	//		safe_release(ptr); 
-	//		}
-	//
-	//	ms_type* ptr{nullptr};
-	//	ms_type* operator->() noexcept { return ptr; }
-	//	operator ms_type*() noexcept { return ptr; }
-	//	operator bool() const noexcept { return ptr; }
-	//	};
+	template <typename ms_type>
+	struct com_wrapper
+		{
+		using com_wrapper_t = com_wrapper<ms_type>;
+		using com_ptr_t = winrt::com_ptr<ms_type>;
+		com_ptr_t com_ptr;
+
+		auto operator->()       noexcept { return com_ptr.operator->(); }
+		auto operator->() const noexcept { return com_ptr.operator->(); }
+		auto get       ()       noexcept { return com_ptr.get       (); }
+		auto get       () const noexcept { return com_ptr.get       (); }
+		operator bool() const noexcept { return com_ptr.operator bool(); }
+		};
 	}

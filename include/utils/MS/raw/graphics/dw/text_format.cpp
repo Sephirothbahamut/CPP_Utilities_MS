@@ -3,7 +3,7 @@
 #include <utils/string.h>
 #include "cast.h"
 #include "../../../string.h"
-
+          
 namespace utils::MS::raw::graphics::dw::text_format
 	{
 	com_ptr create(winrt::com_ptr<IDWriteFactory> dw_factory, const utils::MS::graphics::text::format& format)

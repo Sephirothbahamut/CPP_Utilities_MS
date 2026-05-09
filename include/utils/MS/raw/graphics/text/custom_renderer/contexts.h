@@ -18,7 +18,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer
 	{
 	struct contexts
 		{
-		d2d::context::com_ptr render_context;
+		d2d::context render_context;
 		utils::MS::graphics::text::output_shapes output_shapes;
 		};
 	}

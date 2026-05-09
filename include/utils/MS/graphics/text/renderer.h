@@ -51,7 +51,7 @@ namespace utils::MS::graphics::text
 
 			/// <summary> Output geometries are in dips (see utils::MS::graphics::conversions) </summary>
 			utils::MS::graphics::text::output_shapes get_output_shapes() const;
-			utils::MS::graphics::text::output_image  get_output_image () const;
+			utils::MS::graphics::text::output_image  get_output_image ();
 
 		utils::polymorphic_value<implementation> implementation_ptr;
 		};

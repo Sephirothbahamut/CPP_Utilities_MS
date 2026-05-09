@@ -13,9 +13,9 @@ namespace utils::MS::graphics::dx
 	{
 	struct context::implementation
 		{
-		implementation(utils::MS::raw::graphics::d2d::device::com_ptr d2d_device);
+		implementation(utils::MS::raw::graphics::d2d::device& d2d_device);
 
-		utils::MS::raw::graphics::d2d::context::com_ptr d2d_context{};
+		utils::MS::raw::graphics::d2d::context d2d_context;
 		};
 	}
 

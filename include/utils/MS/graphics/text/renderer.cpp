@@ -35,14 +35,14 @@ namespace utils::MS::graphics::text
 		utils::math::vec2s resolution;
 		umrg::dw::factory::com_ptr dw_factory;
 		umrg::text::custom_renderer::renderer::com_ptr dw_renderer;
-		umrg::d2d::context::com_ptr d2d_context;
-		umrg::d2d::bitmap::com_ptr d2d_bitmap;
+		umrg::d2d::context d2d_context;
+		umrg::d2d::bitmap d2d_bitmap;
 		umrg::text::custom_renderer::contexts contexts;
 
 		implementation(dx::initializer& dx_initializer, const create_info& create_info) :
 			dw_factory {dx_initializer.implementation_ptr->dw_factory},
 			dw_renderer{umrg::text::custom_renderer::renderer::create(dx_initializer.implementation_ptr->d2d_factory)},
-			d2d_context{umrg::d2d::context::create(dx_initializer.implementation_ptr->d2d_device)},
+			d2d_context{dx_initializer.implementation_ptr->d2d_device},
 			contexts{.render_context{d2d_context}}
 			{
 			d2d_context->SetUnitMode(D2D1_UNIT_MODE_DIPS);
@@ -80,14 +80,18 @@ namespace utils::MS::graphics::text
 			this->resolution = resolution;
 			d2d_context->SetTarget(nullptr);
 
-			d2d_bitmap = umrg::d2d::bitmap::create(d2d_context, umrg::d2d::bitmap::create_info
+			d2d_bitmap = umrg::d2d::bitmap
 				{
-				.resolution{resolution},
-				.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
-				.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
-				//.dpi        {dpi.x(), dpi.y()},
-				.options    {D2D1_BITMAP_OPTIONS_TARGET}
-				});
+				d2d_context,
+				umrg::d2d::bitmap::create_info
+					{
+					.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
+					.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
+					//.dpi        {dpi.x(), dpi.y()},
+					.options    {D2D1_BITMAP_OPTIONS_TARGET}
+					},
+				resolution
+				};
 			d2d_context->SetDpi(dpi.x(), dpi.y());
 			d2d_context->SetTarget(d2d_bitmap.get());
 			}
@@ -118,7 +122,7 @@ namespace utils::MS::graphics::text
 			}
 
 
-		utils::matrix<utils::graphics::colour::rgba_f> get_image() const
+		utils::matrix<utils::graphics::colour::rgba_f> get_image()
 			{
 			const utils::math::vec2f dpi{[&]()
 				{
@@ -127,74 +131,75 @@ namespace utils::MS::graphics::text
 				return ret;
 				}()};
 
-			auto cpu_bitmap{umrg::d2d::bitmap::create(d2d_context, umrg::d2d::bitmap::create_info
-				{
-				.resolution{resolution},
-				.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
-				.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
-				//.dpi        {dpi},
-				.options    {D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW}
-				})};
-
-			
-			D2D1_POINT_2U copy_dest_point{0, 0};
-			D2D1_RECT_U copy_src_rect{.left{0}, .top{0}, .right{static_cast<uint32_t>(resolution.x())}, .bottom{static_cast<uint32_t>(resolution.y())}};
-			cpu_bitmap->CopyFromBitmap(&copy_dest_point, d2d_bitmap.get(), &copy_src_rect);
-
-			D2D1_MAPPED_RECT mapped_rect;
-			winrt::check_hresult(cpu_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped_rect));
-			cpu_bitmap->Unmap();
-			
-			const size_t per_channel_bytes_count{sizeof(float)};
-			const size_t per_pixel_bytes_count{per_channel_bytes_count * 4};
-
-			//Note: the mapped rect may be actually larger than the bitmap
-			//so scanning on pure pixels data size can lead to a skewed image with excess zeroed out pixels.
-			//need to use mapped_rect.pitch to get the address of each line to skip those excess pixels.
-			const size_t per_row_bytes_count{mapped_rect.pitch};//per_pixel_bytes_count * resolution.x()};
-
-			utils::matrix<utils::graphics::colour::rgba_f> ret{resolution};
-
-			for (size_t y = 0; y < resolution.y(); y++)
-				{
-				const size_t row_begin_index{per_row_bytes_count * y};
-				for (size_t x = 0; x < resolution.x(); x++)
-					{
-					const size_t current_pixel_begin_index{row_begin_index + (per_pixel_bytes_count * x)};
-
-					const size_t r_index{current_pixel_begin_index};
-					const size_t g_index{r_index + per_channel_bytes_count};
-					const size_t b_index{g_index + per_channel_bytes_count};
-					const size_t a_index{b_index + per_channel_bytes_count};
-
-					const BYTE* r_byte_ptr{mapped_rect.bits + r_index};
-					const BYTE* g_byte_ptr{mapped_rect.bits + g_index};
-					const BYTE* b_byte_ptr{mapped_rect.bits + b_index};
-					const BYTE* a_byte_ptr{mapped_rect.bits + a_index};
-
-					const float* r_ptr{reinterpret_cast<const float*>(r_byte_ptr)};
-					const float* g_ptr{reinterpret_cast<const float*>(g_byte_ptr)};
-					const float* b_ptr{reinterpret_cast<const float*>(b_byte_ptr)};
-					const float* a_ptr{reinterpret_cast<const float*>(a_byte_ptr)};
-
-					const float r{*r_ptr};
-					const float g{*g_ptr};
-					const float b{*b_ptr};
-					const float a{*a_ptr};
-
-					auto& ret_pixel{ret[utils::math::vec2s{x, y}]};
-					ret_pixel.r() = r;
-					ret_pixel.g() = g;
-					ret_pixel.b() = b;
-					ret_pixel.a() = a;
-					}
-				}
-
-			return ret;
+			return d2d_bitmap.to_cpu_matrix(d2d_context);
+			//auto cpu_bitmap{umrg::d2d::bitmap::create(d2d_context, umrg::d2d::bitmap::create_info
+			//	{
+			//	.resolution{resolution},
+			//	.dxgi_format{DXGI_FORMAT_R32G32B32A32_FLOAT},//DXGI_FORMAT_B8G8R8A8_UNORM
+			//	.alpha_mode {D2D1_ALPHA_MODE_PREMULTIPLIED},
+			//	//.dpi        {dpi},
+			//	.options    {D2D1_BITMAP_OPTIONS_CPU_READ | D2D1_BITMAP_OPTIONS_CANNOT_DRAW}
+			//	})};
+			//
+			//
+			//D2D1_POINT_2U copy_dest_point{0, 0};
+			//D2D1_RECT_U copy_src_rect{.left{0}, .top{0}, .right{static_cast<uint32_t>(resolution.x())}, .bottom{static_cast<uint32_t>(resolution.y())}};
+			//cpu_bitmap->CopyFromBitmap(&copy_dest_point, d2d_bitmap.get(), &copy_src_rect);
+			//
+			//D2D1_MAPPED_RECT mapped_rect;
+			//winrt::check_hresult(cpu_bitmap->Map(D2D1_MAP_OPTIONS_READ, &mapped_rect));
+			//cpu_bitmap->Unmap();
+			//
+			//const size_t per_channel_bytes_count{sizeof(float)};
+			//const size_t per_pixel_bytes_count{per_channel_bytes_count * 4};
+			//
+			////Note: the mapped rect may be actually larger than the bitmap
+			////so scanning on pure pixels data size can lead to a skewed image with excess zeroed out pixels.
+			////need to use mapped_rect.pitch to get the address of each line to skip those excess pixels.
+			//const size_t per_row_bytes_count{mapped_rect.pitch};//per_pixel_bytes_count * resolution.x()};
+			//
+			//utils::matrix<utils::graphics::colour::rgba_f> ret{resolution};
+			//
+			//for (size_t y = 0; y < resolution.y(); y++)
+			//	{
+			//	const size_t row_begin_index{per_row_bytes_count * y};
+			//	for (size_t x = 0; x < resolution.x(); x++)
+			//		{
+			//		const size_t current_pixel_begin_index{row_begin_index + (per_pixel_bytes_count * x)};
+			//
+			//		const size_t r_index{current_pixel_begin_index};
+			//		const size_t g_index{r_index + per_channel_bytes_count};
+			//		const size_t b_index{g_index + per_channel_bytes_count};
+			//		const size_t a_index{b_index + per_channel_bytes_count};
+			//
+			//		const BYTE* r_byte_ptr{mapped_rect.bits + r_index};
+			//		const BYTE* g_byte_ptr{mapped_rect.bits + g_index};
+			//		const BYTE* b_byte_ptr{mapped_rect.bits + b_index};
+			//		const BYTE* a_byte_ptr{mapped_rect.bits + a_index};
+			//
+			//		const float* r_ptr{reinterpret_cast<const float*>(r_byte_ptr)};
+			//		const float* g_ptr{reinterpret_cast<const float*>(g_byte_ptr)};
+			//		const float* b_ptr{reinterpret_cast<const float*>(b_byte_ptr)};
+			//		const float* a_ptr{reinterpret_cast<const float*>(a_byte_ptr)};
+			//
+			//		const float r{*r_ptr};
+			//		const float g{*g_ptr};
+			//		const float b{*b_ptr};
+			//		const float a{*a_ptr};
+			//
+			//		auto& ret_pixel{ret[utils::math::vec2s{x, y}]};
+			//		ret_pixel.r() = r;
+			//		ret_pixel.g() = g;
+			//		ret_pixel.b() = b;
+			//		ret_pixel.a() = a;
+			//		}
+			//	}
+			//
+			//return ret;
 			}
 
 		output_shapes get_output_shapes() const { return contexts.output_shapes; }
-		output_image  get_output_image () const { return get_image()    ; }
+		output_image  get_output_image () { return get_image()    ; }
 		};
 
 	renderer::renderer(dx::initializer& dx_initializer, const create_info& create_info) :
@@ -210,5 +215,5 @@ namespace utils::MS::graphics::text
 	void renderer::draw_text(const formatted_string::renderable& text, const utils::math::vec2f& position)            { implementation_ptr->draw_text(text, position); }
 
 	output_shapes renderer::get_output_shapes() const { return implementation_ptr->get_output_shapes(); }
-	output_image  renderer::get_output_image () const { return implementation_ptr->get_output_image (); }
+	output_image  renderer::get_output_image () { return implementation_ptr->get_output_image (); }
 	}

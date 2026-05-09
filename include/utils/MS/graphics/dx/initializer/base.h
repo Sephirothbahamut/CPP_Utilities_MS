@@ -10,6 +10,7 @@ namespace utils::MS::graphics::dx
 		initializer();
 		~initializer();
 		utils::polymorphic_value<implementation> implementation_ptr;
+		implementation* operator->() noexcept;
 		};
 	}
 

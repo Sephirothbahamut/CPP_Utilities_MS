@@ -1,11 +1,11 @@
 #include "device.h"
 
-namespace utils::MS::raw::graphics::d2d::device
+#include "../dxgi/device.h"
+
+namespace utils::MS::raw::graphics::d2d
 	{
-	com_ptr create(winrt::com_ptr<ID2D1Factory1> d2d_factory, winrt::com_ptr<IDXGIDevice4> dxgi_device)
+	device::device(winrt::com_ptr<ID2D1Factory1> d2d_factory, dxgi::device& dxgi_device)
 		{
-		com_ptr ret;
-		winrt::check_hresult(d2d_factory->CreateDevice(dxgi_device.get(), ret.put()));
-		return ret;
+		winrt::check_hresult(d2d_factory->CreateDevice(dxgi_device.get(), com_ptr.put()));
 		}
 	}

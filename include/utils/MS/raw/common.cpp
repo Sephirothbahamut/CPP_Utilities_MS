@@ -8,7 +8,7 @@
 namespace utils::MS::raw
 	{
 	bool succeeded(HRESULT result) noexcept { return SUCCEEDED(result); }
-	bool failed(HRESULT result) noexcept { return FAILED(result); }
+	bool failed   (HRESULT result) noexcept { return FAILED   (result); }
 
 	//std::string hr_to_string(HRESULT hr) noexcept
 	//	{
@@ -25,4 +25,10 @@ namespace utils::MS::raw
 	//		throw std::runtime_error{"Error code : " + error};
 	//		}
 	//	}
+
+	std::system_error last_error(const std::string& message)
+		{
+		//return std::system_error{std::error_code(::GetLastError(), std::system_category()), message + '\n'};
+		return std::system_error{std::error_code{}, "q"};
+		}
 	}
