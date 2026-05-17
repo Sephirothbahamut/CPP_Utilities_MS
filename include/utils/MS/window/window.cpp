@@ -1,4 +1,3 @@
-#pragma once
 #include "window.h"
 
 #include "../raw/windows.h"
@@ -22,9 +21,9 @@ namespace utils::MS::window
 
 
 	base::base(const create_info& create_info) : hwnd_wrapper{create_window(create_info)}
-				{
-				set_window_ptr();
-				}
+		{
+		set_window_ptr();
+		}
 
 
 	base::base(base&& move) noexcept { operator=(std::move(move)); }

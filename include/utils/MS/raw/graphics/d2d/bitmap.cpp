@@ -6,7 +6,8 @@ namespace utils::MS::raw::graphics::d2d
 	{
 	bitmap::bitmap() noexcept {}
 
-	bitmap::bitmap(const d2d::context& d2d_context, const create_info& create_info, utils::math::vec2s size)
+	//Note: for some reason passing a pointer to IDXGISwapChain1 as third parameter calls this constructor. Why? How?
+	bitmap::bitmap(const d2d::context& d2d_context, const create_info& create_info, const utils::math::vec2s& size)
 		{
 		winrt::check_hresult(d2d_context->CreateBitmap(D2D1_SIZE_U{static_cast<uint32_t>(size.x()), static_cast<uint32_t>(size.y())},
 			nullptr,
@@ -43,11 +44,11 @@ namespace utils::MS::raw::graphics::d2d
 
 
 
-	bitmap::bitmap(const d2d::context& d2d_context, const create_info& create_info, dxgi::swap_chain& dxgi_swapchain)
+	bitmap::bitmap(const d2d::context& d2d_context, const create_info& create_info, const dxgi::swap_chain& dxgi_swapchain)
 		{
-		winrt::com_ptr<IDXGISurface2> dxgi_back_buffer;
+		winrt::com_ptr<IDXGISurface> dxgi_back_buffer;
 		winrt::check_hresult(dxgi_swapchain->GetBuffer(0, __uuidof(dxgi_back_buffer), dxgi_back_buffer.put_void()));
-
+		
 		D2D1_BITMAP_PROPERTIES1 properties
 			{
 			.pixelFormat{DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED},
@@ -55,7 +56,7 @@ namespace utils::MS::raw::graphics::d2d
 			.dpiY{1},
 			.bitmapOptions{D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW},
 			};
-
+		
 		winrt::check_hresult(d2d_context->CreateBitmapFromDxgiSurface(dxgi_back_buffer.get(), &properties, com_ptr.put()));
 		}
 

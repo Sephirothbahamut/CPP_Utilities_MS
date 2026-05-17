@@ -11,7 +11,7 @@ namespace utils::MS::raw::graphics::dxgi
 		{
 		winrt::check_hresult(d3d_device->QueryInterface<IDXGIDevice4>(com_ptr.put()));
 		}
-	device::device(d2d::device& d2d_device)
+	device::device(const d2d::device& d2d_device)
 		{
 		winrt::com_ptr<ID2D1Device2> d2d_device_version;
 		winrt::check_hresult(d2d_device->QueryInterface<ID2D1Device2>(d2d_device_version.put()));

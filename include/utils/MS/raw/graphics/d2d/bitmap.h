@@ -22,12 +22,12 @@ namespace utils::MS::raw::graphics::d2d
 			};
 
 		bitmap() noexcept;
-		bitmap(const d2d::context& d2d_context, const create_info& create_info, utils::math::vec2s size);
+		bitmap(const d2d::context& d2d_context, const create_info& create_info, const utils::math::vec2s& size);
 		bitmap(const d2d::context& d2d_context, const create_info& create_info);
 		bitmap(const d2d::context& d2d_context, utils::math::vec2s size);
 		bitmap(const d2d::context& d2d_context);
 
-		bitmap(const d2d::context& d2d_context, const create_info& create_info, dxgi::swap_chain& dxgi_swapchain);
+		bitmap(const d2d::context& d2d_context, const create_info& create_info, const dxgi::swap_chain& dxgi_swapchain);
 
 		//bitmap(const d2d::device_context& d2d_context, const wic::bitmap& wic_bitmap) : com_ptr{create_from_wic_bitmap  (context, wic_bitmap)} {}
 

@@ -5,8 +5,7 @@
 
 namespace utils::MS::raw::graphics::dxgi
 	{
-
-	static swap_chain::com_ptr_t create(const dxgi::device& dxgi_device, HWND hwnd)
+	swap_chain::swap_chain(IDXGIDevice3* dxgi_device, HWND hwnd)
 		{
 		RECT client_rect{0, 0, 0, 0};
 		GetClientRect(hwnd, &client_rect);
@@ -16,7 +15,8 @@ namespace utils::MS::raw::graphics::dxgi
 		winrt::check_hresult(dxgi_device->GetAdapter(dxgi_adapter.put()));
 
 		winrt::com_ptr<IDXGIFactory2> dxgi_factory;
-		winrt::check_hresult(dxgi_adapter->GetParent(IID_PPV_ARGS(dxgi_factory.put())));
+
+		winrt::check_hresult(dxgi_adapter->GetParent(__uuidof(dxgi_factory), dxgi_factory.put_void()));
 
 		DXGI_SWAP_CHAIN_DESC1 desc
 			{
@@ -42,13 +42,10 @@ namespace utils::MS::raw::graphics::dxgi
 			.Scaling     {DXGI_MODE_SCALING_CENTERED},
 			};
 				
-		swap_chain::com_ptr_t ret{nullptr};
-		winrt::check_hresult(dxgi_factory->CreateSwapChainForHwnd(dxgi_device.get(), hwnd, &desc, &desc_fullscreen, nullptr, ret.put()));
-
+		winrt::check_hresult(dxgi_factory->CreateSwapChainForHwnd(dxgi_device, hwnd, &desc, &desc_fullscreen, nullptr, com_ptr.put()));
 		dxgi_device->SetMaximumFrameLatency(1);
-
-		return ret;
 		}
+	
 
 	// CreateSwapchainForHWND fails with premultiplied alpha. The error tells to use CreateSwapChainForComposition
 	// if I use the following method the window is indeed glassy/transparent as expected, however nothing is rendered.
@@ -58,18 +55,18 @@ namespace utils::MS::raw::graphics::dxgi
 	// however there's no explanation on how to "connect" that with a dxgi swapchain.
 	// The closest it gets is retrieving a d2d device context from BeginDraw
 	// but at that point i'd be completely skipping over the whole swapchain deal
-	static swap_chain::com_ptr_t create_composition(const dxgi::device& dxgi_device, HWND hwnd)
+	swap_chain::swap_chain(IDXGIDevice3* dxgi_device, HWND hwnd, nullptr_t)
 		{
 		RECT client_rect{0, 0, 0, 0};
 		GetClientRect(hwnd, &client_rect);
 		utils::math::rect<long> rectl{client_rect.left, client_rect.top, client_rect.right, client_rect.bottom};
-
+		
 		winrt::com_ptr<IDXGIAdapter> dxgi_adapter;
 		winrt::check_hresult(dxgi_device->GetAdapter(dxgi_adapter.put()));
-
+		
 		winrt::com_ptr<IDXGIFactory2> dxgi_factory;
-		winrt::check_hresult(dxgi_adapter->GetParent(IID_PPV_ARGS(dxgi_factory.put())));
-
+		winrt::check_hresult(dxgi_adapter->GetParent(__uuidof(dxgi_factory), dxgi_factory.put_void()));
+		
 		DXGI_SWAP_CHAIN_DESC1 desc
 			{
 			.Width      {static_cast<UINT>(rectl.w())},
@@ -93,25 +90,15 @@ namespace utils::MS::raw::graphics::dxgi
 			.RefreshRate{.Numerator{1}, .Denominator{0}},
 			.Scaling     {DXGI_MODE_SCALING_CENTERED},
 			};
-				
-		swap_chain::com_ptr_t ret{nullptr};
-		winrt::check_hresult(dxgi_factory->CreateSwapChainForComposition(dxgi_device.get(), &desc, nullptr, ret.put()));
-
+		
+		winrt::check_hresult(dxgi_factory->CreateSwapChainForComposition(dxgi_device, &desc, nullptr, com_ptr.put()));
 		dxgi_device->SetMaximumFrameLatency(1);
-
-		return ret;
 		}
-
-
-
-	swap_chain::swap_chain(const dxgi::device& dxgi_device, HWND hwnd) : com_wrapper_t{create(dxgi_device, hwnd)} {}
-
-	//temporary flag for composition mode
-	swap_chain::swap_chain(const dxgi::device& dxgi_device, HWND hwnd, nullptr_t) : com_wrapper_t{create_composition(dxgi_device, hwnd)} {}
 
 	void swap_chain::resize(utils::math::vec2u size)
 		{
-		HRESULT hresult{com_ptr->ResizeBuffers(2, size.x(), size.y(), DXGI_FORMAT_B8G8R8A8_UNORM, 0)};
+		if (size.x() == 0 || size.y() == 0) { return; }
+		const HRESULT hresult{com_ptr->ResizeBuffers(2, size.x(), size.y(), DXGI_FORMAT_B8G8R8A8_UNORM, 0)};
 		if (hresult == DXGI_ERROR_DEVICE_REMOVED || hresult == DXGI_ERROR_DEVICE_RESET)
 			{
 			throw std::runtime_error("Device removed or reset");
@@ -124,7 +111,7 @@ namespace utils::MS::raw::graphics::dxgi
 
 	void swap_chain::present() const
 		{
-		HRESULT hresult{com_ptr->Present(1, 0)};
+		const HRESULT hresult{com_ptr->Present(1, 0)};
 		if (hresult == DXGI_ERROR_DEVICE_REMOVED || hresult == DXGI_ERROR_DEVICE_RESET)
 			{
 			throw std::runtime_error("Device removed or reset");

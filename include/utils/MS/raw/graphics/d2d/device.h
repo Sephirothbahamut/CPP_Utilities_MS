@@ -7,13 +7,15 @@
 namespace utils::MS::raw::graphics::dxgi
 	{
 	struct device;
-	};
+	}
 
 namespace utils::MS::raw::graphics::d2d
 	{
 	struct device : com_wrapper<ID2D1Device>
 		{
-		device(winrt::com_ptr<ID2D1Factory1> d2d_factory, dxgi::device& dxgi_device);
+		device(const d2d::factory& d2d_factory, const dxgi::device& dxgi_device);
+
+		dxgi::device get_dxgi_device() const;
 		};
 	}
 

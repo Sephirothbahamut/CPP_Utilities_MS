@@ -1,12 +1,12 @@
 #pragma once
 
-#include "device.h"
+#include "common.h"
 
-namespace utils::MS::raw::graphics::d2d::composition
+namespace utils::MS::raw::graphics::composition
 	{
 	struct visual : com_wrapper<IDCompositionVisual>
 		{
-		visual(const composition::device& composition_device);
+		visual(IDCompositionDevice* composition_device);
 		};
 	}
 

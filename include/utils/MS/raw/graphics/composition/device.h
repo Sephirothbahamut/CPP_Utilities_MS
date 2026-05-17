@@ -1,12 +1,18 @@
 #pragma once
 
-#include "../dxgi/device.h"
+#include "common.h"
 
-namespace utils::MS::raw::graphics::d2d::composition
+
+namespace utils::MS::raw::graphics::dxgi
+	{
+	struct device;
+	}
+
+namespace utils::MS::raw::graphics::composition
 	{
 	struct device : com_wrapper<IDCompositionDevice>
 		{
-		device(const utils::MS::raw::graphics::dxgi::device& dxgi_device);
+		device(IDXGIDevice4* dxgi_device);
 		};
 	}
 

@@ -54,5 +54,7 @@ namespace utils::MS::raw::graphics
 		auto get       ()       noexcept { return com_ptr.get       (); }
 		auto get       () const noexcept { return com_ptr.get       (); }
 		operator bool() const noexcept { return com_ptr.operator bool(); }
+
+		operator ms_type*() const noexcept {return com_ptr.get();}
 		};
 	}

@@ -17,7 +17,7 @@
 
 namespace utils::MS::raw::graphics::d2d::window
 	{
-	using draw_callback_signature = void(const ::utils::MS::window::base&, d2d::context&);
+	using draw_callback_signature = void(const ::utils::MS::window::base&, ID2D1DeviceContext5*);
 
 	namespace details
 		{
@@ -35,7 +35,10 @@ namespace utils::MS::raw::graphics::d2d::window
 
 				std::function<draw_callback_signature> draw_callback;
 
-				bool draw() noexcept { return crtp::derived().draw(draw_callback); }
+				bool draw() const noexcept 
+					{
+					return crtp::derived().draw(draw_callback); 
+					}
 
 				// Note: kept for reference reasons.
 				// there should be no benefit/no difference between doing this and calling directly draw, assuming no other module deals with WM_PAINT
@@ -45,7 +48,7 @@ namespace utils::MS::raw::graphics::d2d::window
 					}
 
 			protected:
-				void on_resize(utils::math::vec2u size) noexcept {}
+				void on_resize(utils::math::vec2u size) const noexcept {}
 
 
 				virtual utils::MS::window::procedure_result procedure(UINT msg, WPARAM wparam, LPARAM lparam) override
@@ -94,7 +97,7 @@ namespace utils::MS::raw::graphics::d2d::window
 			struct create_info
 				{
 				using module_type = render_target;
-				d2d::factory::com_ptr& d2d_factory;
+				const d2d::factory& d2d_factory;
 				std::function<draw_callback_signature> draw_callback;
 				
 				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
@@ -114,24 +117,30 @@ namespace utils::MS::raw::graphics::d2d::window
 				{
 				}
 
-			bool draw() noexcept { return details::base<render_target>::draw(); }
-			bool draw(std::function<draw_callback_signature> draw_callback) noexcept
+			bool draw() const noexcept { return details::base<render_target>::draw(); }
+			bool draw(const std::function<draw_callback_signature>& draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }
 				d2d_device_context->BeginDraw();
-				draw_callback(get_base(), d2d_device_context);
+
+				winrt::com_ptr<ID2D1DeviceContext5> d2d_context_v5;
+				winrt::check_hresult(d2d_device_context->QueryInterface<ID2D1DeviceContext5>(d2d_context_v5.put()));
+				draw_callback(get_base(), d2d_context_v5.get());
+
 				d2d_device_context->EndDraw();
 				return true;
 				}
 
-			d2d::context d2d_device_context;
-
 		private:
 			d2d::hwnd_render_target::com_ptr d2d_hwnd_rt;
+
+		public:
+			d2d::context d2d_device_context;
 
 			void on_resize(utils::math::vec2u size) noexcept 
 				{
 				d2d_hwnd_rt->Resize({size.x(), size.y()});
+				d2d_device_context = d2d::context{d2d_hwnd_rt};
 				}
 		};
 
@@ -165,19 +174,26 @@ namespace utils::MS::raw::graphics::d2d::window
 			swap_chain(utils::MS::window::base& base, create_info create_info) :
 				details::base<swap_chain>{base, create_info.draw_callback},
 				d2d_device_context{create_info.d2d_device},
-				dxgi_swapchain{create_info.d2d_device, get_base().get_handle()},
+				dxgi_swapchain{create_info.d2d_device.get_dxgi_device().get(), get_base().get_handle()},
 				d2d_bitmap_target{create_bitmap_target()}
 				{
-				d2d_device_context->SetTarget(d2d_bitmap_target.get());
 				}
 
-			bool draw() noexcept { details::base<swap_chain>::draw(); }
-			bool draw(std::function<draw_callback_signature> draw_callback) noexcept
+			bool draw() const noexcept { return details::base<swap_chain>::draw(); }
+			bool draw(const std::function<draw_callback_signature>& draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }
+
+				d2d_device_context->SetTarget(d2d_bitmap_target.get());
+
 				d2d_device_context->BeginDraw();
-				draw_callback(get_base(), d2d_device_context);
-				d2d_device_context->EndDraw();
+
+				winrt::com_ptr<ID2D1DeviceContext5> d2d_context_v5;
+				winrt::check_hresult(d2d_device_context->QueryInterface<ID2D1DeviceContext5>(d2d_context_v5.put()));
+
+				draw_callback(get_base(), d2d_context_v5.get());
+
+				winrt::check_hresult(d2d_device_context->EndDraw());
 				dxgi_swapchain.present();
 				return true;
 				}
@@ -217,7 +233,7 @@ namespace utils::MS::raw::graphics::d2d::window
 				return ret;
 				}
 		};
-
+	
 	/// <summary>
 	/// Modern (I think) correct way to create a directx-drawable window that supports transparency through composition APIs.
 	/// Resizing with this transparency feels less "snappy" than the render_target alternative, 
@@ -231,7 +247,7 @@ namespace utils::MS::raw::graphics::d2d::window
 				{
 				using module_type = composition_swap_chain;
 
-				d2d::device& d2d_device;
+				const raw::graphics::d2d::device& d2d_device;
 				std::function<draw_callback_signature> draw_callback;
 
 				inline void adjust_base_create_info(utils::MS::window::base::create_info& base_create_info) const noexcept
@@ -244,23 +260,29 @@ namespace utils::MS::raw::graphics::d2d::window
 			composition_swap_chain(utils::MS::window::base& base, create_info create_info) :
 				details::base<composition_swap_chain>{base, create_info.draw_callback},
 				d2d_device_context{create_info.d2d_device},
-				composition_device{create_info.d2d_device},
+				composition_device{create_info.d2d_device.get_dxgi_device().get()},
 				composition_visual{composition_device},
 				composition_target{composition_device, get_base().get_handle()},
-				dxgi_swapchain{create_info.d2d_device, get_base().get_handle(), nullptr}
-				{}
+				dxgi_swapchain{create_info.d2d_device.get_dxgi_device().get(), get_base().get_handle(), nullptr}
+				{
+				}
 
-			bool draw() noexcept { return details::base<composition_swap_chain>::draw(); }
-			bool draw(std::function<draw_callback_signature> draw_callback) noexcept
+			bool draw() const noexcept { return details::base<composition_swap_chain>::draw(); }
+			bool draw(std::function<draw_callback_signature> draw_callback) const noexcept
 				{
 				if (!draw_callback) { return false; }
 
-				d2d::bitmap bitmap{d2d_device_context, dxgi_swapchain};
+				//d2d::bitmap bitmap{d2d_device_context, dxgi_swapchain.get(), 1};//TODO HERE?S THE PROBLEM, this one works with swapchain from d2d_old but not the new one
+				//TODO check the new version in raw::namespace
+				raw::graphics::d2d::bitmap bitmap{d2d_device_context, raw::graphics::d2d::bitmap::create_info{}, dxgi_swapchain};//TODO HERE?S THE PROBLEM, this one works with swapchain from d2d_old but not the new one
 				d2d_device_context->SetTarget(bitmap.get());
 
 				d2d_device_context->BeginDraw();
 
-				draw_callback(get_base(), d2d_device_context);
+				winrt::com_ptr<ID2D1DeviceContext5> d2d_context_v5;
+				winrt::check_hresult(d2d_device_context->QueryInterface<ID2D1DeviceContext5>(d2d_context_v5.put()));
+
+				draw_callback(get_base(), d2d_context_v5.get());
 
 				d2d_device_context->EndDraw();
 				dxgi_swapchain    ->Present(1, 0);
@@ -271,13 +293,13 @@ namespace utils::MS::raw::graphics::d2d::window
 				return true;
 				}
 
-			d2d::context d2d_device_context;
+			raw::graphics::d2d::context d2d_device_context;
 
 		private:
-			composition::device composition_device;
-			composition::visual composition_visual;
-			composition::target composition_target;
-			dxgi::swap_chain dxgi_swapchain;
+			raw::graphics::composition::device composition_device;
+			raw::graphics::composition::visual composition_visual;
+			raw::graphics::composition::target composition_target;
+			raw::graphics::dxgi::swap_chain dxgi_swapchain;
 
 			void on_resize(utils::math::vec2u size) noexcept
 				{

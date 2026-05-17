@@ -104,7 +104,7 @@ namespace utils::MS::graphics::text
 
 			D2D1_RECT_F layoutRect = D2D1_RECT_F{.left{region.ll()}, .top{region.up()}, .right{region.rr()}, .bottom{region.dw()}};
 
-			auto brush{umrg::d2d::brush::create(d2d_context, utils::graphics::colour::rgba_f{0.f, 0.f, 0.f, 1.f})};
+			umrg::d2d::brush_solid brush{d2d_context.get(), utils::graphics::colour::rgba_f{0.f, 0.f, 0.f, 1.f}};
 
 			auto dw_format{umrg::dw::text_format::create(dw_factory, format)};
 

@@ -89,7 +89,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		return S_OK;
 		}
 
-	com_class::com_class(d2d::factory::com_ptr& d2d_factory) : d2d_factory{d2d_factory} {}
+	com_class::com_class(const d2d::factory& d2d_factory) : d2d_factory{d2d_factory} {}
 
 	template <bool simplified>
 	winrt::com_ptr<ID2D1TransformedGeometry> com_class::evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun)
@@ -181,7 +181,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 		if ((effects.fill.render_to.image && effects.fill.enabled) && !effects.fill.render_to.shape && !effects.outline.enabled)
 			{
-			const auto brush_fill{d2d::brush::create(contexts.render_context, effects.fill.colour)};
+			const d2d::brush_solid brush_fill{contexts.render_context, effects.fill.colour};
 			contexts.render_context->DrawGlyphRun(D2D1_POINT_2F{baseline_origin_x, baseline_origin_y}, glyph_run, brush_fill.get(), measuring_mode);
 			}
 		else
@@ -191,12 +191,12 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 
 			if (effects.outline.enabled && effects.outline.render_to.image)
 				{
-				const auto brush_outline{d2d::brush::create(contexts.render_context, effects.outline.colour)};
+				const d2d::brush_solid brush_outline{contexts.render_context, effects.outline.colour};
 				contexts.render_context->DrawGeometry(transformed_geometry.get(), brush_outline.get());
 				}
 			if (effects.fill.enabled && effects.fill.render_to.image)
 				{
-				const auto brush_fill{d2d::brush::create(contexts.render_context, effects.fill.colour)};
+				const d2d::brush_solid brush_fill{contexts.render_context, effects.fill.colour};
 				contexts.render_context->FillGeometry(transformed_geometry.get(), brush_fill.get());
 				}
 
@@ -251,7 +251,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			winrt::com_ptr<ID2D1TransformedGeometry> transformed_geometry;
 			winrt::check_hresult(d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put()));
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.underline.colour)};
+			const d2d::brush_solid brush{contexts.render_context, effects.underline.colour};
 
 			// Draw the outline of the rectangle
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush.get());
@@ -305,7 +305,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 				hr = d2d_factory->CreateTransformedGeometry(rectangle_geometry.get(), &matrix, transformed_geometry.put());
 				}
 
-			const auto brush{d2d::brush::create(contexts.render_context, effects.strikethrough.colour)};
+			const d2d::brush_solid brush{contexts.render_context, effects.strikethrough.colour};
 
 			// Draw the outline of the rectangle
 			contexts.render_context->DrawGeometry(transformed_geometry.get(), brush.get());
@@ -380,7 +380,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		}
 
 
-	com_ptr create(d2d::factory::com_ptr& d2d_factory)
+	com_ptr create(const d2d::factory& d2d_factory)
 		{
 		return utils::MS::raw::graphics::create_com_ptr<com_class>(d2d_factory);
 		}

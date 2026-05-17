@@ -16,8 +16,9 @@ namespace utils::MS::raw::graphics::dxgi
 	{
 	struct device : com_wrapper<IDXGIDevice4>
 		{
+		using com_wrapper<IDXGIDevice4>::com_wrapper;
 		device(winrt::com_ptr<ID3D11Device> d3d_device);
-		device(d2d::device& d2d_device);
+		device(const d2d::device& d2d_device);
 		};
 	}
 

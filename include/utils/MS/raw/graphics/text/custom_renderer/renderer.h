@@ -13,7 +13,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		{
 		private:
 			unsigned long ref_count{1};
-			d2d::factory::com_ptr d2d_factory;
+			const d2d::factory& d2d_factory;
 
 			template <bool simplified>
 			winrt::com_ptr<ID2D1TransformedGeometry> evaluate_transformed_geometry(FLOAT baselineOriginX, FLOAT baselineOriginY, DWRITE_GLYPH_RUN const* glyphRun);
@@ -25,7 +25,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 			IFACEMETHOD(QueryInterface) (IID const& riid, void** ppvObject);
 
 		public:
-			com_class(d2d::factory::com_ptr& d2d_factory);
+			com_class(const d2d::factory& d2d_factory);
 
 			IFACEMETHOD(IsPixelSnappingDisabled)(__maybenull void* clientDrawingContext, __out BOOL* isDisabled);
 
@@ -71,7 +71,7 @@ namespace utils::MS::raw::graphics::text::custom_renderer::renderer
 		};
 
 	using com_ptr = winrt::com_ptr<com_class>;
-	com_ptr create(d2d::factory::com_ptr& d2d_factory);
+	com_ptr create(const d2d::factory& d2d_factory);
 	}
 
 #ifdef utils_implementation
