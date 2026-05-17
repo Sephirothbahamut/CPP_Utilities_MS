@@ -8,9 +8,9 @@
 #include <unordered_map>
 
 #include <utils/enum.h>
+#include <utils/string.h>
 #include <utils/memory.h>
 
-#include "../../utf8.h"
 #include "../../raw/common.h"
 #include "../../raw/windows.h"
 
@@ -343,8 +343,7 @@ namespace utils::MS::window::input
 		int count = ::ToUnicode(vkCode, scanCode, keyboardState.data(), chars.data(), static_cast<int>(chars.size()), 0);
 
 		ClearKeyboardBuffer(VK_DECIMAL);
-
-		return utf8::narrow(chars.data(), std::abs(count));
+		return utils::string::cast<char, wchar_t>(chars.data(), std::abs(count));
 		}
 
 	std::string GetScanCodeName(uint16_t scanCode)
@@ -384,8 +383,7 @@ namespace utils::MS::window::input
 				return it->keyText;
 
 			std::string keyText = GetStringFromKeyPress(scanCode);
-			std::wstring keyTextWide = utf8::widen(keyText);
-			if (!keyTextWide.empty() && !std::iswblank(keyTextWide[0]) && !std::iswcntrl(keyTextWide[0]))
+			if (!keyText.empty() && !std::isblank(keyText[0]) && !std::iscntrl(keyText[0]))
 				{
 				return keyText;
 				}
@@ -394,7 +392,7 @@ namespace utils::MS::window::input
 			const LPARAM lParam = MAKELPARAM(0, ((scanCode & 0xff00) ? KF_EXTENDED : 0) | (scanCode & 0xff));
 			int count = ::GetKeyNameTextW(static_cast<LONG>(lParam), buffer.data(), static_cast<int>(buffer.size()));
 
-			return utf8::narrow(buffer.data(), count);
+			return utils::string::cast<char, wchar_t>(buffer.data(), std::abs(count));
 		}
 
 	bool keyboard::wm_input(WPARAM wparam, LPARAM lparam)
